@@ -1,0 +1,185 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+import { api } from "../routes/api";
+import { Hono } from "hono";
+
+// Internal Hono app for routing MCP tool calls to API handlers
+const app = new Hono();
+app.route("/api", api);
+
+/** Make an internal request to the API and return the parsed JSON response. */
+async function apiRequest(
+  method: string,
+  path: string,
+  body?: unknown
+): Promise<{ status: number; data: unknown }> {
+  const init: RequestInit = { method, headers: { "Content-Type": "application/json" } };
+  if (body !== undefined) {
+    init.body = JSON.stringify(body);
+  }
+  const res = await app.request(path, init);
+  const data = await res.json();
+  return { status: res.status, data };
+}
+
+/** Format an API response as an MCP tool result. */
+function result(data: unknown, isError = false) {
+  return {
+    content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
+    isError,
+  };
+}
+
+export function createMcpServer() {
+  const mcp = new McpServer(
+    { name: "hearsay", version: "0.1.0" },
+    { capabilities: { tools: {} } }
+  );
+
+  // hearsay_browse
+  mcp.tool(
+    "hearsay_browse",
+    "Browse a topic in the hierarchy. Returns posts at that topic and its immediate subtopics — like `ls` on a directory.",
+    {
+      topic: z.string().optional().describe("Topic path to browse. Empty string for root."),
+      status: z.enum(["active", "archived", "obsolete", "all"]).optional().describe("Filter posts by status."),
+      recursive: z.boolean().optional().describe("If true, return all posts at and below this topic."),
+      order_by: z.enum(["updated_at", "created_at", "title"]).optional().describe("Sort field."),
+      order: z.enum(["asc", "desc"]).optional().describe("Sort direction."),
+      cursor: z.string().optional().describe("Pagination cursor from a previous response."),
+      limit: z.number().int().min(1).max(100).optional().describe("Maximum number of posts to return (1-100)."),
+    },
+    async (args) => {
+      const params = new URLSearchParams();
+      if (args.topic !== undefined) params.set("topic", args.topic);
+      if (args.status) params.set("status", args.status);
+      if (args.recursive !== undefined) params.set("recursive", String(args.recursive));
+      if (args.order_by) params.set("order_by", args.order_by);
+      if (args.order) params.set("order", args.order);
+      if (args.cursor) params.set("cursor", args.cursor);
+      if (args.limit !== undefined) params.set("limit", String(args.limit));
+
+      const { data } = await apiRequest("GET", `/api/browse?${params}`);
+      return result(data);
+    }
+  );
+
+  // hearsay_read_post
+  mcp.tool(
+    "hearsay_read_post",
+    "Read a post and all its comments.",
+    {
+      post_id: z.string().describe("The post's UUID v7."),
+    },
+    async (args) => {
+      const { status, data } = await apiRequest("GET", `/api/posts/${args.post_id}`);
+      return result(data, status >= 400);
+    }
+  );
+
+  // hearsay_search
+  mcp.tool(
+    "hearsay_search",
+    "Full-text search across post titles, post bodies, and comment bodies.",
+    {
+      query: z.string().describe("Search query."),
+      regex: z.boolean().optional().describe("If true, treat query as a regular expression."),
+      topic: z.string().optional().describe("Restrict search to a topic prefix and its subtopics."),
+      tags: z.array(z.string()).optional().describe("Only search posts that have all of these tags."),
+      status: z.enum(["active", "archived", "obsolete", "all"]).optional().describe("Filter by status."),
+      order_by: z.enum(["relevance", "updated_at", "created_at"]).optional().describe("Sort field."),
+      order: z.enum(["asc", "desc"]).optional().describe("Sort direction."),
+      cursor: z.string().optional().describe("Pagination cursor from a previous response."),
+      limit: z.number().int().min(1).max(100).optional().describe("Maximum number of results to return (1-100)."),
+    },
+    async (args) => {
+      const params = new URLSearchParams();
+      params.set("query", args.query);
+      if (args.regex !== undefined) params.set("regex", String(args.regex));
+      if (args.topic) params.set("topic", args.topic);
+      if (args.tags?.length) params.set("tags", args.tags.join(","));
+      if (args.status) params.set("status", args.status);
+      if (args.order_by) params.set("order_by", args.order_by);
+      if (args.order) params.set("order", args.order);
+      if (args.cursor) params.set("cursor", args.cursor);
+      if (args.limit !== undefined) params.set("limit", String(args.limit));
+
+      const { status, data } = await apiRequest("GET", `/api/search?${params}`);
+      return result(data, status >= 400);
+    }
+  );
+
+  // hearsay_create_post
+  mcp.tool(
+    "hearsay_create_post",
+    "Create a new post.",
+    {
+      title: z.string().describe("Post title."),
+      topic: z.string().describe("Hierarchical topic path (e.g. deployments/staging)."),
+      body: z.string().describe("Content of the post. Markdown supported."),
+      tags: z.array(z.string()).optional().describe("Tags for cross-cutting concerns."),
+      author: z.string().optional().describe("Injected by the plugin from session identity."),
+      commit_sha: z.string().optional().describe("Injected by the plugin from git rev-parse HEAD."),
+    },
+    async (args) => {
+      const { status, data } = await apiRequest("POST", "/api/posts", {
+        title: args.title,
+        topic: args.topic,
+        body: args.body,
+        tags: args.tags,
+        author: args.author,
+        commit_sha: args.commit_sha,
+      });
+      return result(data, status >= 400);
+    }
+  );
+
+  // hearsay_comment
+  mcp.tool(
+    "hearsay_comment",
+    "Add a comment to an existing post.",
+    {
+      post_id: z.string().describe("The post to comment on."),
+      body: z.string().describe("Content of the comment. Markdown supported."),
+      author: z.string().optional().describe("Injected by the plugin from session identity."),
+    },
+    async (args) => {
+      const { status, data } = await apiRequest("POST", `/api/posts/${args.post_id}/comments`, {
+        body: args.body,
+        author: args.author,
+      });
+      return result(data, status >= 400);
+    }
+  );
+
+  // hearsay_update_post_status
+  mcp.tool(
+    "hearsay_update_post_status",
+    "Change a post's status.",
+    {
+      post_id: z.string().describe("The post to update."),
+      status: z.enum(["active", "archived", "obsolete"]).describe("New status."),
+    },
+    async (args) => {
+      const { status, data } = await apiRequest("PATCH", `/api/posts/${args.post_id}`, {
+        status: args.status,
+      });
+      return result(data, status >= 400);
+    }
+  );
+
+  // hearsay_delete_post
+  mcp.tool(
+    "hearsay_delete_post",
+    "Permanently delete a post and all its comments. This is irreversible.",
+    {
+      post_id: z.string().describe("The post to delete."),
+    },
+    async (args) => {
+      const { status, data } = await apiRequest("DELETE", `/api/posts/${args.post_id}`);
+      return result(data, status >= 400);
+    }
+  );
+
+  return mcp;
+}

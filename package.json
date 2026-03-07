@@ -11,6 +11,7 @@
     "db:migrate": "bun run src/db/migrate.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "drizzle-orm": "^0.39.0",
     "hono": "^4.7.0"
   },
