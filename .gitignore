@@ -5,3 +5,4 @@ dist/
 *.sqlite
 .DS_Store
 .claude/
+.worktrees/
