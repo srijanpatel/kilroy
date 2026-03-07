@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "bun run --hot src/server.ts",
     "start": "bun run src/server.ts",
-    "test": "bun test",
+    "build:web": "cd web && bun run build",
+    "test": "bun test --cwd . test/",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run src/db/migrate.ts"
   },
