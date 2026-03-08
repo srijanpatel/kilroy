@@ -125,8 +125,8 @@ a:hover { color: var(--accent-hover); }
 
 /* Sidebar */
 .sidebar {
-  width: 220px;
-  min-width: 220px;
+  width: 230px;
+  min-width: 230px;
   border-right: 1px solid var(--border);
   background: var(--bg-surface);
   overflow-y: auto;
@@ -135,43 +135,94 @@ a:hover { color: var(--accent-hover); }
   flex-direction: column;
 }
 
-.sidebar-tree { flex: 1; }
+.sidebar-tree { flex: 1; padding-top: 0.25rem; }
 
 .sidebar-bottom {
   padding: 0.75rem 1rem;
   border-top: 1px solid var(--border);
 }
 
+.sidebar-bottom .btn {
+  border-style: dashed;
+  background: transparent;
+  width: 100%;
+}
+
+.sidebar-bottom .btn:hover {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .tree-item {
   display: flex;
   align-items: center;
-  padding: 0.25rem 0.75rem;
+  padding: 0.3rem 0.75rem 0.3rem 0;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
   color: var(--text-muted);
   user-select: none;
+  position: relative;
+  transition: color 0.1s, background 0.1s;
 }
 
 .tree-item:hover { background: var(--bg-hover); color: var(--text); }
-.tree-item.active { color: var(--accent); font-weight: 600; }
+
+.tree-item.active {
+  color: var(--accent);
+  font-weight: 600;
+  background: var(--accent-glow);
+}
+
+.tree-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--accent);
+}
 
 .tree-toggle {
-  width: 1rem;
-  text-align: center;
-  margin-right: 0.25rem;
-  font-size: 0.7rem;
+  width: 1.5rem;
+  min-width: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--text-dim);
 }
 
-.tree-label { flex: 1; }
+.tree-chevron {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  transition: transform 0.15s ease;
+}
+
+.tree-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.tree-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .tree-count {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   color: var(--text-dim);
+  background: var(--bg-hover);
+  padding: 0.05rem 0.4rem;
+  border-radius: 8px;
   margin-left: 0.5rem;
+  min-width: 1.2rem;
+  text-align: center;
 }
 
-.tree-children { padding-left: 0.75rem; }
+.tree-children {
+  padding-left: 0.5rem;
+  margin-left: 1rem;
+  border-left: 1px solid var(--border-subtle);
+}
 
 /* Content */
 .content {

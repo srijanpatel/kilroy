@@ -69,7 +69,11 @@ function TreeNode({ node, activeTopic }: { node: TopicNode; activeTopic: string 
             if (hasChildren) setExpanded(!expanded);
           }}
         >
-          {hasChildren ? (expanded ? '▾' : '▸') : ' '}
+          {hasChildren ? (
+            <svg className={`tree-chevron ${expanded ? 'expanded' : ''}`} viewBox="0 0 16 16" fill="currentColor">
+              <path d="M6 3l5 5-5 5V3z" />
+            </svg>
+          ) : null}
         </span>
         <span className="tree-label">{node.name}</span>
         <span className="tree-count">{node.postCount}</span>
@@ -108,7 +112,7 @@ export function Sidebar({ activeTopic }: { activeTopic: string }) {
         )}
       </div>
       <div className="sidebar-bottom">
-        <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => navigate('/new')}>
+        <button className="btn" onClick={() => navigate('/new')}>
           + New Post
         </button>
       </div>
