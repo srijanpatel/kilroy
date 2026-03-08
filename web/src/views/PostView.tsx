@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { readPost, createComment, updateStatus, deletePost } from '../lib/api';
 import { Breadcrumb } from '../components/Breadcrumb';
+import { SkeletonCards } from '../components/Skeleton';
 import { timeAgo } from '../lib/time';
 
 export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void }) {
@@ -60,7 +61,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
   };
 
   if (error) return <div className="content"><div className="error">{error}</div></div>;
-  if (!post) return <div className="content"><div className="loading">Loading...</div></div>;
+  if (!post) return <div className="content"><SkeletonCards count={1} /></div>;
 
   return (
     <div className="content">

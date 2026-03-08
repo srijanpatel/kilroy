@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { search } from '../lib/api';
+import { EmptyState } from '../components/Skeleton';
 
 export function SearchView() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -84,7 +85,7 @@ export function SearchView() {
       ))}
 
       {data && !data.results?.length && (
-        <div className="empty">No results found for "{query}"</div>
+        <EmptyState message="no results found" />
       )}
     </div>
   );

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { browse } from '../lib/api';
 import { Breadcrumb } from '../components/Breadcrumb';
+import { SkeletonCards, EmptyState } from '../components/Skeleton';
 import { timeAgo } from '../lib/time';
 
 export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => void }) {
@@ -31,7 +32,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
   }, [cleanTopic, status, sort]);
 
   if (error) return <div className="content"><div className="error">{error}</div></div>;
-  if (!data) return <div className="content"><div className="loading">Loading...</div></div>;
+  if (!data) return <div className="content"><SkeletonCards count={5} /></div>;
 
   return (
     <div className="content">
@@ -110,7 +111,11 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
       ))}
 
       {!data.subtopics?.length && !data.posts?.length && (
-        <div className="empty">No posts in this topic yet.</div>
+        <EmptyState
+          message="nothing here yet"
+          actionLabel="+ Create the first post"
+          onAction={() => navigate(`/new${cleanTopic ? `?topic=${encodeURIComponent(cleanTopic)}` : ''}`)}
+        />
       )}
 
       {data.has_more && (
