@@ -45,10 +45,15 @@ export function NewPostView() {
     }
   };
 
-  return (
-    <div className="content">
-      <h2 style={{ marginBottom: '1.25rem', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>new post</h2>
+  const handleBodyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setBody(e.target.value);
+    const el = e.target;
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  };
 
+  return (
+    <div className="content reading">
       {error && <div className="error">{error}</div>}
 
       <form onSubmit={handleSubmit}>
@@ -58,24 +63,24 @@ export function NewPostView() {
             placeholder="e.g. auth/google"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
+            style={{ fontFamily: 'var(--font-mono)' }}
           />
         </div>
 
-        <div className="form-group">
-          <label>Title</label>
-          <input
-            placeholder="Post title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </div>
+        <input
+          className="title-input"
+          placeholder="Post title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
 
-        <div className="form-group">
-          <label>Body (markdown)</label>
+        <div className="form-group" style={{ marginTop: '1.25rem' }}>
+          <label>Body</label>
           <textarea
-            placeholder="Write your post..."
+            placeholder="Write your knowledge..."
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={handleBodyChange}
+            rows={8}
           />
         </div>
 
@@ -89,7 +94,7 @@ export function NewPostView() {
         </div>
 
         <button className="btn btn-primary" type="submit" disabled={submitting}>
-          {submitting ? 'Creating...' : 'Create Post'}
+          {submitting ? 'Publishing...' : 'Publish'}
         </button>
       </form>
     </div>

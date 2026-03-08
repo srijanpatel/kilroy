@@ -14,11 +14,10 @@ function highlightSnippet(snippet: string, query: string) {
 }
 
 export function SearchView() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const query = searchParams.get('q') || '';
 
-  const [input, setInput] = useState(query);
   const [data, setData] = useState<any>(null);
   const [status, setStatus] = useState('active');
   const [error, setError] = useState('');
@@ -26,6 +25,7 @@ export function SearchView() {
   useEffect(() => {
     if (!query) { setData(null); return; }
     setError('');
+    setData(null);
     const params: Record<string, string> = { query };
     if (status !== 'active') params.status = status;
 
@@ -34,43 +34,30 @@ export function SearchView() {
       .catch((e) => setError(e.message));
   }, [query, status]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (input.trim()) {
-      setSearchParams({ q: input.trim() });
-    }
-  };
+  if (!query) return (
+    <div className="content">
+      <EmptyState
+        title="Search Hearsay"
+        message="Use the omnibar above (⌘K) to search across all posts."
+      />
+    </div>
+  );
 
   return (
     <div className="content">
       <div className="search-header">
-        <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-          <input
-            style={{
-              flex: 1, background: 'var(--bg-input)', border: '1px solid var(--border)',
-              borderRadius: '6px', padding: '0.5rem 0.75rem', color: 'var(--text)',
-              fontFamily: 'var(--font-mono)', fontSize: '0.85rem', outline: 'none',
-            }}
-            placeholder="Search posts..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-          />
-          <button className="btn btn-primary" type="submit">Search</button>
-        </form>
-
-        {query && (
-          <div className="controls">
-            <label>Status:
-              <select value={status} onChange={(e) => setStatus(e.target.value)}>
-                <option value="active">Active</option>
-                <option value="archived">Archived</option>
-                <option value="obsolete">Obsolete</option>
-                <option value="all">All</option>
-              </select>
-            </label>
-            {data && <span className="count">{data.results?.length || 0} results</span>}
-          </div>
-        )}
+        <h2>Results for &ldquo;{query}&rdquo;</h2>
+        <div className="controls" style={{ marginTop: '0.75rem' }}>
+          <label>Status
+            <select value={status} onChange={(e) => setStatus(e.target.value)}>
+              <option value="active">Active</option>
+              <option value="archived">Archived</option>
+              <option value="obsolete">Obsolete</option>
+              <option value="all">All</option>
+            </select>
+          </label>
+          {data && <span className="search-count">{data.results?.length || 0} results</span>}
+        </div>
       </div>
 
       {error && <div className="error">{error}</div>}
@@ -78,29 +65,27 @@ export function SearchView() {
       {data?.results?.map((r: any, i: number) => (
         <div
           key={r.post_id}
-          className={`card status-border-${r.status} card-animate`}
+          className="card card-animate"
           style={{ animationDelay: `${i * 30}ms` }}
           onClick={() => navigate(`/post/${r.post_id}`)}
         >
           <div className="card-title">
             <span className="card-title-text">{r.title}</span>
-            <span className={`status status-${r.status}`}>{r.status}</span>
+            <span className={`status-dot status-dot-${r.status}`} />
           </div>
           <div className="card-meta">
-            <span className="mono">{r.topic}</span>
+            {r.topic}
             {r.match_location && <> · <span className="match-location">{r.match_location}</span></>}
           </div>
-          {r.tags?.length > 0 && (
-            <div className="card-tags">
-              {r.tags.map((t: string) => <span key={t} className="tag">{t}</span>)}
-            </div>
-          )}
           {r.snippet && <div className="snippet">{highlightSnippet(r.snippet, query)}</div>}
         </div>
       ))}
 
       {data && !data.results?.length && (
-        <EmptyState message="no results found" />
+        <EmptyState
+          title="No results"
+          message={`Nothing matched \u201c${query}\u201d. Try a different search term.`}
+        />
       )}
     </div>
   );

@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { browse } from '../lib/api';
-import { Breadcrumb } from '../components/Breadcrumb';
 import { SkeletonCards, EmptyState } from '../components/Skeleton';
 import { timeAgo } from '../lib/time';
 
 export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => void }) {
   const params = useParams();
-  const topic = params['*'] || '';
-  // Strip trailing slash from route param
-  const cleanTopic = topic.replace(/\/$/, '');
+  const topic = (params['*'] || '').replace(/\/$/, '');
   const navigate = useNavigate();
 
   const [data, setData] = useState<any>(null);
@@ -17,65 +14,68 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
   const [sort, setSort] = useState('updated_at');
   const [error, setError] = useState('');
 
-  useEffect(() => { onTopicChange(cleanTopic); }, [cleanTopic]);
+  useEffect(() => { onTopicChange(topic); }, [topic]);
 
   useEffect(() => {
     setError('');
+    setData(null);
     const params: Record<string, string> = {};
-    if (cleanTopic) params.topic = cleanTopic;
+    if (topic) params.topic = topic;
     if (status !== 'active') params.status = status;
     if (sort !== 'updated_at') params.order_by = sort;
 
     browse(params)
       .then(setData)
       .catch((e) => setError(e.message));
-  }, [cleanTopic, status, sort]);
+  }, [topic, status, sort]);
 
   if (error) return <div className="content"><div className="error">{error}</div></div>;
   if (!data) return <div className="content"><SkeletonCards count={5} /></div>;
 
+  const hasContent = (data.subtopics?.length || 0) + (data.posts?.length || 0) > 0;
+
   return (
     <div className="content">
-      <Breadcrumb topic={cleanTopic} />
-
-      <div className="controls">
-        <label>Status:
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="active">Active</option>
-            <option value="archived">Archived</option>
-            <option value="obsolete">Obsolete</option>
-            <option value="all">All</option>
-          </select>
-        </label>
-        <label>Sort:
-          <select value={sort} onChange={(e) => setSort(e.target.value)}>
-            <option value="updated_at">Updated</option>
-            <option value="created_at">Created</option>
-            <option value="title">Title</option>
-          </select>
-        </label>
-        <div className="spacer" />
-        <button className="btn btn-primary" onClick={() => navigate(`/new${cleanTopic ? `?topic=${encodeURIComponent(cleanTopic)}` : ''}`)}>
-          + New Post
-        </button>
-      </div>
+      {hasContent && (
+        <div className="controls">
+          <label>Status
+            <select value={status} onChange={(e) => setStatus(e.target.value)}>
+              <option value="active">Active</option>
+              <option value="archived">Archived</option>
+              <option value="obsolete">Obsolete</option>
+              <option value="all">All</option>
+            </select>
+          </label>
+          <label>Sort
+            <select value={sort} onChange={(e) => setSort(e.target.value)}>
+              <option value="updated_at">Updated</option>
+              <option value="created_at">Created</option>
+              <option value="title">Title</option>
+            </select>
+          </label>
+          <div className="spacer" />
+          <button
+            className="btn btn-primary"
+            onClick={() => navigate(`/new${topic ? `?topic=${encodeURIComponent(topic)}` : ''}`)}
+          >
+            + New Post
+          </button>
+        </div>
+      )}
 
       {data.subtopics?.map((st: any, i: number) => (
         <div
           key={st.name}
           className="card folder-card card-animate"
           style={{ animationDelay: `${i * 30}ms` }}
-          onClick={() => navigate(`/${cleanTopic ? cleanTopic + '/' : ''}${st.name}/`)}
+          onClick={() => navigate(`/${topic ? topic + '/' : ''}${st.name}/`)}
         >
-          <div className="card-title">
-            <span className="card-title-text">
-              <span className="folder-icon">{'\u{1F4C1}'}</span>
-              {st.name}/
-            </span>
-          </div>
+          <div className="card-title">{st.name}/</div>
           <div className="card-meta">
-            {st.post_count} {st.post_count === 1 ? 'post' : 'posts'} · {st.contributor_count} {st.contributor_count === 1 ? 'contributor' : 'contributors'}
-            {st.updated_at && <> · updated {timeAgo(st.updated_at)}</>}
+            {st.post_count} {st.post_count === 1 ? 'post' : 'posts'}
+            {' · '}
+            {st.contributor_count} {st.contributor_count === 1 ? 'contributor' : 'contributors'}
+            {st.updated_at && <> · {timeAgo(st.updated_at)}</>}
           </div>
           {st.tags?.length > 0 && (
             <div className="card-tags">
@@ -88,13 +88,13 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
       {data.posts?.map((p: any, i: number) => (
         <div
           key={p.id}
-          className={`card status-border-${p.status} card-animate`}
+          className="card card-animate"
           style={{ animationDelay: `${(data.subtopics?.length || 0) * 30 + i * 30}ms` }}
           onClick={() => navigate(`/post/${p.id}`)}
         >
           <div className="card-title">
             <span className="card-title-text">{p.title}</span>
-            <span className={`status status-${p.status}`}>{p.status}</span>
+            <span className={`status-dot status-dot-${p.status}`} />
           </div>
           <div className="card-meta">
             {p.author || 'anonymous'} · {timeAgo(p.updated_at)} · {p.comment_count} {p.comment_count === 1 ? 'comment' : 'comments'}
@@ -104,24 +104,16 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
               {p.tags.map((t: string) => <span key={t} className="tag">{t}</span>)}
             </div>
           )}
-          {p.files?.length > 0 && (
-            <div className="card-files">{p.files.join(', ')}</div>
-          )}
         </div>
       ))}
 
-      {!data.subtopics?.length && !data.posts?.length && (
+      {!hasContent && (
         <EmptyState
-          message="nothing here yet"
-          actionLabel="+ Create the first post"
-          onAction={() => navigate(`/new${cleanTopic ? `?topic=${encodeURIComponent(cleanTopic)}` : ''}`)}
+          title="Welcome to Hearsay."
+          message="Knowledge shared here persists across sessions — so the next agent (or human) doesn't start from zero."
+          actionLabel="Create the first post"
+          onAction={() => navigate(`/new${topic ? `?topic=${encodeURIComponent(topic)}` : ''}`)}
         />
-      )}
-
-      {data.has_more && (
-        <div style={{ textAlign: 'center', padding: '1rem' }}>
-          <span className="mono" style={{ color: 'var(--text-dim)' }}>More results available</span>
-        </div>
       )}
     </div>
   );

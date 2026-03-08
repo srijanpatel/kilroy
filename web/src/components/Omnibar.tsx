@@ -1,0 +1,216 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { browse, search } from '../lib/api';
+
+interface OmnibarProps {
+  currentTopic: string;
+}
+
+export function Omnibar({ currentTopic }: OmnibarProps) {
+  const navigate = useNavigate();
+  const [active, setActive] = useState(false);
+  const [query, setQuery] = useState('');
+  const [topics, setTopics] = useState<any[]>([]);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const [allTopics, setAllTopics] = useState<string[]>([]);
+
+  useEffect(() => {
+    browse({ recursive: 'true', status: 'all', limit: '200' })
+      .then((data) => {
+        const paths = new Set<string>();
+        for (const p of data.posts || []) {
+          const parts = p.topic.split('/');
+          for (let i = 1; i <= parts.length; i++) {
+            paths.add(parts.slice(0, i).join('/'));
+          }
+        }
+        setAllTopics(Array.from(paths).sort());
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!query.trim()) {
+      setTopics([]);
+      setPosts([]);
+      return;
+    }
+
+    const q = query.toLowerCase();
+    const matchedTopics = allTopics
+      .filter((t) => t.toLowerCase().includes(q))
+      .slice(0, 5);
+    setTopics(matchedTopics);
+
+    const timer = setTimeout(() => {
+      search({ query: query.trim(), status: 'all', limit: '5' })
+        .then((data) => setPosts(data.results || []))
+        .catch(() => setPosts([]));
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [query, allTopics]);
+
+  useEffect(() => {
+    setSelectedIndex(-1);
+  }, [topics, posts]);
+
+  const totalResults = topics.length + posts.length;
+
+  const activate = useCallback(() => {
+    setActive(true);
+    setQuery('');
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }, []);
+
+  const deactivate = useCallback(() => {
+    setActive(false);
+    setQuery('');
+    setTopics([]);
+    setPosts([]);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || (e.key === '/' && !active)) {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        e.preventDefault();
+        activate();
+      }
+      if (e.key === 'Escape' && active) {
+        deactivate();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [active, activate, deactivate]);
+
+  useEffect(() => {
+    if (!active) return;
+    const handler = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        deactivate();
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [active, deactivate]);
+
+  const handleSelect = (index: number) => {
+    if (index < topics.length) {
+      navigate(`/${topics[index]}/`);
+    } else {
+      const post = posts[index - topics.length];
+      if (post) navigate(`/post/${post.post_id}`);
+    }
+    deactivate();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex((i) => Math.min(i + 1, totalResults - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex((i) => Math.max(i - 1, -1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedIndex >= 0) {
+        handleSelect(selectedIndex);
+      } else if (query.trim()) {
+        navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+        deactivate();
+      }
+    }
+  };
+
+  const segments = currentTopic ? currentTopic.split('/') : [];
+
+  return (
+    <div className="omnibar-wrapper">
+      <div className={`omnibar ${active ? 'active' : ''}`} ref={wrapperRef}>
+        {active ? (
+          <>
+            <input
+              ref={inputRef}
+              className="omnibar-input"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Search posts or navigate to a topic..."
+            />
+            {query.trim() && (topics.length > 0 || posts.length > 0) && (
+              <div className="omnibar-dropdown">
+                {topics.length > 0 && (
+                  <div className="omnibar-results-group">
+                    <div className="omnibar-group-label">Topics</div>
+                    {topics.map((t, i) => (
+                      <div
+                        key={t}
+                        className={`omnibar-result-item ${selectedIndex === i ? 'selected' : ''}`}
+                        onClick={() => handleSelect(i)}
+                        onMouseEnter={() => setSelectedIndex(i)}
+                      >
+                        <span className="omnibar-result-icon">&#x2192;</span>
+                        <span className="omnibar-result-path">{t}/</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {posts.length > 0 && (
+                  <div className="omnibar-results-group">
+                    <div className="omnibar-group-label">Posts</div>
+                    {posts.map((p, i) => (
+                      <div
+                        key={p.post_id}
+                        className={`omnibar-result-item ${selectedIndex === topics.length + i ? 'selected' : ''}`}
+                        onClick={() => handleSelect(topics.length + i)}
+                        onMouseEnter={() => setSelectedIndex(topics.length + i)}
+                      >
+                        <span className="omnibar-result-title">{p.title}</span>
+                        <span className="omnibar-result-topic">{p.topic}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="omnibar-resting" onClick={activate}>
+            <Link to="/" className="omnibar-wordmark" onClick={(e) => e.stopPropagation()}>
+              hearsay
+            </Link>
+            {segments.length > 0 && (
+              <span className="omnibar-path">
+                {segments.map((seg, i) => {
+                  const path = segments.slice(0, i + 1).join('/');
+                  return (
+                    <span key={path}>
+                      <span className="omnibar-sep">/</span>
+                      <Link
+                        to={`/${path}/`}
+                        className="omnibar-segment"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {seg}
+                      </Link>
+                    </span>
+                  );
+                })}
+              </span>
+            )}
+            <span className="omnibar-hint">
+              <kbd>⌘K</kbd>
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

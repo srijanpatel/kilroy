@@ -27,8 +27,8 @@ export function AuthorPrompt() {
   return (
     <div className="author-prompt-overlay">
       <div className="author-prompt">
-        <h3>who are you?</h3>
-        <p>Set a name for your posts and comments. Stored locally.</p>
+        <h3>Who are you?</h3>
+        <p>Your name will appear on posts and comments you create. Stored in your browser only.</p>
         <input
           autoFocus
           placeholder="e.g. human:sarah"
