@@ -59,9 +59,19 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
         </button>
       </div>
 
-      {data.subtopics?.map((st: any) => (
-        <div key={st.name} className="card folder-card" onClick={() => navigate(`/${cleanTopic ? cleanTopic + '/' : ''}${st.name}/`)}>
-          <div className="card-title">{st.name}/</div>
+      {data.subtopics?.map((st: any, i: number) => (
+        <div
+          key={st.name}
+          className="card folder-card card-animate"
+          style={{ animationDelay: `${i * 30}ms` }}
+          onClick={() => navigate(`/${cleanTopic ? cleanTopic + '/' : ''}${st.name}/`)}
+        >
+          <div className="card-title">
+            <span className="card-title-text">
+              <span className="folder-icon">{'\u{1F4C1}'}</span>
+              {st.name}/
+            </span>
+          </div>
           <div className="card-meta">
             {st.post_count} {st.post_count === 1 ? 'post' : 'posts'} · {st.contributor_count} {st.contributor_count === 1 ? 'contributor' : 'contributors'}
             {st.updated_at && <> · updated {timeAgo(st.updated_at)}</>}
@@ -74,10 +84,15 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
         </div>
       ))}
 
-      {data.posts?.map((p: any) => (
-        <div key={p.id} className="card" onClick={() => navigate(`/post/${p.id}`)}>
+      {data.posts?.map((p: any, i: number) => (
+        <div
+          key={p.id}
+          className={`card status-border-${p.status} card-animate`}
+          style={{ animationDelay: `${(data.subtopics?.length || 0) * 30 + i * 30}ms` }}
+          onClick={() => navigate(`/post/${p.id}`)}
+        >
           <div className="card-title">
-            {p.title}
+            <span className="card-title-text">{p.title}</span>
             <span className={`status status-${p.status}`}>{p.status}</span>
           </div>
           <div className="card-meta">
