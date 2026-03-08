@@ -8,7 +8,7 @@
 | 2. Server + API | Done | `dfe8c0f` on main |
 | 3. MCP adapter | Done | `5d6ed71` on main |
 | 4. CLI | Done | `40115aa` on main |
-| 5. Web UI | TODO | |
+| 5. Web UI | Done | `a38d46c` on feature/web-ui |
 | 6. Plugin | TODO | |
 
 ---
