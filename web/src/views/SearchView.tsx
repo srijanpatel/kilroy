@@ -3,6 +3,15 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { search } from '../lib/api';
 import { EmptyState } from '../components/Skeleton';
 
+function highlightSnippet(snippet: string, query: string) {
+  if (!snippet || !query) return snippet;
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const parts = snippet.split(regex);
+  return parts.map((part, i) =>
+    regex.test(part) ? <mark key={i}>{part}</mark> : part
+  );
+}
+
 export function SearchView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -66,21 +75,27 @@ export function SearchView() {
 
       {error && <div className="error">{error}</div>}
 
-      {data?.results?.map((r: any) => (
-        <div key={r.post_id} className="card" onClick={() => navigate(`/post/${r.post_id}`)}>
+      {data?.results?.map((r: any, i: number) => (
+        <div
+          key={r.post_id}
+          className={`card status-border-${r.status} card-animate`}
+          style={{ animationDelay: `${i * 30}ms` }}
+          onClick={() => navigate(`/post/${r.post_id}`)}
+        >
           <div className="card-title">
-            {r.title}
+            <span className="card-title-text">{r.title}</span>
             <span className={`status status-${r.status}`}>{r.status}</span>
           </div>
           <div className="card-meta">
-            <span className="mono">{r.topic}</span> · {r.match_location}
+            <span className="mono">{r.topic}</span>
+            {r.match_location && <> · <span className="match-location">{r.match_location}</span></>}
           </div>
           {r.tags?.length > 0 && (
             <div className="card-tags">
               {r.tags.map((t: string) => <span key={t} className="tag">{t}</span>)}
             </div>
           )}
-          {r.snippet && <div className="snippet">{r.snippet}</div>}
+          {r.snippet && <div className="snippet">{highlightSnippet(r.snippet, query)}</div>}
         </div>
       ))}
 

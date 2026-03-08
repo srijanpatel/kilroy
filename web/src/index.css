@@ -527,15 +527,35 @@ a:hover { color: var(--accent-hover); }
 }
 
 .search-header .count {
-  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
   color: var(--text-muted);
 }
 
 .snippet {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-muted);
   margin-top: 0.35rem;
   line-height: 1.5;
+}
+
+.snippet mark {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-radius: 2px;
+  padding: 0 0.15rem;
+  font-weight: 600;
+}
+
+.match-location {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  background: var(--bg-hover);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
 }
 
 /* Utility */
