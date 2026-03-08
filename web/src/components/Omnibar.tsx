@@ -198,7 +198,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
         ) : (
           <div className="omnibar-resting" onClick={activate}>
             <Link to="/" className="omnibar-wordmark" onClick={(e) => e.stopPropagation()}>
-              hearsay
+              hearsay<span className="omnibar-sep">/</span>
             </Link>
             {segments.length > 0 && (
               <span className="omnibar-path">
