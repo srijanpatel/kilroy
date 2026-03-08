@@ -1,6 +1,6 @@
 export function SkeletonCards({ count = 4 }: { count?: number }) {
   return (
-    <div className="skeleton-list">
+    <div>
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="skeleton-card" style={{ animationDelay: `${i * 80}ms` }}>
           <div className="skeleton-line skeleton-title" />

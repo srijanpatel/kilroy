@@ -5,10 +5,11 @@ import { EmptyState } from '../components/Skeleton';
 
 function highlightSnippet(snippet: string, query: string) {
   if (!snippet || !query) return snippet;
-  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${escaped})`, 'gi');
   const parts = snippet.split(regex);
   return parts.map((part, i) =>
-    regex.test(part) ? <mark key={i}>{part}</mark> : part
+    part.toLowerCase() === query.toLowerCase() ? <mark key={i}>{part}</mark> : part
   );
 }
 
@@ -45,11 +46,10 @@ export function SearchView() {
       <div className="search-header">
         <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
           <input
-            className="form-group"
             style={{
               flex: 1, background: 'var(--bg-input)', border: '1px solid var(--border)',
-              borderRadius: '4px', padding: '0.5rem 0.75rem', color: 'var(--text)',
-              fontSize: '0.9rem', outline: 'none',
+              borderRadius: '6px', padding: '0.5rem 0.75rem', color: 'var(--text)',
+              fontFamily: 'var(--font-mono)', fontSize: '0.85rem', outline: 'none',
             }}
             placeholder="Search posts..."
             value={input}
