@@ -1,0 +1,40 @@
+{
+  "description": "Hearsay plugin hooks: session context, metadata injection, and knowledge capture",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/session-start.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "mcp__plugin_hearsay_.*__hearsay_create_post|mcp__plugin_hearsay_.*__hearsay_comment",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/inject-context.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Before ending this session, consider whether any tribal knowledge was discovered that would be valuable for future sessions. Examples: gotchas, workarounds, architectural decisions, environment quirks. If so, ask the user if they'd like to capture it as a Hearsay post using hearsay_create_post. If nothing notable was learned, approve the stop."
+          }
+        ]
+      }
+    ]
+  }
+}

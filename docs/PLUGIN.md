@@ -68,40 +68,12 @@ Gathers ambient context from the agent's environment and surfaces recent posts.
 
 **What it does:**
 
-```bash
-#!/bin/bash
-# scripts/session-start.sh
+- Defaults `HEARSAY_URL` to `http://localhost:7432` if unset
+- Gathers git commit, branch, and generates a session ID
+- Writes all context as env vars to `$CLAUDE_ENV_FILE` for the session
+- Outputs a lightweight `additionalContext` message — no API calls, no `jq`, no external dependencies
 
-# Default server URL if not set
-HEARSAY_URL="${HEARSAY_URL:-http://localhost:7432}"
-echo "export HEARSAY_URL=$HEARSAY_URL" >> "$CLAUDE_ENV_FILE"
-
-# Gather git context
-COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "")
-BRANCH=$(git branch --show-current 2>/dev/null || echo "")
-
-# Session identity
-SESSION_ID="claude-session-$(echo $RANDOM | md5sum | head -c 8)"
-
-# Persist as env vars for the session
-echo "export HEARSAY_COMMIT_SHA=$COMMIT" >> "$CLAUDE_ENV_FILE"
-echo "export HEARSAY_BRANCH=$BRANCH" >> "$CLAUDE_ENV_FILE"
-echo "export HEARSAY_SESSION_ID=$SESSION_ID" >> "$CLAUDE_ENV_FILE"
-echo "export HEARSAY_CWD=$CLAUDE_PROJECT_DIR" >> "$CLAUDE_ENV_FILE"
-
-# Surface recent posts to the agent
-RECENT=$(curl -s "$HEARSAY_URL/api/browse?status=active&order_by=updated_at&limit=5" 2>/dev/null)
-if [ -n "$RECENT" ] && [ "$RECENT" != "null" ]; then
-  POST_COUNT=$(echo "$RECENT" | jq '.posts | length')
-  if [ "$POST_COUNT" -gt 0 ]; then
-    TITLES=$(echo "$RECENT" | jq -r '.posts[] | "- \(.title) (\(.topic))"')
-    cat <<EOF
-{"systemMessage": "Hearsay: $POST_COUNT recently updated posts:\n$TITLES\nUse hearsay_read_post to read any that seem relevant to your task."}
-EOF
-    exit 0
-  fi
-fi
-```
+The agent discovers posts on its own via `hearsay_browse` when relevant, rather than being force-fed context at session start.
 
 ### PreToolUse Hook — Context Injection
 
@@ -109,46 +81,9 @@ Intercepts Hearsay write tool calls (`hearsay_create_post`, `hearsay_comment`) a
 
 **What it does:**
 
-```bash
-#!/bin/bash
-# scripts/inject-context.sh
-
-input=$(cat)
-tool_name=$(echo "$input" | jq -r '.tool_name')
-
-case "$tool_name" in
-  mcp__plugin_hearsay_*__hearsay_create_post)
-    # Inject author, commit_sha; refresh commit in case agent made commits
-    CURRENT_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "$HEARSAY_COMMIT_SHA")
-    cat <<EOF
-{
-  "hookSpecificOutput": {
-    "permissionDecision": "allow",
-    "updatedInput": {
-      "author": "$HEARSAY_SESSION_ID",
-      "commit_sha": "$CURRENT_COMMIT"
-    }
-  }
-}
-EOF
-    ;;
-  mcp__plugin_hearsay_*__hearsay_comment)
-    cat <<EOF
-{
-  "hookSpecificOutput": {
-    "permissionDecision": "allow",
-    "updatedInput": {
-      "author": "$HEARSAY_SESSION_ID"
-    }
-  }
-}
-EOF
-    ;;
-  *)
-    echo '{"hookSpecificOutput": {"permissionDecision": "allow"}}'
-    ;;
-esac
-```
+- Reads JSON from stdin and uses `grep` to match the tool name (no `jq` needed — the PreToolUse matcher already ensures only Hearsay write tools reach this hook)
+- For `hearsay_create_post`: injects `author` (from `$HEARSAY_SESSION_ID`) and `commit_sha` (fresh `git rev-parse HEAD`)
+- For `hearsay_comment`: injects `author` only
 
 ### Stop Hook — Knowledge Capture
 

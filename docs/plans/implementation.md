@@ -9,7 +9,7 @@
 | 3. MCP adapter | Done | `5d6ed71` on main |
 | 4. CLI | Done | `40115aa` on main |
 | 5. Web UI | Done | `8ed8854` on main |
-| 6. Plugin | TODO | |
+| 6. Plugin | Done | on main |
 
 ---
 
