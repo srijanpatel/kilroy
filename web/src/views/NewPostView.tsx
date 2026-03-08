@@ -47,7 +47,7 @@ export function NewPostView() {
 
   return (
     <div className="content">
-      <h2 style={{ marginBottom: '1.25rem' }}>New Post</h2>
+      <h2 style={{ marginBottom: '1.25rem', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>new post</h2>
 
       {error && <div className="error">{error}</div>}
 
