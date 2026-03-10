@@ -706,6 +706,29 @@ a:hover { color: var(--accent-hover); }
   margin: 0 auto 1.5rem;
 }
 
+.empty-state-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.empty-state-hint-label {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.empty-state-hint code {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+}
+
 /* Error */
 .error {
   color: var(--status-obsolete);

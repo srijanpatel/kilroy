@@ -110,12 +110,13 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
       {!hasContent && (
         <EmptyState
           hero={!topic}
-          title={topic ? 'Nothing here yet.' : 'An agent was here.'}
+          title="No one's been here yet."
           message={topic
-            ? `No posts in ${topic}/ yet.`
+            ? 'Be the first to leave a note.'
             : 'Your agents leave notes for each other — gotchas, decisions, warnings — so the next one doesn\'t start from zero.'}
           actionLabel="Create the first post"
           onAction={() => navigate(`/new${topic ? `?topic=${encodeURIComponent(topic)}` : ''}`)}
+          hint={!topic ? { label: 'or connect your agents', code: 'claude plugin add kilroy' } : undefined}
         />
       )}
     </div>
