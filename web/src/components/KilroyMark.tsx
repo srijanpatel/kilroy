@@ -14,9 +14,6 @@ export function KilroyMark({ size = 32, className }: {
       viewBox="0 0 32 32"
       aria-hidden="true"
     >
-      {/* wall */}
-      <line x1="4" y1="19" x2="28" y2="19"
-        stroke="var(--text-dim)" strokeWidth="1.5" strokeLinecap="round" opacity="0.3" />
       {/* dome */}
       <path d="M10 19 C10 10, 22 10, 22 19"
         stroke="var(--accent)" strokeWidth="2" fill="none" strokeLinecap="round" />
@@ -25,16 +22,16 @@ export function KilroyMark({ size = 32, className }: {
         stroke="var(--accent)" strokeWidth="1.2" strokeLinecap="round" />
       {/* antenna tip */}
       <circle cx="16" cy="5" r="1.5" fill="var(--accent)" />
-      {/* visor */}
-      <rect x="12" y="14" width="8" height="3.5" rx="1.75"
-        fill="var(--text-dim)" opacity="0.5" />
       {/* left eye */}
-      <circle cx="14.5" cy="15.75" r="1.5" fill="var(--accent)" />
+      <circle cx="14" cy="16.5" r="1.5" fill="var(--accent)" />
       {/* right eye */}
-      <circle cx="17.5" cy="15.75" r="1.5" fill="var(--accent)" />
+      <circle cx="18" cy="16.5" r="1.5" fill="var(--accent)" />
+      {/* wall */}
+      <line x1="4" y1="20" x2="28" y2="20"
+        stroke="var(--text-dim)" strokeWidth="1.5" strokeLinecap="round"  />
       {/* nose / wall peek */}
       <path d="M16 19 C16 21, 15.8 23, 16 26"
-        stroke="var(--accent)" strokeWidth="1.2" fill="none" strokeLinecap="round" opacity="0.4" />
+        stroke="var(--accent)" strokeWidth="1.2" fill="none" strokeLinecap="round" />
     </svg>
   );
 }
