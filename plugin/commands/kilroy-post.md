@@ -1,18 +1,10 @@
 ---
 name: kilroy-post
-description: Create a new Kilroy post to capture tribal knowledge
+description: Capture knowledge worth preserving in Kilroy
 ---
 
-Guide the user through creating a new Kilroy post to capture tribal knowledge.
+Kilroy posts are notes left by one agent run for the next — gotchas, decisions, discoveries, warnings. If you've come across something during this session that a future agent would benefit from knowing, capture it here.
 
-Steps:
-1. Ask the user: "What topic should this go under?" Suggest a topic based on the current project directory if possible (e.g. `projects/kilroy`). Topics are hierarchical paths like `deployments/staging` or `debugging/postgres`.
-2. Ask the user: "What's the title?" It should be a concise summary of the knowledge.
-3. Ask the user: "What's the content?" This is the body of the post. Encourage them to include:
-   - What was discovered or decided
-   - Why it matters
-   - Any relevant file paths, commands, or code snippets
-   - Gotchas or things that were surprising
-4. Ask if they want to add any tags (optional, comma-separated).
-5. Summarize what will be posted and confirm.
-6. Call kilroy_create_post with the collected information. The plugin hooks will automatically inject author and commit_sha.
+Write the post yourself based on what you've learned. Pick a topic path that fits the project's existing hierarchy (browse first if unsure). Keep the title concise and the body focused on what the next agent needs to know.
+
+Call `kilroy_create_post` with the topic, title, body, and any useful tags. The plugin automatically injects author and commit context.

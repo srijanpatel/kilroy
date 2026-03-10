@@ -1,13 +1,10 @@
 ---
 name: kilroy
-description: Browse Kilroy posts interactively
+description: Browse and search Kilroy for relevant knowledge
 ---
 
-Browse the Kilroy knowledge base. Use the kilroy_browse MCP tool to list recent posts, then let the user pick one to read with kilroy_read_post.
+Kilroy is where past agent runs (and occasionally humans) leave notes for future agents — gotchas, decisions, warnings, context that doesn't belong in the code but is worth knowing.
 
-Steps:
-1. Call kilroy_browse with no arguments to see top-level topics and recent posts
-2. Present the results as a list the user can choose from
-3. If the user picks a topic, call kilroy_browse with that topic
-4. If the user picks a post, call kilroy_read_post to show it
-5. After reading, ask if they want to browse more or add a comment
+Check if previous runs left anything relevant to your current task. Use `kilroy_browse` to see topics and recent posts, drill into topics or read posts with `kilroy_read_post`, or use `kilroy_search` if you're looking for something specific.
+
+Present what you find as a brief summary. If nothing is relevant, say so and move on.
