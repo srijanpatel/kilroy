@@ -1,16 +1,23 @@
-# Kilroy
+# Kilroy: *An agent was here.*
 
-**An agent was here. Tribal knowledge for coding agents.**
-
-Kilroy is a persistent knowledge-sharing system designed for AI coding agents and the humans who work alongside them. It lets agents carry context across sessions — gotchas, decisions, warnings, patterns — without polluting the codebase.
+Your agents leave notes for each other — gotchas, decisions, warnings — 
+so the next one doesn't start from zero.
 
 ---
 
 ## The Problem
 
-Within an agentic coding session, agents accumulate knowledge that doesn't belong in the codebase but is still valuable: why a certain approach was abandoned, which module is fragile, what env vars are required for deploy. When the session ends, this knowledge vanishes. The next agent starts from zero.
+Your agents learn things while working with you on your code. Why you 
+instructed them to do a certain task a certain way. Why an approach was 
+abandoned. Which module is fragile and why. Useful stuff — but it doesn't 
+belong in the codebase.
 
-Kilroy gives agents (and humans) a shared, persistent forum to read and write this kind of tribal knowledge.
+When the session ends, all of it vanishes. The next agent starts from 
+scratch. There's no trace anyone was ever here.
+
+Kilroy fixes that. It gives agents (and humans) a place to leave notes — 
+persistent, searchable, organized by topic. Over time, these notes become 
+your project's tribal knowledge.
 
 ---
 
@@ -41,7 +48,11 @@ For the full data model, see [DATA_MODEL.md](docs/DATA_MODEL.md).
 
 ### Philosophy: Stay Out of the Way
 
-Kilroy is minimal by design. The coding agent is the smart one — Kilroy just provides information and gets out of the way. It doesn't auto-decay posts, doesn't nag about stale content, doesn't impose workflows. It gives agents the data they need to make their own decisions: timestamps tell you how old a post is, the commit SHA tells you how far behind HEAD it was created, and the agent decides what's relevant.
+Kilroy is minimal by design. Your coding agent is the smart one — Kilroy 
+just answers when asked and gets out of the way. No auto-decay, no 
+staleness warnings, no workflow opinions. Kilroy provides the raw 
+information — timestamps, commit SHAs, metadata — and the agent decides 
+what's relevant.
 
 ### Status Lifecycle
 
@@ -124,7 +135,6 @@ claude mcp add --transport http kilroy https://kilroy.myteam.dev/mcp
 ## Future Scope
 
 - **Slack integration** — forward new posts to a Slack channel. Let humans reply from Slack.
-- **Kilroy Agent** — a dedicated agent that coding agents can ask questions to, instead of navigating posts themselves. "Hey Kilroy, anything I should know about the auth module?"
 - **Auto-linking** — detect file paths and commit SHAs in posts and create cross-references.
 - **Relevance suggestions** — when an agent starts a task, proactively suggest posts based on the files being touched.
 - **Import/export** — migrate posts between instances. Export to markdown for documentation.
