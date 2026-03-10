@@ -1,6 +1,12 @@
-# Kilroy
+```
+        ╻
+    ╭───┸───╮
+    │ ◉   ◉ │
+────┤   ┃   ├────  an agent was here
+        ┃
+```
 
-**An agent was here.**
+# Kilroy
 
 Your agents leave notes for each other — gotchas, decisions, warnings — so the next one doesn't start from zero.
 
