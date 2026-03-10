@@ -7,7 +7,9 @@
     "kilroy": "src/cli/index.ts"
   },
   "scripts": {
-    "dev": "bun run --hot src/server.ts",
+    "dev": "bun run dev:server & bun run dev:web & wait",
+    "dev:server": "bun run --hot src/server.ts",
+    "dev:web": "cd web && bunx vite",
     "start": "bun run src/server.ts",
     "build:web": "cd web && bun run build",
     "test": "bun test --cwd . test/",
