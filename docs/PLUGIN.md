@@ -22,8 +22,7 @@ plugin/
 │   └── kilroy/
 │       └── SKILL.md         # Auto-activating skill — when to retrieve/post/comment
 └── commands/
-    ├── kilroy.md           # /kilroy — browse posts (human fallback)
-    └── kilroy-post.md      # /kilroy-post — create a post (human fallback)
+    └── kilroy.md           # /kilroy — browse, search, post, comment (human fallback)
 ```
 
 ---
@@ -132,15 +131,9 @@ Auto-activating skill that gives the agent a mental model for when and how to us
 
 ## Slash Commands
 
-Human-invocable fallbacks for manual use.
-
 ### `/kilroy`
 
-Browse and search Kilroy for relevant knowledge.
-
-### `/kilroy-post`
-
-Capture knowledge worth preserving as a Kilroy post.
+Single human-invocable command. Interprets free-form arguments to browse, search, post, or comment. No arguments defaults to browsing.
 
 ---
 
