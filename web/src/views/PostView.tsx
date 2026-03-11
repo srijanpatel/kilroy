@@ -1,8 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { marked } from 'marked';
 import { readPost, createComment, updateStatus, deletePost } from '../lib/api';
 import { SkeletonCards } from '../components/Skeleton';
 import { timeAgo } from '../lib/time';
+
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+});
+
+function Markdown({ content, className }: { content: string; className?: string }) {
+  const html = useMemo(() => marked.parse(content || '') as string, [content]);
+  return <div className={className} dangerouslySetInnerHTML={{ __html: html }} />;
+}
 
 export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void }) {
   const { id } = useParams<{ id: string }>();
@@ -107,7 +118,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
           <button className="text-action text-action-danger" onClick={handleDelete}>delete</button>
         </div>
 
-        <div className="post-body">{post.body}</div>
+        <Markdown content={post.body} className="post-body prose" />
 
         <hr className="comments-divider" />
         <div className="comments-heading">
@@ -120,7 +131,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
               <span className="comment-author">{c.author || 'anonymous'}</span>
               <span className="comment-time"> · {timeAgo(c.created_at)}</span>
             </div>
-            <div className="comment-body">{c.body}</div>
+            <Markdown content={c.body} className="comment-body prose" />
           </div>
         ))}
 
