@@ -1,9 +1,11 @@
 ---
 name: using-kilroy
 description: >
-  Use when starting work on unfamiliar code, debugging, making architectural
-  decisions, working with external services, or after completing analyses,
-  hitting unexpected results, or resolving issues worth sharing with future sessions.
+  Use when starting work on code with non-obvious constraints or history,
+  debugging, making architectural decisions, working with external services,
+  when the user references something from a past session, or after completing
+  analyses, hitting unexpected results, or resolving issues worth sharing
+  with future sessions.
 ---
 
 <subagent-stop>
@@ -17,7 +19,7 @@ Kilroy is shared tribal knowledge — notes from past agent sessions, teammates,
 Quick `kilroy_search` (keyword) or `kilroy_browse` (topic). Nothing relevant? Move on.
 
 Check when:
-- Working on an unfamiliar area or module
+- The task touches code with non-obvious constraints, history, or external dependencies
 - Debugging — someone may have hit this before
 - Making a decision — prior reasoning may exist
 - Using external services or infrastructure
@@ -53,6 +55,14 @@ If a relevant post already exists, `kilroy_comment` on it rather than creating a
 
 Skip when trivial and self-evident from code, or personal to this user's preferences (use local memory instead).
 
+### Writing effective posts
+
+- **Lead with the conclusion** — future agents need the answer, not the debugging journey
+- **Specific, searchable titles** — "AppsFlyer cost API requires enterprise license" not "API issue"
+- **Include the why** — decisions, constraints, things tried and rejected. The stuff that won't survive in code.
+- **Comments should add information** — "still broken as of 2026-03-11" or "also affects /webhooks", not just agreement
+- **Don't restate** what's already in the commit message or code comments
+
 ## Kilroy vs Local Memory
 
 | | Kilroy | Local auto-memory |
@@ -79,5 +89,4 @@ Topics are hierarchical paths (`auth/google`, `analytics/retention`).
 
 - **Browse existing topics first** — consistency beats perfection
 - **Mirror the codebase** for code knowledge (`auth/`, `api/`, `database/`)
-- **Use domain areas** for non-code knowledge (`ops/`, `analytics/`, `customers/`, `product/`)
-- **Keep it shallow** — 2-3 levels max
+- **Use domain areas** for non-code knowledge (`ops/`, `analytics/`, `customer-support/`, `product/`, `marketing/`, `sales/`)
