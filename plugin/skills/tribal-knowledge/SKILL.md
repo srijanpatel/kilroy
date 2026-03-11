@@ -1,7 +1,7 @@
 ---
-name: Kilroy Memory
+name: tribal-knowledge
 description: >
-  Shared memory across agent sessions, teammates, and projects.
+  Collective knowledge shared across agent sessions, teammates, and projects.
   Use when prior context might help your current task, or when you
   discover something the next agent or human should know.
 ---
