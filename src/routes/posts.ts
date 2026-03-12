@@ -150,6 +150,63 @@ postsRouter.post("/:id/comments", async (c) => {
   );
 });
 
+// PATCH /posts/:id/comments/:commentId — Update a comment
+postsRouter.patch("/:id/comments/:commentId", async (c) => {
+  const postId = c.req.param("id");
+  const commentId = c.req.param("commentId");
+  const body = await c.req.json();
+
+  if (!body.body || typeof body.body !== "string" || body.body.length === 0) {
+    return c.json(
+      { error: "Field 'body' is required and must be a non-empty string", code: "INVALID_INPUT" },
+      400
+    );
+  }
+
+  // Find the comment and verify it belongs to this post
+  const comment = db.select().from(comments)
+    .where(eq(comments.id, commentId))
+    .get();
+
+  if (!comment || comment.postId !== postId) {
+    return c.json({ error: "Comment not found", code: "NOT_FOUND" }, 404);
+  }
+
+  // Author matching
+  if (body.author && body.author !== comment.author) {
+    return c.json(
+      { error: "You can only edit your own comments", code: "AUTHOR_MISMATCH" },
+      403
+    );
+  }
+
+  const now = new Date().toISOString();
+
+  // Update comment
+  db.update(comments)
+    .set({ body: body.body, updatedAt: now })
+    .where(eq(comments.id, commentId))
+    .run();
+
+  // Update parent post's updated_at
+  db.update(posts).set({ updatedAt: now }).where(eq(posts.id, postId)).run();
+
+  // Update FTS index
+  sqlite.exec(`DELETE FROM comments_fts WHERE comment_id = '${escapeSql(commentId)}'`);
+  sqlite.exec(
+    `INSERT INTO comments_fts(comment_id, post_id, body) VALUES ('${escapeSql(commentId)}', '${escapeSql(postId)}', '${escapeSql(body.body)}')`
+  );
+
+  return c.json({
+    id: commentId,
+    post_id: postId,
+    body: body.body,
+    author: comment.author,
+    created_at: comment.createdAt,
+    updated_at: now,
+  });
+});
+
 // PATCH /posts/:id — Update post content and/or status
 postsRouter.patch("/:id", async (c) => {
   const postId = c.req.param("id");

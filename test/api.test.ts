@@ -709,6 +709,127 @@ describe("PATCH /api/posts/:id (author matching)", () => {
   });
 });
 
+// ─── PATCH /api/posts/:id/comments/:commentId ──────────────────
+
+describe("PATCH /api/posts/:id/comments/:commentId", () => {
+  beforeEach(() => createApp());
+
+  it("updates a comment body", async () => {
+    const post = await createPost();
+    const comment = await createComment(post.id, { author: "human:sarah" });
+    const res = await app.request(`/api/posts/${post.id}/comments/${comment.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "Updated comment body", author: "human:sarah" }),
+    });
+
+    expect(res.status).toBe(200);
+    const updated = await res.json();
+    expect(updated.id).toBeTruthy();
+    expect(updated.post_id).toBe(post.id);
+    expect(updated.body).toBe("Updated comment body");
+    expect(updated.author).toBe("human:sarah");
+    expect(updated.created_at).toBeTruthy();
+    expect(updated.updated_at).toBeTruthy();
+  });
+
+  it("updates parent post's updated_at", async () => {
+    const post = await createPost();
+    const comment = await createComment(post.id);
+    await new Promise((r) => setTimeout(r, 10));
+
+    await app.request(`/api/posts/${post.id}/comments/${comment.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "Updated body" }),
+    });
+
+    const readRes = await app.request(`/api/posts/${post.id}`);
+    const updatedPost = await readRes.json();
+    expect(updatedPost.updated_at).not.toBe(post.updated_at);
+  });
+
+  it("updates FTS index for comment", async () => {
+    const post = await createPost({ body: "unrelated" });
+    const comment = await createComment(post.id, { body: "xyzabc unique word here" });
+
+    await app.request(`/api/posts/${post.id}/comments/${comment.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "qrstuv replaced content" }),
+    });
+
+    const oldSearch = await (await app.request("/api/search?query=xyzabc")).json();
+    expect(oldSearch.results).toHaveLength(0);
+
+    const newSearch = await (await app.request("/api/search?query=qrstuv")).json();
+    expect(newSearch.results).toHaveLength(1);
+  });
+
+  it("rejects when author does not match", async () => {
+    const post = await createPost();
+    const comment = await createComment(post.id, { author: "human:sarah" });
+    const res = await app.request(`/api/posts/${post.id}/comments/${comment.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "Updated body", author: "human:bob" }),
+    });
+
+    expect(res.status).toBe(403);
+    expect((await res.json()).code).toBe("AUTHOR_MISMATCH");
+  });
+
+  it("allows edit when author omitted (human escape hatch)", async () => {
+    const post = await createPost();
+    const comment = await createComment(post.id, { author: "human:sarah" });
+    const res = await app.request(`/api/posts/${post.id}/comments/${comment.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "Updated without author" }),
+    });
+
+    expect(res.status).toBe(200);
+  });
+
+  it("returns 404 for non-existent comment", async () => {
+    const post = await createPost();
+    const res = await app.request(`/api/posts/${post.id}/comments/nonexistent`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "Updated body" }),
+    });
+
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 404 when comment belongs to different post", async () => {
+    const post1 = await createPost();
+    const post2 = await createPost();
+    const comment = await createComment(post1.id);
+
+    const res = await app.request(`/api/posts/${post2.id}/comments/${comment.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "Updated body" }),
+    });
+
+    expect(res.status).toBe(404);
+  });
+
+  it("rejects empty body", async () => {
+    const post = await createPost();
+    const comment = await createComment(post.id);
+    const res = await app.request(`/api/posts/${post.id}/comments/${comment.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "" }),
+    });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).code).toBe("INVALID_INPUT");
+  });
+});
+
 // ─── DELETE /api/posts/:id ─────────────────────────────────────
 
 describe("DELETE /api/posts/:id", () => {
