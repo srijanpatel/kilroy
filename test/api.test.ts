@@ -471,6 +471,244 @@ describe("PATCH /api/posts/:id", () => {
   });
 });
 
+// ─── PATCH /api/posts/:id (content editing) ────────────────────
+
+describe("PATCH /api/posts/:id (content editing)", () => {
+  beforeEach(() => createApp());
+
+  it("updates post title", async () => {
+    const post = await createPost();
+    const res = await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "Updated title" }),
+    });
+
+    expect(res.status).toBe(200);
+    expect((await res.json()).title).toBe("Updated title");
+  });
+
+  it("updates post topic", async () => {
+    const post = await createPost();
+    const res = await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic: "new/topic" }),
+    });
+
+    expect(res.status).toBe(200);
+    expect((await res.json()).topic).toBe("new/topic");
+  });
+
+  it("updates tags only", async () => {
+    const post = await createPost();
+    const res = await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tags: ["new", "tags"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect((await res.json()).tags).toEqual(["new", "tags"]);
+  });
+
+  it("updates post body and re-extracts files", async () => {
+    const post = await createPost();
+    const res = await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "Now referencing src/new/file.ts only" }),
+    });
+
+    expect(res.status).toBe(200);
+    expect((await res.json()).files).toEqual(["src/new/file.ts"]);
+  });
+
+  it("updates FTS index when body changes", async () => {
+    const post = await createPost({ body: "unique word xyzabc in this post" });
+
+    await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "completely different content qrstuv" }),
+    });
+
+    const oldSearch = await (await app.request("/api/search?query=xyzabc")).json();
+    expect(oldSearch.results).toHaveLength(0);
+
+    const newSearch = await (await app.request("/api/search?query=qrstuv")).json();
+    expect(newSearch.results).toHaveLength(1);
+  });
+
+  it("clears tags with empty array", async () => {
+    const post = await createPost({ tags: ["old", "tags"] });
+    const res = await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tags: [] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect((await res.json()).tags).toEqual([]);
+  });
+
+  it("updates status and content together", async () => {
+    const post = await createPost();
+    const res = await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "New", status: "archived" }),
+    });
+
+    expect(res.status).toBe(200);
+    const updated = await res.json();
+    expect(updated.title).toBe("New");
+    expect(updated.status).toBe("archived");
+  });
+
+  it("rejects when no fields provided", async () => {
+    const post = await createPost();
+    const res = await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).code).toBe("INVALID_INPUT");
+  });
+
+  it("rejects empty string for title", async () => {
+    const post = await createPost();
+    const res = await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "" }),
+    });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).code).toBe("INVALID_INPUT");
+  });
+
+  it("rejects empty string for body", async () => {
+    const post = await createPost();
+    const res = await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "" }),
+    });
+
+    expect(res.status).toBe(400);
+    expect((await res.json()).code).toBe("INVALID_INPUT");
+  });
+
+  it("allows editing posts in any status", async () => {
+    const post = await createPost();
+
+    // Archive the post
+    await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "archived" }),
+    });
+
+    // Edit title on archived post
+    const res = await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "Edited while archived" }),
+    });
+
+    expect(res.status).toBe(200);
+  });
+
+  it("returns full post shape in response", async () => {
+    const post = await createPost();
+    const res = await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "Full shape check" }),
+    });
+
+    expect(res.status).toBe(200);
+    const updated = await res.json();
+    expect(updated.id).toBeTruthy();
+    expect(updated.title).toBeTruthy();
+    expect(updated.topic).toBeTruthy();
+    expect(updated.status).toBeTruthy();
+    expect(updated.tags).toBeDefined();
+    expect(updated.author).toBeDefined();
+    expect(updated.commit_sha).toBeDefined();
+    expect(updated.created_at).toBeTruthy();
+    expect(updated.updated_at).toBeTruthy();
+  });
+
+  it("rejects content update with invalid status transition", async () => {
+    const post = await createPost();
+
+    // Archive the post first
+    await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "archived" }),
+    });
+
+    // Try to change title and do invalid transition (archived -> obsolete)
+    const res = await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "New", status: "obsolete" }),
+    });
+
+    expect(res.status).toBe(409);
+
+    // Verify title was NOT changed (atomic rejection)
+    const readRes = await app.request(`/api/posts/${post.id}`);
+    const readPost = await readRes.json();
+    expect(readPost.title).not.toBe("New");
+  });
+});
+
+// ─── PATCH /api/posts/:id (author matching) ─────────────────────
+
+describe("PATCH /api/posts/:id (author matching)", () => {
+  beforeEach(() => createApp());
+
+  it("allows edit when author matches", async () => {
+    const post = await createPost({ author: "claude-session-1" });
+    const res = await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "Edited by same author", author: "claude-session-1" }),
+    });
+
+    expect(res.status).toBe(200);
+  });
+
+  it("rejects edit when author does not match", async () => {
+    const post = await createPost({ author: "claude-session-1" });
+    const res = await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "Edited by different author", author: "claude-session-2" }),
+    });
+
+    expect(res.status).toBe(403);
+    expect((await res.json()).code).toBe("AUTHOR_MISMATCH");
+  });
+
+  it("allows edit when author is omitted (human escape hatch)", async () => {
+    const post = await createPost({ author: "claude-session-1" });
+    const res = await app.request(`/api/posts/${post.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: "Edited without author field" }),
+    });
+
+    expect(res.status).toBe(200);
+  });
+});
+
 // ─── DELETE /api/posts/:id ─────────────────────────────────────
 
 describe("DELETE /api/posts/:id", () => {
