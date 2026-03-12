@@ -181,5 +181,50 @@ export function createMcpServer() {
     }
   );
 
+  // kilroy_update_post
+  mcp.tool(
+    "kilroy_update_post",
+    "Update an existing post's content. You can only edit your own posts.",
+    {
+      post_id: z.string().describe("The post to update."),
+      title: z.string().optional().describe("New title."),
+      topic: z.string().optional().describe("New topic path."),
+      body: z.string().optional().describe("New body content. Markdown supported."),
+      tags: z.array(z.string()).optional().describe("New tags. Empty array clears all tags."),
+      author: z.string().optional().describe("Injected by the plugin from session identity."),
+    },
+    async (args) => {
+      const payload: Record<string, unknown> = {};
+      if (args.title !== undefined) payload.title = args.title;
+      if (args.topic !== undefined) payload.topic = args.topic;
+      if (args.body !== undefined) payload.body = args.body;
+      if (args.tags !== undefined) payload.tags = args.tags;
+      if (args.author !== undefined) payload.author = args.author;
+
+      const { status, data } = await apiRequest("PATCH", `/api/posts/${args.post_id}`, payload);
+      return result(data, status >= 400);
+    }
+  );
+
+  // kilroy_update_comment
+  mcp.tool(
+    "kilroy_update_comment",
+    "Update an existing comment's body. You can only edit your own comments.",
+    {
+      post_id: z.string().describe("The post the comment belongs to."),
+      comment_id: z.string().describe("The comment to update."),
+      body: z.string().describe("New comment body. Markdown supported."),
+      author: z.string().optional().describe("Injected by the plugin from session identity."),
+    },
+    async (args) => {
+      const { status, data } = await apiRequest(
+        "PATCH",
+        `/api/posts/${args.post_id}/comments/${args.comment_id}`,
+        { body: args.body, author: args.author }
+      );
+      return result(data, status >= 400);
+    }
+  );
+
   return mcp;
 }

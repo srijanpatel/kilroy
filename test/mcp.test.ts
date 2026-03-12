@@ -40,7 +40,7 @@ async function callTool(name: string, args: Record<string, unknown> = {}) {
 describe("MCP tool registration", () => {
   beforeEach(setupMcp);
 
-  it("registers all 7 tools", async () => {
+  it("registers all 9 tools", async () => {
     const result = await client.listTools();
     const names = result.tools.map((t) => t.name).sort();
     expect(names).toEqual([
@@ -50,6 +50,8 @@ describe("MCP tool registration", () => {
       "kilroy_delete_post",
       "kilroy_read_post",
       "kilroy_search",
+      "kilroy_update_comment",
+      "kilroy_update_post",
       "kilroy_update_post_status",
     ]);
   });
@@ -331,6 +333,128 @@ describe("kilroy_update_post_status", () => {
     });
     expect(isError).toBe(true);
     expect(data.code).toBe("INVALID_TRANSITION");
+  });
+});
+
+// ─── kilroy_update_post ───────────────────────────────────────
+
+describe("kilroy_update_post", () => {
+  beforeEach(setupMcp);
+
+  it("updates a post's body", async () => {
+    const { data: post } = await callTool("kilroy_create_post", {
+      title: "Original",
+      topic: "test",
+      body: "Original body",
+      author: "claude-session-1",
+    });
+
+    const { data } = await callTool("kilroy_update_post", {
+      post_id: post.id,
+      body: "Updated body with src/new/path.ts",
+      author: "claude-session-1",
+    });
+
+    expect(data.id).toBe(post.id);
+    expect(data.files).toContain("src/new/path.ts");
+  });
+
+  it("rejects when author does not match", async () => {
+    const { data: post } = await callTool("kilroy_create_post", {
+      title: "Test",
+      topic: "test",
+      body: "Content",
+      author: "claude-session-1",
+    });
+
+    const { data, isError } = await callTool("kilroy_update_post", {
+      post_id: post.id,
+      title: "Hacked",
+      author: "claude-session-2",
+    });
+
+    expect(isError).toBe(true);
+    expect(data.code).toBe("AUTHOR_MISMATCH");
+  });
+
+  it("returns error for non-existent post", async () => {
+    const { data, isError } = await callTool("kilroy_update_post", {
+      post_id: "nonexistent",
+      title: "test",
+    });
+    expect(isError).toBe(true);
+    expect(data.code).toBe("NOT_FOUND");
+  });
+});
+
+// ─── kilroy_update_comment ────────────────────────────────────
+
+describe("kilroy_update_comment", () => {
+  beforeEach(setupMcp);
+
+  it("updates a comment's body", async () => {
+    const { data: post } = await callTool("kilroy_create_post", {
+      title: "Test",
+      topic: "test",
+      body: "Content",
+    });
+
+    const { data: comment } = await callTool("kilroy_comment", {
+      post_id: post.id,
+      body: "Original comment",
+      author: "claude-session-1",
+    });
+
+    const { data } = await callTool("kilroy_update_comment", {
+      post_id: post.id,
+      comment_id: comment.id,
+      body: "Updated comment",
+      author: "claude-session-1",
+    });
+
+    expect(data.body).toBe("Updated comment");
+    expect(data.id).toBe(comment.id);
+  });
+
+  it("rejects when author does not match", async () => {
+    const { data: post } = await callTool("kilroy_create_post", {
+      title: "Test",
+      topic: "test",
+      body: "Content",
+    });
+
+    const { data: comment } = await callTool("kilroy_comment", {
+      post_id: post.id,
+      body: "My comment",
+      author: "claude-session-1",
+    });
+
+    const { data, isError } = await callTool("kilroy_update_comment", {
+      post_id: post.id,
+      comment_id: comment.id,
+      body: "Hacked",
+      author: "claude-session-2",
+    });
+
+    expect(isError).toBe(true);
+    expect(data.code).toBe("AUTHOR_MISMATCH");
+  });
+
+  it("returns error for non-existent comment", async () => {
+    const { data: post } = await callTool("kilroy_create_post", {
+      title: "Test",
+      topic: "test",
+      body: "Content",
+    });
+
+    const { data, isError } = await callTool("kilroy_update_comment", {
+      post_id: post.id,
+      comment_id: "nonexistent",
+      body: "test",
+    });
+
+    expect(isError).toBe(true);
+    expect(data.code).toBe("NOT_FOUND");
   });
 });
 
