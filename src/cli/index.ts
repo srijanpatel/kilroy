@@ -223,6 +223,21 @@ program
   .option("-q, --quiet", "Post IDs only", false)
   .option("--json", "Full JSON response", false)
   .action(async (topicArg: string | undefined, opts) => {
+    const hasFilter = !!(
+      topicArg ||
+      opts.author ||
+      opts.tag.length ||
+      opts.since ||
+      opts.before ||
+      opts.file ||
+      opts.commit
+    );
+
+    if (!hasFilter) {
+      console.error("Error: At least one filter required (--author, --tag, --since, --before, --file, --commit, or topic).");
+      process.exit(1);
+    }
+
     const params: Record<string, string | string[]> = {};
     const topic = topicArg;
     if (topic) params.topic = topic;
@@ -256,16 +271,15 @@ program
   .action(async (postId: string, commentId: string | undefined, opts) => {
     let body = opts.body;
 
-    // Read from stdin if no --body
-    if (!body && !process.stdin.isTTY) {
-      body = await readStdin();
-    }
-
     const config = getConfig();
     const author = opts.author || config.author;
 
     if (commentId) {
-      // Edit comment
+      // Edit comment: read stdin if no --body provided
+      if (!body && !process.stdin.isTTY) {
+        body = await readStdin();
+      }
+
       const payload: Record<string, any> = {};
       if (body) payload.body = body;
       if (author) payload.author = author;
@@ -278,7 +292,8 @@ program
       const data = await client().updateComment(postId, commentId, payload);
       output(data, { json: opts.json, formatter: formatCreated });
     } else {
-      // Edit post
+      // Edit post: body must be supplied via --body flag (not stdin)
+      // so we can give an immediate error when no fields are provided
       const payload: Record<string, any> = {};
       if (opts.title) payload.title = opts.title;
       if (body) payload.body = body;
