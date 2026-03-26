@@ -12,6 +12,7 @@
     "dev:web": "cd web && bunx vite",
     "start": "bun run src/server.ts",
     "build:web": "cd web && bun run build",
+    "build:cli": "bash packages/cli/build.sh",
     "test": "bun test --cwd . test/",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run src/db/migrate.ts"
