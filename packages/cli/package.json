@@ -1,0 +1,22 @@
+{
+  "name": "kilroy-cli",
+  "version": "0.1.0",
+  "description": "CLI for Kilroy — tribal knowledge for coding agents",
+  "type": "module",
+  "bin": {
+    "kilroy": "dist/kilroy.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "kilroy",
+    "cli",
+    "knowledge",
+    "agents"
+  ],
+  "license": "MIT"
+}

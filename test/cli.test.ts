@@ -109,20 +109,20 @@ describe("kilroy ls", () => {
   });
 });
 
-// ─── cat ─────────────────────────────────────────────────────────
+// ─── read ─────────────────────────────────────────────────────────
 
-describe("kilroy cat", () => {
+describe("kilroy read", () => {
   it("reads a post with --json", async () => {
     const post = await apiPost("/api/posts", {
-      title: "CLI test cat",
+      title: "CLI test read",
       topic: "cli-test",
       body: "read me",
     });
 
-    const { stdout, code } = await cli("cat", post.id, "--json");
+    const { stdout, code } = await cli("read", post.id, "--json");
     expect(code).toBe(0);
     const data = JSON.parse(stdout);
-    expect(data.title).toBe("CLI test cat");
+    expect(data.title).toBe("CLI test read");
     expect(data.body).toBe("read me");
 
     await apiDelete(`/api/posts/${post.id}`);
@@ -137,7 +137,7 @@ describe("kilroy cat", () => {
     });
 
     // Even in non-TTY pipe mode, we get the piped format (body text)
-    const { stdout, code } = await cli("cat", post.id);
+    const { stdout, code } = await cli("read", post.id);
     expect(code).toBe(0);
     expect(stdout).toContain("formatted body");
 
@@ -145,7 +145,7 @@ describe("kilroy cat", () => {
   });
 
   it("exits 2 for non-existent post", async () => {
-    const { code, stderr } = await cli("cat", "nonexistent-id");
+    const { code, stderr } = await cli("read", "nonexistent-id");
     expect(code).toBe(2);
     expect(stderr).toContain("not found");
   });
@@ -297,20 +297,166 @@ describe("kilroy status", () => {
 // ─── rm ──────────────────────────────────────────────────────────
 
 describe("kilroy rm", () => {
-  it("deletes a post with --force", async () => {
+  it("deletes a post", async () => {
     const post = await apiPost("/api/posts", {
       title: "Delete me",
       topic: "cli-test",
       body: "body",
     });
 
-    const { stdout, code } = await cli("rm", post.id, "--force", "--json");
+    const { stdout, code } = await cli("rm", post.id, "--json");
     expect(code).toBe(0);
     const data = JSON.parse(stdout);
     expect(data.deleted).toBe(true);
 
     // Verify it's gone
-    const { code: catCode } = await cli("cat", post.id);
-    expect(catCode).toBe(2);
+    const { code: readCode } = await cli("read", post.id);
+    expect(readCode).toBe(2);
+  });
+});
+
+// ─── find ───────────────────────────────────────────────────────
+
+describe("kilroy find", () => {
+  it("finds posts by author", async () => {
+    const post = await apiPost("/api/posts", {
+      title: "Find by author",
+      topic: "cli-test",
+      body: "findable",
+      author: "test-finder",
+    });
+
+    const { stdout, code } = await cli("find", "--author", "test-finder", "--json");
+    expect(code).toBe(0);
+    const data = JSON.parse(stdout);
+    expect(data.results.some((r: any) => r.id === post.id)).toBe(true);
+
+    await apiDelete(`/api/posts/${post.id}`);
+  });
+
+  it("finds posts by tag", async () => {
+    const post = await apiPost("/api/posts", {
+      title: "Find by tag",
+      topic: "cli-test",
+      body: "tagged",
+      tags: ["findme"],
+    });
+
+    const { stdout, code } = await cli("find", "--tag", "findme", "--json");
+    expect(code).toBe(0);
+    const data = JSON.parse(stdout);
+    expect(data.results.some((r: any) => r.id === post.id)).toBe(true);
+
+    await apiDelete(`/api/posts/${post.id}`);
+  });
+
+  it("requires at least one filter", async () => {
+    const { code, stderr } = await cli("find");
+    expect(code).toBe(1);
+  });
+});
+
+// ─── edit ───────────────────────────────────────────────────────
+
+describe("kilroy edit", () => {
+  it("edits a post title", async () => {
+    const post = await apiPost("/api/posts", {
+      title: "Original title",
+      topic: "cli-test",
+      body: "body",
+      author: "editor",
+    });
+
+    const { stdout, code } = await cli(
+      "edit", post.id,
+      "--title", "Updated title",
+      "--author", "editor",
+      "--json"
+    );
+    expect(code).toBe(0);
+    const data = JSON.parse(stdout);
+    expect(data.title).toBe("Updated title");
+
+    await apiDelete(`/api/posts/${post.id}`);
+  });
+
+  it("edits a comment", async () => {
+    const post = await apiPost("/api/posts", {
+      title: "Comment edit target",
+      topic: "cli-test",
+      body: "body",
+    });
+
+    const comment = await (await fetch(`${SERVER_URL}/api/posts/${post.id}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "original comment", author: "commenter" }),
+    })).json();
+
+    const { stdout, code } = await cli(
+      "edit", post.id, comment.id,
+      "--body", "updated comment",
+      "--author", "commenter",
+      "--json"
+    );
+    expect(code).toBe(0);
+    const data = JSON.parse(stdout);
+    expect(data.body).toBe("updated comment");
+
+    await apiDelete(`/api/posts/${post.id}`);
+  });
+});
+
+// ─── --quiet flag ────────────────────────────────────────────────
+
+describe("kilroy ls --quiet", () => {
+  it("outputs only post IDs", async () => {
+    const post = await apiPost("/api/posts", {
+      title: "Quiet test",
+      topic: "cli-test",
+      body: "body",
+    });
+
+    const { stdout, code } = await cli("ls", "-q", "cli-test");
+    expect(code).toBe(0);
+    expect(stdout).toContain(post.id);
+    // Should not contain title or topic
+    expect(stdout).not.toContain("Quiet test");
+
+    await apiDelete(`/api/posts/${post.id}`);
+  });
+});
+
+describe("kilroy grep --quiet", () => {
+  it("outputs only post IDs", async () => {
+    const post = await apiPost("/api/posts", {
+      title: "Grep quiet test",
+      topic: "cli-test",
+      body: "unique_quiet_grep_term",
+    });
+
+    const { stdout, code } = await cli("grep", "-q", "unique_quiet_grep_term");
+    expect(code).toBe(0);
+    expect(stdout).toContain(post.id);
+    expect(stdout).not.toContain("Grep quiet test");
+
+    await apiDelete(`/api/posts/${post.id}`);
+  });
+});
+
+// ─── edit error cases ───────────────────────────────────────────
+
+describe("kilroy edit (error cases)", () => {
+  it("errors when no fields provided", async () => {
+    const post = await apiPost("/api/posts", {
+      title: "Edit error test",
+      topic: "cli-test",
+      body: "body",
+    });
+
+    const { code, stderr } = await cli("edit", post.id);
+    expect(code).toBe(1);
+
+    await apiDelete(`/api/posts/${post.id}`);
   });
 });

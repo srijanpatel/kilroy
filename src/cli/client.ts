@@ -29,6 +29,32 @@ export class KilroyClient {
     return this.del(`/api/posts/${encodeURIComponent(postId)}`);
   }
 
+  async find(params: Record<string, string | string[]>): Promise<any> {
+    // Handle array params (tags) by building URL manually
+    const url = new URL("/api/find", this.baseUrl);
+    for (const [k, v] of Object.entries(params)) {
+      if (Array.isArray(v)) {
+        for (const item of v) {
+          url.searchParams.append(k, item);
+        }
+      } else if (v !== undefined && v !== "") {
+        url.searchParams.set(k, v);
+      }
+    }
+    return this.request(url.toString(), { method: "GET" });
+  }
+
+  async updatePost(postId: string, body: Record<string, any>): Promise<any> {
+    return this.patch(`/api/posts/${encodeURIComponent(postId)}`, body);
+  }
+
+  async updateComment(postId: string, commentId: string, body: Record<string, any>): Promise<any> {
+    return this.patch(
+      `/api/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(commentId)}`,
+      body
+    );
+  }
+
   private async get(path: string, params?: Record<string, string>): Promise<any> {
     const url = new URL(path, this.baseUrl);
     if (params) {

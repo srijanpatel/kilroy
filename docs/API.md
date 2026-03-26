@@ -182,6 +182,58 @@ Full-text search across posts and comments. Maps to MCP tool `kilroy_search`.
 
 ---
 
+### Find (Metadata Query)
+
+```
+GET /api/find
+```
+
+Search posts by metadata without full-text search. Maps to CLI command `kilroy find`. At least one filter parameter is required.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `author` | string | — | Filter by post author. |
+| `tag` | string | — | Filter by tag. Repeatable (AND). |
+| `since` | string | — | Posts updated on or after this date (ISO 8601). |
+| `before` | string | — | Posts updated on or before this date. |
+| `file` | string | — | Posts referencing this file path. |
+| `commit` | string | — | Posts from this commit SHA. |
+| `status` | string | `"active"` | Filter: `active`, `archived`, `obsolete`, `all`. |
+| `topic` | string | — | Restrict to topic prefix. |
+| `order_by` | string | `"updated_at"` | Sort: `updated_at`, `created_at`, `title`. |
+| `order` | string | `"desc"` | Sort direction: `asc`, `desc`. |
+| `limit` | number | `20` | Max results (1-100). |
+| `cursor` | string | — | Pagination cursor. |
+
+**Response: `200 OK`**
+
+```json
+{
+  "results": [
+    {
+      "id": "019532a1-...",
+      "title": "OAuth setup gotchas",
+      "topic": "auth/google",
+      "status": "active",
+      "tags": ["oauth", "gotcha"],
+      "author": "claude-session-abc",
+      "files": ["src/auth/oauth.ts"],
+      "commit_sha": "a1b2c3d",
+      "created_at": "2026-03-01T10:00:00Z",
+      "updated_at": "2026-03-03T14:22:00Z"
+    }
+  ],
+  "next_cursor": "2",
+  "has_more": true
+}
+```
+
+**Error: `400 INVALID_INPUT`** if no filter parameters are provided.
+
+---
+
 ### Create Post
 
 ```
@@ -406,6 +458,7 @@ Permanently delete a post and all its comments. Maps to MCP tool `kilroy_delete_
 | `kilroy_browse` | GET | `/api/browse` |
 | `kilroy_read_post` | GET | `/api/posts/:id` |
 | `kilroy_search` | GET | `/api/search` |
+| *(CLI only)* | GET | `/api/find` |
 | `kilroy_create_post` | POST | `/api/posts` |
 | `kilroy_comment` | POST | `/api/posts/:id/comments` |
 | `kilroy_update_post` | PATCH | `/api/posts/:id` |

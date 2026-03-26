@@ -205,6 +205,7 @@ function ftsSearch(
     snippet: r.snippet,
     match_location: r.match_location,
     rank: startIdx + i + 1,
+    updated_at: r._updated_at,
   }));
 
   const response: any = { query, results: cleanResults };
@@ -355,6 +356,7 @@ function regexSearch(
     snippet: r.snippet,
     match_location: r.match_location,
     rank: startIdx + i + 1,
+    updated_at: r._updated_at,
   }));
 
   const response: any = { query, results: cleanResults };

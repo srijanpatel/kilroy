@@ -1,12 +1,13 @@
 #!/usr/bin/env bun
 import { Command } from "commander";
-import { resolveConfig } from "./config";
+import { resolveConfig, CliConfig } from "./config";
 import { KilroyClient } from "./client";
 import {
   output,
   formatBrowse,
   formatPost,
   formatSearch,
+  formatFind,
   formatCreated,
   formatStatus,
   formatDeleted,
@@ -20,10 +21,13 @@ program
   .version("0.1.0")
   .option("--server <url>", "Kilroy server URL");
 
-function client(): KilroyClient {
+function getConfig(): CliConfig {
   const opts = program.opts();
-  const config = resolveConfig({ server: opts.server });
-  return new KilroyClient(config.serverUrl);
+  return resolveConfig({ server: opts.server });
+}
+
+function client(): KilroyClient {
+  return new KilroyClient(getConfig().serverUrl);
 }
 
 // ─── ls ──────────────────────────────────────────────────────────
@@ -37,6 +41,7 @@ program
   .option("--order <dir>", "Sort direction: asc, desc", "desc")
   .option("-n, --limit <n>", "Max results (1-100)", "50")
   .option("--cursor <cursor>", "Pagination cursor")
+  .option("-q, --quiet", "Post IDs only", false)
   .option("--json", "Output raw JSON", false)
   .action(async (topic: string | undefined, opts) => {
     const params: Record<string, string> = {};
@@ -49,13 +54,13 @@ program
     if (opts.cursor) params.cursor = opts.cursor;
 
     const data = await client().browse(params);
-    output(data, { json: opts.json, formatter: formatBrowse });
+    output(data, { json: opts.json, quiet: opts.quiet, formatter: formatBrowse });
   });
 
-// ─── cat ─────────────────────────────────────────────────────────
+// ─── read ─────────────────────────────────────────────────────────
 
 program
-  .command("cat <post_id>")
+  .command("read <post_id>")
   .description("Read a post and its comments")
   .option("--json", "Output raw JSON", false)
   .action(async (postId: string, opts) => {
@@ -70,27 +75,24 @@ program
   .description("Full-text search")
   .option("-E, --regex", "Treat query as regex", false)
   .option("-t, --topic <topic>", "Restrict to topic prefix")
-  .option("--tag <tag>", "Filter by tag (repeatable)", collect, [])
-  .option("-s, --status <status>", "Filter: active, archived, obsolete, all", "active")
   .option("--sort <field>", "Sort: relevance, updated_at, created_at", "relevance")
   .option("--order <dir>", "Sort direction: asc, desc", "desc")
   .option("-n, --limit <n>", "Max results (1-100)", "20")
   .option("--cursor <cursor>", "Pagination cursor")
+  .option("-q, --quiet", "Post IDs only", false)
   .option("--json", "Output raw JSON", false)
   .action(async (query: string, topicArg: string | undefined, opts) => {
     const params: Record<string, string> = { query };
     const topic = opts.topic || topicArg;
     if (topic) params.topic = topic;
     if (opts.regex) params.regex = "true";
-    if (opts.tag.length) params.tags = opts.tag.join(",");
-    if (opts.status !== "active") params.status = opts.status;
     if (opts.sort !== "relevance") params.order_by = opts.sort;
     if (opts.order !== "desc") params.order = opts.order;
     if (opts.limit !== "20") params.limit = opts.limit;
     if (opts.cursor) params.cursor = opts.cursor;
 
     const data = await client().search(params);
-    output(data, { json: opts.json, formatter: formatSearch });
+    output(data, { json: opts.json, quiet: opts.quiet, formatter: formatSearch });
   });
 
 // ─── post ────────────────────────────────────────────────────────
@@ -112,13 +114,8 @@ program
       body = await readStdin();
     }
 
-    // Open $EDITOR if no body and stdin is a TTY
-    if (!body && process.stdin.isTTY) {
-      body = await openEditor();
-    }
-
     if (!body) {
-      console.error("Error: No body provided. Use --body, pipe stdin, or $EDITOR.");
+      console.error("Error: No body provided. Use --body or pipe stdin.");
       process.exit(1);
     }
 
@@ -127,8 +124,13 @@ program
     if (opts.author) payload.author = opts.author;
     if (opts.commitSha) payload.commit_sha = opts.commitSha;
 
+    if (!payload.author) {
+      const config = getConfig();
+      if (config.author) payload.author = config.author;
+    }
+
     const data = await client().createPost(payload);
-    output(data, { json: opts.json, formatter: (d) => formatCreated(d, `Created ${d.topic}: ${d.title}`) });
+    output(data, { json: opts.json, formatter: formatCreated });
   });
 
 // ─── comment ─────────────────────────────────────────────────────
@@ -146,20 +148,21 @@ program
       body = await readStdin();
     }
 
-    if (!body && process.stdin.isTTY) {
-      body = await openEditor();
-    }
-
     if (!body) {
-      console.error("Error: No body provided. Use --body, pipe stdin, or $EDITOR.");
+      console.error("Error: No body provided. Use --body or pipe stdin.");
       process.exit(1);
     }
 
     const payload: Record<string, any> = { body };
     if (opts.author) payload.author = opts.author;
 
+    if (!payload.author) {
+      const config = getConfig();
+      if (config.author) payload.author = config.author;
+    }
+
     const data = await client().createComment(postId, payload);
-    output(data, { json: opts.json, formatter: (d) => formatCreated(d, `Comment ${d.id}`) });
+    output(data, { json: opts.json, formatter: formatCreated });
   });
 
 // ─── status ──────────────────────────────────────────────────────
@@ -195,20 +198,117 @@ for (const [cmd, targetStatus] of [
 program
   .command("rm <post_id>")
   .description("Permanently delete a post")
-  .option("-f, --force", "Skip confirmation", false)
   .option("--json", "Output raw JSON", false)
   .action(async (postId: string, opts) => {
-    if (!opts.force && process.stdin.isTTY) {
-      process.stdout.write(`Delete post ${postId}? [y/N] `);
-      const answer = await readLine();
-      if (answer.toLowerCase() !== "y") {
-        console.log("Aborted.");
-        process.exit(0);
-      }
-    }
-
     const data = await client().deletePost(postId);
     output(data, { json: opts.json, formatter: formatDeleted });
+  });
+
+// ─── find ───────────────────────────────────────────────────────
+
+program
+  .command("find [topic]")
+  .description("Search posts by metadata")
+  .option("-a, --author <author>", "Filter by author")
+  .option("--tag <tag>", "Filter by tag (repeatable)", collect, [])
+  .option("--since <date>", "Posts updated after date (ISO 8601)")
+  .option("--before <date>", "Posts updated before date")
+  .option("-f, --file <path>", "Posts referencing this file")
+  .option("--commit <sha>", "Posts from this commit")
+  .option("-s, --status <status>", "Filter: active, archived, obsolete, all", "active")
+  .option("--sort <field>", "Sort: updated_at, created_at, title", "updated_at")
+  .option("--order <dir>", "Sort direction: asc, desc", "desc")
+  .option("-n, --limit <n>", "Max results (1-100)", "20")
+  .option("--cursor <cursor>", "Pagination cursor")
+  .option("-q, --quiet", "Post IDs only", false)
+  .option("--json", "Full JSON response", false)
+  .action(async (topicArg: string | undefined, opts) => {
+    const hasFilter = !!(
+      topicArg ||
+      opts.author ||
+      opts.tag.length ||
+      opts.since ||
+      opts.before ||
+      opts.file ||
+      opts.commit
+    );
+
+    if (!hasFilter) {
+      console.error("Error: At least one filter required (--author, --tag, --since, --before, --file, --commit, or topic).");
+      process.exit(1);
+    }
+
+    const params: Record<string, string | string[]> = {};
+    const topic = topicArg;
+    if (topic) params.topic = topic;
+    if (opts.author) params.author = opts.author;
+    if (opts.tag.length) params.tag = opts.tag;
+    if (opts.since) params.since = opts.since;
+    if (opts.before) params.before = opts.before;
+    if (opts.file) params.file = opts.file;
+    if (opts.commit) params.commit = opts.commit;
+    if (opts.status !== "active") params.status = opts.status;
+    if (opts.sort !== "updated_at") params.order_by = opts.sort;
+    if (opts.order !== "desc") params.order = opts.order;
+    if (opts.limit !== "20") params.limit = opts.limit;
+    if (opts.cursor) params.cursor = opts.cursor;
+
+    const data = await client().find(params);
+    output(data, { json: opts.json, quiet: opts.quiet, formatter: formatFind });
+  });
+
+// ─── edit ───────────────────────────────────────────────────────
+
+program
+  .command("edit <post_id> [comment_id]")
+  .description("Update a post or comment")
+  .option("--title <title>", "New title (posts only)")
+  .option("-b, --body <body>", "New body")
+  .option("--tag <tag>", "Replace tags (repeatable, posts only)", collect, [])
+  .option("--topic <topic>", "Move to new topic (posts only)")
+  .option("--author <author>", "Override author (must match original)")
+  .option("--json", "Full JSON response", false)
+  .action(async (postId: string, commentId: string | undefined, opts) => {
+    let body = opts.body;
+
+    const config = getConfig();
+    const author = opts.author || config.author;
+
+    if (commentId) {
+      // Edit comment: read stdin if no --body provided
+      if (!body && !process.stdin.isTTY) {
+        body = await readStdin();
+      }
+
+      const payload: Record<string, any> = {};
+      if (body) payload.body = body;
+      if (author) payload.author = author;
+
+      if (!payload.body) {
+        console.error("Error: --body or stdin required when editing a comment.");
+        process.exit(1);
+      }
+
+      const data = await client().updateComment(postId, commentId, payload);
+      output(data, { json: opts.json, formatter: formatCreated });
+    } else {
+      // Edit post: body must be supplied via --body flag (not stdin)
+      // so we can give an immediate error when no fields are provided
+      const payload: Record<string, any> = {};
+      if (opts.title) payload.title = opts.title;
+      if (body) payload.body = body;
+      if (opts.tag.length) payload.tags = opts.tag;
+      if (opts.topic) payload.topic = opts.topic;
+      if (author) payload.author = author;
+
+      if (Object.keys(payload).length === 0 || (Object.keys(payload).length === 1 && payload.author)) {
+        console.error("Error: At least one field required: --title, --body, --tag, --topic.");
+        process.exit(1);
+      }
+
+      const data = await client().updatePost(postId, payload);
+      output(data, { json: opts.json, formatter: formatCreated });
+    }
   });
 
 // ─── helpers ─────────────────────────────────────────────────────
@@ -224,39 +324,6 @@ async function readStdin(): Promise<string> {
     chunks.push(chunk);
   }
   return Buffer.concat(chunks).toString("utf-8").trim();
-}
-
-async function readLine(): Promise<string> {
-  return new Promise((resolve) => {
-    let data = "";
-    process.stdin.setEncoding("utf-8");
-    process.stdin.once("data", (chunk) => {
-      data += chunk;
-      resolve(data.trim());
-    });
-  });
-}
-
-async function openEditor(): Promise<string | undefined> {
-  const { tmpdir } = await import("os");
-  const { join } = await import("path");
-  const { writeFileSync, readFileSync, unlinkSync } = await import("fs");
-  const { spawnSync } = await import("child_process");
-
-  const editor = process.env.EDITOR || "vi";
-  const tmpFile = join(tmpdir(), `kilroy-${Date.now()}.md`);
-
-  writeFileSync(tmpFile, "");
-  const result = spawnSync(editor, [tmpFile], { stdio: "inherit" });
-
-  if (result.status !== 0) return undefined;
-
-  try {
-    const content = readFileSync(tmpFile, "utf-8").trim();
-    return content || undefined;
-  } finally {
-    try { unlinkSync(tmpFile); } catch {}
-  }
 }
 
 program.parse();
