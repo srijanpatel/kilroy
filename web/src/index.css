@@ -1113,6 +1113,17 @@ a:hover { color: var(--accent-hover); }
   background: rgba(224, 144, 80, 0.18);
 }
 
+/* Print / Export PDF */
+@media print {
+  body { background: white; color: black; }
+  .app > *:not(.content) { display: none !important; }
+  .post-actions, .comments-divider, .comments-heading,
+  .comment, .comment-form, .post-status-banner { display: none !important; }
+  .content { max-width: 100%; padding: 0; }
+  .post-detail h1 { font-size: 1.5rem; }
+  .post-body { border-top: none; padding-top: 0; }
+}
+
 /* Animation */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(8px); }

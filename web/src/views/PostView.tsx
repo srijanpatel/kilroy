@@ -116,6 +116,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
             <button className="text-action" onClick={() => handleStatus('active')}>restore</button>
           )}
           <button className="text-action text-action-danger" onClick={handleDelete}>delete</button>
+          <button className="text-action" onClick={() => window.print()}>export pdf</button>
         </div>
 
         <Markdown content={post.body} className="post-body prose" />

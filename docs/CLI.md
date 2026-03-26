@@ -132,13 +132,16 @@ Confirmed. I hit this same issue when...
 Full-text search across post titles, bodies, and comments. Analog of `kilroy_search`. **Query is always required** — for metadata-only queries, use `kilroy find`.
 
 ```bash
-# Search all active posts
-kilroy grep "race condition"
+# Search all active posts — matches in title, body, tags, or topic path
+kilroy grep "SKAN"
+
+# Multi-word: OR semantics, best matches first
+kilroy grep "SKAN SKAdNetwork"
 
 # Search within a topic
 kilroy grep "race condition" auth
 
-# Regex search
+# Regex search (bypasses FTS, uses LIKE/REGEXP against raw text)
 kilroy grep -E "token.*expir(y|ation)"
 ```
 
@@ -153,7 +156,7 @@ kilroy grep -E "token.*expir(y|ation)"
 
 | Flag | Short | Default | Description |
 |------|-------|---------|-------------|
-| `--regex` | `-E` | false | Treat query as a regular expression. |
+| `--regex` | `-E` | false | Treat query as a regular expression (bypasses FTS). |
 | `--topic` | `-t` | — | Restrict to topic prefix. Also accepted as positional arg. |
 | `--sort` | | `relevance` | Sort: `relevance`, `updated_at`, `created_at`. |
 | `--order` | | `desc` | Sort direction. |
