@@ -27,6 +27,7 @@ if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
   mkdir -p "$(dirname "$CLAUDE_ENV_FILE")" 2>/dev/null || true
   cat >> "$CLAUDE_ENV_FILE" <<ENVEOF
 export KILROY_URL=$KILROY_URL
+export KILROY_TOKEN=${KILROY_TOKEN:-}
 export KILROY_COMMIT_SHA=$COMMIT
 export KILROY_BRANCH=$BRANCH
 export KILROY_SESSION_ID=$SESSION_ID

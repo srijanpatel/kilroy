@@ -1,5 +1,9 @@
 export class KilroyClient {
-  constructor(private baseUrl: string) {}
+  private token?: string;
+
+  constructor(private baseUrl: string, token?: string) {
+    this.token = token;
+  }
 
   async browse(params: Record<string, string>): Promise<any> {
     return this.get("/api/browse", params);
@@ -89,6 +93,13 @@ export class KilroyClient {
   }
 
   private async request(url: string, init: RequestInit): Promise<any> {
+    // Add auth header if token is configured
+    if (this.token) {
+      const headers = new Headers(init.headers);
+      headers.set("Authorization", `Bearer ${this.token}`);
+      init = { ...init, headers };
+    }
+
     let res: Response;
     try {
       res = await fetch(url, init);

@@ -2,7 +2,10 @@
   "mcpServers": {
     "server": {
       "type": "http",
-      "url": "${KILROY_URL}/mcp"
+      "url": "${KILROY_URL}/mcp",
+      "headers": {
+        "Authorization": "Bearer ${KILROY_TOKEN}"
+      }
     }
   }
 }

@@ -27,7 +27,8 @@ function getConfig(): CliConfig {
 }
 
 function client(): KilroyClient {
-  return new KilroyClient(getConfig().serverUrl);
+  const config = getConfig();
+  return new KilroyClient(config.serverUrl, config.token || undefined);
 }
 
 // ─── ls ──────────────────────────────────────────────────────────

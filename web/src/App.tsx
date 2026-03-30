@@ -5,6 +5,7 @@ import { BrowseView } from './views/BrowseView';
 import { PostView } from './views/PostView';
 import { SearchView } from './views/SearchView';
 import { NewPostView } from './views/NewPostView';
+import { JoinView } from './views/JoinView';
 import { AuthorPrompt } from './components/AuthorPrompt';
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
       <AuthorPrompt />
       <Omnibar currentTopic={currentTopic} />
       <Routes>
+        <Route path="/join" element={<JoinView />} />
         <Route path="/post/:id" element={<PostView onTopicChange={setCurrentTopic} />} />
         <Route path="/search" element={<SearchView />} />
         <Route path="/new" element={<NewPostView />} />

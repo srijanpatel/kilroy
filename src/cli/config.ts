@@ -5,6 +5,7 @@ import { spawnSync } from "child_process";
 
 export interface CliConfig {
   serverUrl: string;
+  token: string | null;
   author: string | null;
 }
 
@@ -38,8 +39,11 @@ export function resolveConfig(opts: { server?: string; author?: string }): CliCo
     } catch {}
   }
 
+  // Token from env
+  const token = process.env.KILROY_TOKEN || null;
+
   // Author: --author flag > git config user.name
   const author = opts.author || gitUserName();
 
-  return { serverUrl, author };
+  return { serverUrl, token, author };
 }

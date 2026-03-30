@@ -1,7 +1,19 @@
-const BASE = '/api';
+// Extract team slug from URL path: /<team>/... → /<team>/api
+function getBase(): string {
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  if (parts.length > 0) {
+    return `/${parts[0]}/api`;
+  }
+  return '/api';
+}
+
+const BASE = getBase();
 
 async function request(path: string, init?: RequestInit): Promise<any> {
-  const res = await fetch(`${BASE}${path}`, init);
+  const res = await fetch(`${BASE}${path}`, {
+    credentials: 'include',
+    ...init,
+  });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
   return data;
