@@ -1,18 +1,20 @@
 import { Hono } from "hono";
-import { eq, asc } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 import { db, sqlite } from "../db";
 import { posts, comments } from "../db/schema";
 import { uuidv7 } from "../lib/uuid";
 import { extractFilePaths } from "../lib/files";
 import { formatPost } from "../lib/format";
+import type { Env } from "../types";
 
-export const postsRouter = new Hono();
+export const postsRouter = new Hono<Env>();
 
 // GET /posts/:id — Read a post with all comments
 postsRouter.get("/:id", (c) => {
   const postId = c.req.param("id");
+  const teamId = c.get("teamId");
 
-  const post = db.select().from(posts).where(eq(posts.id, postId)).get();
+  const post = db.select().from(posts).where(and(eq(posts.id, postId), eq(posts.teamId, teamId))).get();
   if (!post) {
     return c.json({ error: "Post not found", code: "NOT_FOUND" }, 404);
   }
@@ -56,12 +58,14 @@ postsRouter.post("/", async (c) => {
     );
   }
 
+  const teamId = c.get("teamId");
   const now = new Date().toISOString();
   const id = uuidv7();
   const files = extractFilePaths(body.body);
 
   const post = {
     id,
+    teamId,
     title: body.title,
     topic: body.topic,
     status: "active" as const,
@@ -110,8 +114,10 @@ postsRouter.post("/:id/comments", async (c) => {
     );
   }
 
-  // Check post exists
-  const post = db.select().from(posts).where(eq(posts.id, postId)).get();
+  const teamId = c.get("teamId");
+
+  // Check post exists and belongs to this team
+  const post = db.select().from(posts).where(and(eq(posts.id, postId), eq(posts.teamId, teamId))).get();
   if (!post) {
     return c.json({ error: "Post not found", code: "NOT_FOUND" }, 404);
   }
@@ -121,6 +127,7 @@ postsRouter.post("/:id/comments", async (c) => {
 
   const comment = {
     id,
+    teamId,
     postId,
     body: body.body,
     author: body.author || null,
@@ -163,9 +170,11 @@ postsRouter.patch("/:id/comments/:commentId", async (c) => {
     );
   }
 
-  // Find the comment and verify it belongs to this post
+  const teamId = c.get("teamId");
+
+  // Find the comment and verify it belongs to this post and team
   const comment = db.select().from(comments)
-    .where(eq(comments.id, commentId))
+    .where(and(eq(comments.id, commentId), eq(comments.teamId, teamId)))
     .get();
 
   if (!comment || comment.postId !== postId) {
@@ -242,7 +251,8 @@ postsRouter.patch("/:id", async (c) => {
     );
   }
 
-  const post = db.select().from(posts).where(eq(posts.id, postId)).get();
+  const teamId = c.get("teamId");
+  const post = db.select().from(posts).where(and(eq(posts.id, postId), eq(posts.teamId, teamId))).get();
   if (!post) {
     return c.json({ error: "Post not found", code: "NOT_FOUND" }, 404);
   }
@@ -308,7 +318,8 @@ postsRouter.patch("/:id", async (c) => {
 postsRouter.delete("/:id", (c) => {
   const postId = c.req.param("id");
 
-  const post = db.select().from(posts).where(eq(posts.id, postId)).get();
+  const teamId = c.get("teamId");
+  const post = db.select().from(posts).where(and(eq(posts.id, postId), eq(posts.teamId, teamId))).get();
   if (!post) {
     return c.json({ error: "Post not found", code: "NOT_FOUND" }, 404);
   }

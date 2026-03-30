@@ -2,24 +2,32 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { api } from "../routes/api";
 import { Hono } from "hono";
-
-// Internal Hono app for routing MCP tool calls to API handlers
-const app = new Hono();
-app.route("/api", api);
+import type { Env } from "../types";
 
 /** Make an internal request to the API and return the parsed JSON response. */
-async function apiRequest(
-  method: string,
-  path: string,
-  body?: unknown
-): Promise<{ status: number; data: unknown }> {
-  const init: RequestInit = { method, headers: { "Content-Type": "application/json" } };
-  if (body !== undefined) {
-    init.body = JSON.stringify(body);
-  }
-  const res = await app.request(path, init);
-  const data = await res.json();
-  return { status: res.status, data };
+function createApiRequest(teamId: string) {
+  // Internal Hono app with team context injected
+  const app = new Hono<Env>();
+  app.use("*", async (c, next) => {
+    c.set("teamId", teamId);
+    c.set("teamSlug", ""); // Not needed for internal API calls
+    return next();
+  });
+  app.route("/api", api);
+
+  return async (
+    method: string,
+    path: string,
+    body?: unknown
+  ): Promise<{ status: number; data: unknown }> => {
+    const init: RequestInit = { method, headers: { "Content-Type": "application/json" } };
+    if (body !== undefined) {
+      init.body = JSON.stringify(body);
+    }
+    const res = await app.request(path, init);
+    const data = await res.json();
+    return { status: res.status, data };
+  };
 }
 
 /** Format an API response as an MCP tool result. */
@@ -30,7 +38,9 @@ function result(data: unknown, isError = false) {
   };
 }
 
-export function createMcpServer() {
+export function createMcpServer(teamId: string) {
+  const apiRequest = createApiRequest(teamId);
+
   const mcp = new McpServer(
     { name: "kilroy", version: "0.1.0" },
     { capabilities: { tools: {} } }

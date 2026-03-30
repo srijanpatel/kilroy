@@ -3,10 +3,12 @@ import { eq, and, like, or, sql, desc, asc } from "drizzle-orm";
 import { db } from "../db";
 import { posts, comments } from "../db/schema";
 import { formatPost } from "../lib/format";
+import type { Env } from "../types";
 
-export const browseRouter = new Hono();
+export const browseRouter = new Hono<Env>();
 
 browseRouter.get("/", (c) => {
+  const teamId = c.get("teamId");
   const topic = c.req.query("topic") || "";
   const status = c.req.query("status") || "active";
   const recursive = c.req.query("recursive") === "true";
@@ -16,7 +18,7 @@ browseRouter.get("/", (c) => {
   const cursor = c.req.query("cursor");
 
   // Build conditions for posts at this exact topic
-  const conditions: any[] = [];
+  const conditions: any[] = [eq(posts.teamId, teamId)];
 
   if (recursive) {
     // All posts at and below this topic
@@ -100,7 +102,7 @@ browseRouter.get("/", (c) => {
 
   // Subtopics (only in non-recursive mode)
   if (!recursive) {
-    response.subtopics = getSubtopics(topic, status);
+    response.subtopics = getSubtopics(teamId, topic, status);
   }
 
   if (hasMore) {
@@ -112,6 +114,7 @@ browseRouter.get("/", (c) => {
 });
 
 function getSubtopics(
+  teamId: string,
   parentTopic: string,
   status: string
 ): Array<{
@@ -123,6 +126,7 @@ function getSubtopics(
 }> {
   const prefix = parentTopic ? `${parentTopic}/` : "";
   const statusFilter = status !== "all" ? `AND status = '${status}'` : "";
+  const teamFilter = `AND team_id = '${teamId}'`;
 
   // Get all unique immediate child topic segments
   const rows = db.all<{
@@ -136,6 +140,7 @@ function getSubtopics(
       SELECT *
       FROM posts
       WHERE topic LIKE ${prefix + "%"}
+      ${sql.raw(teamFilter)}
       ${sql.raw(statusFilter)}
     ),
     immediate_children AS (

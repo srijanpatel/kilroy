@@ -1,8 +1,9 @@
 import { Hono } from "hono";
 import { sql } from "drizzle-orm";
 import { db, sqlite } from "../db";
+import type { Env } from "../types";
 
-export const searchRouter = new Hono();
+export const searchRouter = new Hono<Env>();
 
 searchRouter.get("/", (c) => {
   const query = c.req.query("query");
@@ -21,17 +22,20 @@ searchRouter.get("/", (c) => {
   const limit = Math.min(Math.max(parseInt(c.req.query("limit") || "20"), 1), 100);
   const cursor = c.req.query("cursor");
 
+  const teamId = c.get("teamId");
+
   if (regex) {
-    return regexSearch(c, { query, topic, tagsParam, status, orderBy, limit, cursor });
+    return regexSearch(c, { query, teamId, topic, tagsParam, status, orderBy, limit, cursor });
   }
 
-  return ftsSearch(c, { query, topic, tagsParam, status, orderBy, limit, cursor });
+  return ftsSearch(c, { query, teamId, topic, tagsParam, status, orderBy, limit, cursor });
 });
 
 function ftsSearch(
   c: any,
   opts: {
     query: string;
+    teamId: string;
     topic?: string;
     tagsParam?: string;
     status: string;
@@ -40,9 +44,9 @@ function ftsSearch(
     cursor?: string;
   }
 ) {
-  const { query, topic, tagsParam, status, orderBy, limit, cursor } = opts;
+  const { query, teamId, topic, tagsParam, status, orderBy, limit, cursor } = opts;
 
-  // Search posts FTS
+  // Search posts FTS (joined to posts for team scoping)
   const postMatches = sqlite
     .prepare(
       `
@@ -52,19 +56,21 @@ function ftsSearch(
         pf.rank,
         'title_or_body' as match_location
       FROM posts_fts pf
+      JOIN posts p ON p.id = pf.post_id
       WHERE posts_fts MATCH ?
+        AND p.team_id = ?
       ORDER BY pf.rank
       LIMIT ?
     `
     )
-    .all(escapeQuery(query), limit * 2) as Array<{
+    .all(escapeQuery(query), teamId, limit * 2) as Array<{
     post_id: string;
     snippet: string;
     rank: number;
     match_location: string;
   }>;
 
-  // Search comments FTS
+  // Search comments FTS (joined to comments for team scoping)
   const commentMatches = sqlite
     .prepare(
       `
@@ -75,12 +81,14 @@ function ftsSearch(
         cf.rank,
         'comment' as match_location
       FROM comments_fts cf
+      JOIN comments cm ON cm.id = cf.comment_id
       WHERE comments_fts MATCH ?
+        AND cm.team_id = ?
       ORDER BY cf.rank
       LIMIT ?
     `
     )
-    .all(escapeQuery(query), limit * 2) as Array<{
+    .all(escapeQuery(query), teamId, limit * 2) as Array<{
     post_id: string;
     comment_id: string;
     snippet: string;
@@ -130,8 +138,8 @@ function ftsSearch(
   }
 
   const placeholders = postIds.map(() => "?").join(",");
-  let postQuery = `SELECT * FROM posts WHERE id IN (${placeholders})`;
-  const params: any[] = [...postIds];
+  let postQuery = `SELECT * FROM posts WHERE id IN (${placeholders}) AND team_id = ?`;
+  const params: any[] = [...postIds, teamId];
 
   if (status !== "all") {
     postQuery += ` AND status = ?`;
@@ -221,6 +229,7 @@ function regexSearch(
   c: any,
   opts: {
     query: string;
+    teamId: string;
     topic?: string;
     tagsParam?: string;
     status: string;
@@ -229,11 +238,11 @@ function regexSearch(
     cursor?: string;
   }
 ) {
-  const { query, topic, tagsParam, status, orderBy, limit, cursor } = opts;
+  const { query, teamId, topic, tagsParam, status, orderBy, limit, cursor } = opts;
 
   // For regex, we search directly against the posts and comments tables
-  let postQuery = `SELECT * FROM posts WHERE (title REGEXP ? OR body REGEXP ?)`;
-  const params: any[] = [query, query];
+  let postQuery = `SELECT * FROM posts WHERE team_id = ? AND (title REGEXP ? OR body REGEXP ?)`;
+  const params: any[] = [teamId, query, query];
 
   if (status !== "all") {
     postQuery += ` AND status = ?`;
@@ -253,20 +262,20 @@ function regexSearch(
     // Fallback: treat as LIKE pattern
     const likeQuery = postQuery.replace(/REGEXP/g, "LIKE");
     const likePattern = `%${query}%`;
-    matchedPosts = sqlite.prepare(likeQuery).all(likePattern, likePattern, ...params.slice(2));
+    matchedPosts = sqlite.prepare(likeQuery).all(teamId, likePattern, likePattern, ...params.slice(3));
   }
 
-  // Also search comments
+  // Also search comments (scoped to team)
   let commentPostIds: string[] = [];
   try {
     const commentResults = sqlite
-      .prepare(`SELECT DISTINCT post_id FROM comments WHERE body REGEXP ?`)
-      .all(query) as Array<{ post_id: string }>;
+      .prepare(`SELECT DISTINCT post_id FROM comments WHERE team_id = ? AND body REGEXP ?`)
+      .all(teamId, query) as Array<{ post_id: string }>;
     commentPostIds = commentResults.map((r) => r.post_id);
   } catch {
     const commentResults = sqlite
-      .prepare(`SELECT DISTINCT post_id FROM comments WHERE body LIKE ?`)
-      .all(`%${query}%`) as Array<{ post_id: string }>;
+      .prepare(`SELECT DISTINCT post_id FROM comments WHERE team_id = ? AND body LIKE ?`)
+      .all(teamId, `%${query}%`) as Array<{ post_id: string }>;
     commentPostIds = commentResults.map((r) => r.post_id);
   }
 
@@ -276,8 +285,8 @@ function regexSearch(
 
   if (commentOnlyIds.length > 0) {
     const placeholders = commentOnlyIds.map(() => "?").join(",");
-    let extraQuery = `SELECT * FROM posts WHERE id IN (${placeholders})`;
-    const extraParams: any[] = [...commentOnlyIds];
+    let extraQuery = `SELECT * FROM posts WHERE id IN (${placeholders}) AND team_id = ?`;
+    const extraParams: any[] = [...commentOnlyIds, teamId];
     if (status !== "all") {
       extraQuery += ` AND status = ?`;
       extraParams.push(status);

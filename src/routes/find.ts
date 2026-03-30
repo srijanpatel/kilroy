@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { sqlite } from "../db";
+import type { Env } from "../types";
 
-export const findRouter = new Hono();
+export const findRouter = new Hono<Env>();
 
 findRouter.get("/", (c) => {
   const author = c.req.query("author");
@@ -26,9 +27,11 @@ findRouter.get("/", (c) => {
     );
   }
 
-  // Build SQL query
-  const conditions: string[] = [];
-  const params: any[] = [];
+  const teamId = c.get("teamId");
+
+  // Build SQL query — always scoped to team
+  const conditions: string[] = ["team_id = ?"];
+  const params: any[] = [teamId];
 
   if (author) {
     conditions.push("author = ?");

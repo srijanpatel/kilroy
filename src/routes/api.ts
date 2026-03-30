@@ -1,10 +1,11 @@
 import { Hono } from "hono";
+import type { Env } from "../types";
 import { postsRouter } from "./posts";
 import { browseRouter } from "./browse";
 import { searchRouter } from "./search";
 import { findRouter } from "./find";
 
-export const api = new Hono();
+export const api = new Hono<Env>();
 
 api.route("/posts", postsRouter);
 api.route("/browse", browseRouter);
