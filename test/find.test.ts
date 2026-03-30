@@ -1,9 +1,19 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Hono } from "hono";
-import { initDatabase, sqlite } from "../src/db";
-import { api } from "../src/routes/api";
 
-const app = new Hono().route("/api", api);
+// Must be set before any import of src/db
+process.env.KILROY_DB_PATH = ":memory:";
+
+import { resetDb, createTestApp } from "./helpers";
+import { sqlite } from "../src/db";
+import type { Env } from "../src/types";
+
+let app: Hono<Env>;
+
+function setup() {
+  resetDb();
+  app = createTestApp();
+}
 
 function request(path: string) {
   return app.request(`http://localhost/api${path}`);
@@ -24,17 +34,11 @@ async function createPost(overrides: Record<string, any> = {}) {
   return res.json();
 }
 
-beforeEach(() => {
-  sqlite.exec("DROP TABLE IF EXISTS comments_fts");
-  sqlite.exec("DROP TABLE IF EXISTS posts_fts");
-  sqlite.exec("DROP TABLE IF EXISTS comments");
-  sqlite.exec("DROP TABLE IF EXISTS posts");
-  initDatabase();
-});
-
 // ─── GET /api/find ────────────────────────────────────────────
 
 describe("GET /api/find", () => {
+  beforeEach(setup);
+
   it("requires at least one filter", async () => {
     const res = await request("/find");
     expect(res.status).toBe(400);

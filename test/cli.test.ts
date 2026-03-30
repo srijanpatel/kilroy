@@ -3,14 +3,17 @@ import { spawn } from "child_process";
 
 const PORT = 7433;
 const SERVER_URL = `http://localhost:${PORT}`;
-const CLI = ["bun", "run", "src/cli/index.ts", "--server", SERVER_URL];
+const TEAM_SLUG = "cli-test-team";
+const TEAM_API = `${SERVER_URL}/${TEAM_SLUG}`;
+const CLI = ["bun", "run", "src/cli/index.ts", "--server", TEAM_API];
 
 let serverProc: ReturnType<typeof spawn>;
+let teamToken: string;
 
 async function cli(...args: string[]): Promise<{ stdout: string; stderr: string; code: number }> {
   return new Promise((resolve) => {
     const proc = spawn(CLI[0], [...CLI.slice(1), ...args], {
-      env: { ...process.env, KILROY_URL: undefined },
+      env: { ...process.env, KILROY_URL: undefined, KILROY_TOKEN: teamToken },
     });
     let stdout = "";
     let stderr = "";
@@ -21,33 +24,40 @@ async function cli(...args: string[]): Promise<{ stdout: string; stderr: string;
 }
 
 async function apiPost(path: string, body: any): Promise<any> {
-  const res = await fetch(`${SERVER_URL}${path}`, {
+  const res = await fetch(`${TEAM_API}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${teamToken}`,
+    },
     body: JSON.stringify(body),
   });
   return res.json();
 }
 
 async function apiDelete(path: string): Promise<void> {
-  await fetch(`${SERVER_URL}${path}`, { method: "DELETE" });
+  await fetch(`${TEAM_API}${path}`, {
+    method: "DELETE",
+    headers: { "Authorization": `Bearer ${teamToken}` },
+  });
 }
 
 async function waitForServer(url: string, maxMs = 5000) {
   const start = Date.now();
   while (Date.now() - start < maxMs) {
     try {
-      await fetch(`${url}/api/browse`);
-      return;
+      const res = await fetch(`${url}/teams`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: "__healthcheck__" }) });
+      // Either 201 (created) or 409 (already exists) means server is up
+      if (res.status === 201 || res.status === 409) {
+        // Clean up the healthcheck team
+        return;
+      }
     } catch {
       await new Promise((r) => setTimeout(r, 100));
     }
   }
   throw new Error("Server did not start in time");
 }
-
-// Track created post IDs for cleanup
-let createdPostIds: string[] = [];
 
 beforeAll(async () => {
   // Start server on test port with in-memory DB
@@ -56,14 +66,19 @@ beforeAll(async () => {
     stdio: "pipe",
   });
   await waitForServer(SERVER_URL);
+
+  // Create a test team
+  const res = await fetch(`${SERVER_URL}/teams`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ slug: TEAM_SLUG }),
+  });
+  const data = await res.json();
+  teamToken = data.project_key;
 });
 
 afterAll(() => {
   serverProc?.kill();
-});
-
-beforeEach(() => {
-  createdPostIds = [];
 });
 
 // ─── ls ──────────────────────────────────────────────────────────
@@ -82,7 +97,6 @@ describe("kilroy ls", () => {
       topic: "cli-test",
       body: "test body",
     });
-    createdPostIds.push(post.id);
 
     const { stdout, code } = await cli("ls", "cli-test", "--json");
     expect(code).toBe(0);
@@ -136,7 +150,6 @@ describe("kilroy read", () => {
       author: "test-author",
     });
 
-    // Even in non-TTY pipe mode, we get the piped format (body text)
     const { stdout, code } = await cli("read", post.id);
     expect(code).toBe(0);
     expect(stdout).toContain("formatted body");
@@ -387,9 +400,12 @@ describe("kilroy edit", () => {
       body: "body",
     });
 
-    const comment = await (await fetch(`${SERVER_URL}/api/posts/${post.id}/comments`, {
+    const comment = await (await fetch(`${TEAM_API}/api/posts/${post.id}/comments`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${teamToken}`,
+      },
       body: JSON.stringify({ body: "original comment", author: "commenter" }),
     })).json();
 

@@ -1,26 +1,21 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { createMcpServer } from "../src/mcp/server";
 
-// Use in-memory database for tests
+// Must be set before any import of src/db
 process.env.KILROY_DB_PATH = ":memory:";
+
+import { createMcpServer } from "../src/mcp/server";
+import { resetDb, testTeamId } from "./helpers";
 
 let client: Client;
 
 async function setupMcp() {
-  const { initDatabase, sqlite } = require("../src/db");
+  resetDb();
 
-  // Fresh DB state
-  try {
-    sqlite.exec("DROP TABLE IF EXISTS comments_fts");
-    sqlite.exec("DROP TABLE IF EXISTS posts_fts");
-    sqlite.exec("DROP TABLE IF EXISTS comments");
-    sqlite.exec("DROP TABLE IF EXISTS posts");
-  } catch {}
-  initDatabase();
-
-  const mcp = createMcpServer();
+  // Import testTeamId after resetDb populates it
+  const { testTeamId: teamId } = require("./helpers");
+  const mcp = createMcpServer(teamId);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
 
   await mcp.connect(serverTransport);
