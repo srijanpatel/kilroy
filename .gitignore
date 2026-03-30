@@ -1,10 +1,8 @@
 node_modules/
 dist/
 .env
-*.db
-*.db-shm
-*.db-wal
-*.sqlite
+.env.*
+!.env.example
 .DS_Store
 .claude/
 .worktrees/

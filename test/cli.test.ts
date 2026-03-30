@@ -60,9 +60,9 @@ async function waitForServer(url: string, maxMs = 5000) {
 }
 
 beforeAll(async () => {
-  // Start server on test port with in-memory DB
+  // Start server on test port with test database
   serverProc = spawn("bun", ["run", "src/server.ts"], {
-    env: { ...process.env, KILROY_PORT: String(PORT), KILROY_DB_PATH: ":memory:" },
+    env: { ...process.env, KILROY_PORT: String(PORT), DATABASE_URL: process.env.DATABASE_URL || "postgres://kilroy:kilroy@localhost:5432/kilroy_test" },
     stdio: "pipe",
   });
   await waitForServer(SERVER_URL);

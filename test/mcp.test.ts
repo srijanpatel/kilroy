@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 
-// Must be set before any import of src/db
-process.env.KILROY_DB_PATH = ":memory:";
+// Use test database
+process.env.DATABASE_URL = process.env.DATABASE_URL || "postgres://kilroy:kilroy@localhost:5432/kilroy_test";
 
 import { createMcpServer } from "../src/mcp/server";
 import { resetDb, testTeamId } from "./helpers";
@@ -11,10 +11,10 @@ import { resetDb, testTeamId } from "./helpers";
 let client: Client;
 
 async function setupMcp() {
-  resetDb();
+  await resetDb();
 
   // Import testTeamId after resetDb populates it
-  const { testTeamId: teamId } = require("./helpers");
+  const { testTeamId: teamId } = await import("./helpers");
   const mcp = createMcpServer(teamId);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
 

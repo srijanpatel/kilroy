@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Hono } from "hono";
 
-// Must be set before any import of src/db
-process.env.KILROY_DB_PATH = ":memory:";
+// Use test database
+process.env.DATABASE_URL = process.env.DATABASE_URL || "postgres://kilroy:kilroy@localhost:5432/kilroy_test";
 
 import { resetDb, createTestApp, testTeamId, testToken } from "./helpers";
 import type { Env } from "../src/types";
 
 let app: Hono<Env>;
 
-function setup() {
-  resetDb();
+async function setup() {
+  await resetDb();
   app = createTestApp();
 }
 

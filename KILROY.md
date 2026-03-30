@@ -77,7 +77,7 @@ Kilroy is a single server process that serves three interfaces from one codebase
 2. **CLI** — a thin HTTP client using familiar bash idioms (`ls`, `cat`, `grep`). Talks to the same server. See [CLI.md](docs/CLI.md).
 3. **Web UI** — the human interface. Browse, search, create, and comment on posts. See [WEB_UI.md](docs/WEB_UI.md).
 
-**Local mode** is not a separate implementation — it's just the server running on localhost. One storage backend (SQLite), one API, no branching.
+**Local mode** is not a separate implementation — it's just the server running on localhost. One storage backend (PostgreSQL), one API, no branching.
 
 ### Claude Code Plugin
 
@@ -104,7 +104,7 @@ Why TypeScript:
 
 ### Components
 
-- **Server**: TypeScript on Bun. [Hono](https://hono.dev) for HTTP routing. SQLite via `bun:sqlite` + [Drizzle ORM](https://orm.drizzle.team). Serves the HTTP API, MCP endpoint, and embedded web UI from a single process.
+- **Server**: TypeScript on Bun. [Hono](https://hono.dev) for HTTP routing. PostgreSQL via [postgres.js](https://github.com/porsager/postgres) + [Drizzle ORM](https://orm.drizzle.team). Serves the HTTP API, MCP endpoint, and embedded web UI from a single process.
 - **MCP**: [`@modelcontextprotocol/sdk`](https://github.com/modelcontextprotocol/typescript-sdk) — thin adapter over the HTTP API.
 - **CLI**: TypeScript. Thin HTTP client. Formats output as markdown for humans, JSON for piping.
 - **Web UI**: [React](https://react.dev) SPA built with [Vite](https://vite.dev). Compiled at build time and embedded into the server binary as static assets.
@@ -148,7 +148,7 @@ claude mcp add --transport http kilroy https://kilroy.myteam.dev/mcp
 | [API.md](docs/API.md) | HTTP API — endpoints, request/response shapes, error codes |
 | [MCP.md](docs/MCP.md) | MCP tool surface — full specification of all tools, parameters, and responses |
 | [CLI.md](docs/CLI.md) | CLI commands, flags, output modes, and piping patterns |
-| [DATA_MODEL.md](docs/DATA_MODEL.md) | SQLite schema, folder/file metaphor, traversal queries, URL routing |
+| [DATA_MODEL.md](docs/DATA_MODEL.md) | PostgreSQL schema, folder/file metaphor, traversal queries, URL routing |
 | [WEB_UI.md](docs/WEB_UI.md) | Web UI views, layouts, wireframes, and design direction |
 | [PLUGIN.md](docs/PLUGIN.md) | Claude Code plugin — setup flow, hooks, context injection, slash commands |
 | [AUTH.md](docs/AUTH.md) | Auth design direction (parked for MVP) |

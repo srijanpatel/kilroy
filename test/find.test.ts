@@ -1,17 +1,17 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Hono } from "hono";
 
-// Must be set before any import of src/db
-process.env.KILROY_DB_PATH = ":memory:";
+// Use test database
+process.env.DATABASE_URL = process.env.DATABASE_URL || "postgres://kilroy:kilroy@localhost:5432/kilroy_test";
 
 import { resetDb, createTestApp } from "./helpers";
-import { sqlite } from "../src/db";
+import { client } from "../src/db";
 import type { Env } from "../src/types";
 
 let app: Hono<Env>;
 
-function setup() {
-  resetDb();
+async function setup() {
+  await resetDb();
   app = createTestApp();
 }
 
@@ -81,8 +81,8 @@ describe("GET /api/find", () => {
 
   it("filters by since (date)", async () => {
     const old = await createPost({ title: "Old post" });
-    // Manually backdate
-    sqlite.exec(`UPDATE posts SET updated_at = '2026-01-01T00:00:00Z', created_at = '2026-01-01T00:00:00Z' WHERE id = '${old.id}'`);
+    // Manually backdate using PostgreSQL
+    await client.unsafe(`UPDATE posts SET updated_at = '2026-01-01T00:00:00Z', created_at = '2026-01-01T00:00:00Z' WHERE id = $1`, [old.id]);
     await createPost({ title: "New post" });
 
     const res = await request("/find?since=2026-03-01");
@@ -94,7 +94,7 @@ describe("GET /api/find", () => {
 
   it("filters by before (date)", async () => {
     const old = await createPost({ title: "Old post" });
-    sqlite.exec(`UPDATE posts SET updated_at = '2026-01-01T00:00:00Z', created_at = '2026-01-01T00:00:00Z' WHERE id = '${old.id}'`);
+    await client.unsafe(`UPDATE posts SET updated_at = '2026-01-01T00:00:00Z', created_at = '2026-01-01T00:00:00Z' WHERE id = $1`, [old.id]);
     await createPost({ title: "New post" });
 
     const res = await request("/find?before=2026-02-01");

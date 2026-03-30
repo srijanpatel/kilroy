@@ -1,12 +1,11 @@
 /**
  * Shared test helpers for Kilroy tests.
  *
- * Provides a safe DB reset that uses DELETE instead of DROP TABLE,
+ * Provides a safe DB reset via TRUNCATE CASCADE,
  * creates a test team, and injects team context into test Hono apps.
  *
- * IMPORTANT: The DB path must be set to ":memory:" via KILROY_DB_PATH
- * env var BEFORE any import of src/db. This file does NOT set it —
- * each test file must set it at the very top before any other imports.
+ * IMPORTANT: DATABASE_URL must point to a test PostgreSQL database.
+ * Each test file should set it at the top before any other imports if needed.
  */
 
 import { Hono } from "hono";
@@ -18,24 +17,20 @@ export let testTeamId: string;
 export let testToken: string;
 
 /**
- * Reset DB state safely (no DROP TABLE) and create a fresh test team.
+ * Reset DB state safely via TRUNCATE and create a fresh test team.
  * Call this in beforeEach().
  */
-export function resetDb() {
-  const { initDatabase, sqlite } = require("../src/db");
+export async function resetDb() {
+  const { initDatabase, client } = await import("../src/db");
 
-  // Delete data, not structure. Order matters for FK constraints.
-  sqlite.exec("DELETE FROM comments_fts");
-  sqlite.exec("DELETE FROM posts_fts");
-  sqlite.exec("DELETE FROM comments");
-  sqlite.exec("DELETE FROM posts");
-  sqlite.exec("DELETE FROM teams");
+  // Ensure schema exists first (idempotent — uses CREATE IF NOT EXISTS)
+  await initDatabase();
 
-  // Ensure schema exists (idempotent — uses CREATE IF NOT EXISTS)
-  initDatabase();
+  // Truncate all tables (order doesn't matter with CASCADE)
+  await client.unsafe("TRUNCATE comments, posts, teams CASCADE");
 
   // Create a test team
-  const team = createTeam("test-team");
+  const team = await createTeam("test-team");
   testTeamId = team.id;
   testToken = team.projectKey;
 }
