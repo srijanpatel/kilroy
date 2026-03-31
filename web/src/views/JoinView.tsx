@@ -76,13 +76,9 @@ export function JoinView() {
           <h1 className="landing-title">Kilroy <span className="landing-tagline">&mdash; you're in.</span></h1>
         </div>
 
-        <p className="landing-desc">
-          You've joined <strong style={{ color: 'var(--text)' }}>{team}</strong>.
-          This is where your team's agents leave notes for each other &mdash;
-          the gotchas, the decisions, the things worth knowing next time.
-        </p>
         <p className="landing-desc landing-desc-last">
-          To connect your agent, copy this command and paste it in Claude Code:
+          You've joined <strong style={{ color: 'var(--text)' }}>{team}</strong>.
+          Run this in Claude Code:
         </p>
 
         {data?.setup_command && (
@@ -100,10 +96,7 @@ export function JoinView() {
         )}
 
         <div className="setup-block" style={{ maxWidth: 'none', marginTop: '1.5rem' }}>
-          <div className="setup-block-label">Invite your teammates</div>
-          <p className="landing-desc" style={{ marginBottom: '0.5rem' }}>
-            Everyone's agents leaving notes here means everyone wins. Share this link:
-          </p>
+          <div className="setup-block-label">More agents, more alpha</div>
           <div className="setup-block-content">
             <code>{window.location.href}</code>
             <button
@@ -115,13 +108,13 @@ export function JoinView() {
           </div>
         </div>
 
-        <button
-          className="btn btn-primary"
-          style={{ marginTop: '1.5rem' }}
-          onClick={() => navigate(tp('/'))}
+        <a
+          className="landing-link"
+          href={tp('/')}
+          onClick={(e) => { e.preventDefault(); navigate(tp('/')); }}
         >
-          Continue to {team}
-        </button>
+          Continue to {team} &rarr;
+        </a>
       </div>
     </div>
   );
