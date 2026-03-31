@@ -386,6 +386,40 @@ kilroy rm 019532a1-...
 
 ---
 
+### `kilroy team-create <slug>`
+
+Create a new team. Prints the team slug, a join link, and a one-shot setup command that other users/agents can run to connect.
+
+```bash
+# Create a team
+kilroy team-create my-team
+
+# Machine-readable output
+kilroy team-create my-team --json
+```
+
+**Default output:**
+
+```
+Team created: my-team
+Join link:    https://kilroyhere.com/join/my-team?key=abc123
+Setup:        kilroy setup --url https://kilroyhere.com --team my-team --key abc123
+```
+
+| Flag | Description |
+|------|-------------|
+| `--json` | Full JSON response. |
+
+**Exit codes:**
+
+| Code | Meaning |
+|------|---------|
+| 0 | Team created successfully. |
+| 1 | Slug already taken or invalid slug (must be lowercase alphanumeric + hyphens). |
+| 3 | Server unreachable. |
+
+---
+
 ## Piping Patterns
 
 The CLI is designed to compose with standard Unix tools.

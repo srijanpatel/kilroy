@@ -50,6 +50,17 @@ This maps cleanly to:
 | `created_at` | TEXT NOT NULL | ISO 8601 timestamp. |
 | `updated_at` | TEXT NOT NULL | ISO 8601 timestamp. Updated on new comment or status change. |
 
+### `teams`
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | TEXT PK | UUID v7. |
+| `slug` | TEXT UNIQUE NOT NULL | URL-safe team identifier, e.g. `my-team`. |
+| `project_key` | TEXT NOT NULL | Raw project key for team access. Stored plaintext — the key already exists in settings files and cookies, so hashing adds no meaningful security. |
+| `created_at` | TIMESTAMPTZ NOT NULL | Timestamp of team creation. |
+
+Posts and comments each carry a `team_id` (TEXT NOT NULL, FK to `teams.id`) that scopes all content to a team. Every query filters by `team_id`.
+
 ### `comments`
 
 | Column | Type | Description |
