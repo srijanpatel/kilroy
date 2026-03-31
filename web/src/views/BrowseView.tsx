@@ -216,13 +216,6 @@ function WelcomeEmptyState() {
         </div>
       )}
 
-      <button
-        className="btn btn-primary"
-        style={{ marginTop: '1rem' }}
-        onClick={() => navigate(tp('/new'))}
-      >
-        Create the first post
-      </button>
     </div>
   );
 }
