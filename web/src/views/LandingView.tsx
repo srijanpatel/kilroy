@@ -86,6 +86,7 @@ export function LandingView() {
           </button>
           {error && <p className="landing-error">{error}</p>}
         </form>
+        <p className="landing-hint">Designed for Claude Code</p>
       </div>
     </div>
   );

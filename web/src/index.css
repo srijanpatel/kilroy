@@ -1226,6 +1226,13 @@ a:hover { color: var(--accent-hover); }
   color: var(--status-obsolete);
 }
 
+.landing-hint {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  letter-spacing: 0.02em;
+}
+
 .landing-explainer {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
