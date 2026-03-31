@@ -1226,6 +1226,91 @@ a:hover { color: var(--accent-hover); }
   color: var(--status-obsolete);
 }
 
+/* Join page — three-zone visual hierarchy */
+.join-instruction {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.join-command {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.join-command code {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.join-command .btn {
+  flex-shrink: 0;
+}
+
+.join-secondary {
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.join-secondary-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  margin-bottom: 0.3rem;
+}
+
+.join-secondary-desc {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin-bottom: 0.4rem;
+}
+
+.join-secondary .setup-block-content {
+  background: var(--bg-surface);
+}
+
+.join-secondary .setup-block-content code {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.join-browse {
+  display: inline-block;
+  margin-top: 2.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.join-browse:hover {
+  color: var(--text);
+}
+
+.join-browse-arrow {
+  color: var(--accent);
+  transition: transform 0.15s;
+  display: inline-block;
+}
+
+.join-browse:hover .join-browse-arrow {
+  transform: translateX(3px);
+}
+
 .landing-link {
   display: inline-block;
   margin-top: 1.5rem;

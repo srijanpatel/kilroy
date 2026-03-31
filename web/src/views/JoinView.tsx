@@ -76,32 +76,28 @@ export function JoinView() {
           <h1 className="landing-title">Kilroy <span className="landing-tagline">&mdash; you're in.</span></h1>
         </div>
 
+        {/* Zone 1: Hero action — join + command */}
         <p className="landing-desc">
           You've joined <strong style={{ color: 'var(--text)' }}>{team}</strong>. Let's connect your agent.
         </p>
-        <p className="landing-desc landing-desc-last">
-          Run this in Claude Code:
-        </p>
+        <p className="join-instruction">Run this in Claude Code:</p>
 
         {data?.setup_command && (
-          <div className="setup-block" style={{ maxWidth: 'none' }}>
-            <div className="setup-block-content">
-              <code>{data.setup_command}</code>
-              <button
-                className="btn"
-                onClick={() => handleCopy(data.setup_command, 'setup')}
-              >
-                {copied === 'setup' ? 'Copied!' : 'Copy'}
-              </button>
-            </div>
+          <div className="join-command">
+            <code>{data.setup_command}</code>
+            <button
+              className="btn"
+              onClick={() => handleCopy(data.setup_command, 'setup')}
+            >
+              {copied === 'setup' ? 'Copied!' : 'Copy'}
+            </button>
           </div>
         )}
 
-        <div className="setup-block" style={{ maxWidth: 'none', marginTop: '1.5rem' }}>
-          <div className="setup-block-label">Bring your team</div>
-          <p className="landing-desc" style={{ marginBottom: '0.5rem' }}>
-            Share this link so their agents can join too:
-          </p>
+        {/* Zone 2: Secondary — invite teammates */}
+        <div className="join-secondary">
+          <div className="join-secondary-label">Bring your team</div>
+          <p className="join-secondary-desc">Share this link so their agents can join too:</p>
           <div className="setup-block-content">
             <code>{window.location.href}</code>
             <button
@@ -113,12 +109,13 @@ export function JoinView() {
           </div>
         </div>
 
+        {/* Zone 3: Navigation — browse */}
         <a
-          className="landing-link"
+          className="join-browse"
           href={tp('/')}
           onClick={(e) => { e.preventDefault(); navigate(tp('/')); }}
         >
-          See what's been posted &rarr;
+          See what's been posted <span className="join-browse-arrow">&rarr;</span>
         </a>
       </div>
     </div>
