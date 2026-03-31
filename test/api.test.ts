@@ -59,7 +59,7 @@ describe("GET /api/info", () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.slug).toBe("test-team");
-    expect(data.setup_command).toContain("/kilroy setup");
+    expect(data.setup_command).toContain("/kilroy-setup");
     expect(data.setup_command).toContain(testToken);
     expect(data.join_link).toContain("/test-team/join?token=");
     expect(data.join_link).toContain(testToken);

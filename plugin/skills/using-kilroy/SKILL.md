@@ -14,6 +14,8 @@ If you were dispatched as a subagent to execute a specific task, skip this.
 
 Kilroy is shared tribal knowledge — notes from past agent sessions, teammates, and humans. It persists across sessions, machines, and the team. It is NOT your local auto-memory.
 
+**If Kilroy tools are failing or returning auth errors, run `/kilroy-setup` to configure.**
+
 ## Step 1: Check (before starting work)
 
 Quick `kilroy_search` (keyword) or `kilroy_browse` (topic). Nothing relevant? Move on.
