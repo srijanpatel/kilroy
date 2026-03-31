@@ -1,67 +1,56 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTeam, useTeamPath } from '../context/TeamContext';
+import { joinTeam } from '../lib/api';
+import { KilroyMark } from '../components/KilroyMark';
 
 export function JoinView() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const team = useTeam();
+  const tp = useTeamPath();
   const token = searchParams.get('token');
 
   const [status, setStatus] = useState<'validating' | 'success' | 'error'>('validating');
-  const [teamData, setTeamData] = useState<any>(null);
+  const [data, setData] = useState<any>(null);
   const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
   const [name, setName] = useState('');
-
-  // Extract team slug from URL path
-  const teamSlug = window.location.pathname.split('/').filter(Boolean)[0] || '';
 
   useEffect(() => {
     if (!token) {
       setStatus('error');
-      setError('No token provided. Ask your team champion for the join link.');
+      setError('No token provided. Ask your team admin for the join link.');
       return;
     }
 
-    // The join endpoint sets the cookie and returns setup info
-    fetch(`/${teamSlug}/join?token=${encodeURIComponent(token)}`, {
-      credentials: 'include',
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok) {
-          setStatus('error');
-          setError(data.error || 'Invalid token');
-          return;
-        }
-        setTeamData(data);
+    joinTeam(team, token)
+      .then((d) => {
+        setData(d);
         setStatus('success');
       })
-      .catch(() => {
+      .catch((e) => {
         setStatus('error');
-        setError('Failed to connect to server');
+        setError(e.message || 'Invalid token');
       });
-  }, [token, teamSlug]);
+  }, [token, team]);
 
-  const configSnippet = teamData
-    ? JSON.stringify(teamData.setup.config, null, 2)
-    : '';
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(configSnippet);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(label);
+    setTimeout(() => setCopied(null), 2000);
   };
 
   const handleSaveName = () => {
     const trimmed = name.trim();
     if (!trimmed) return;
     localStorage.setItem('kilroy_author', trimmed);
-    navigate('/');
+    navigate(tp('/'));
   };
 
   if (status === 'validating') {
     return (
-      <div className="join-view" style={{ maxWidth: 520, margin: '80px auto', padding: '0 20px' }}>
+      <div className="content reading" style={{ paddingTop: '4rem' }}>
         <p>Validating your access...</p>
       </div>
     );
@@ -69,59 +58,56 @@ export function JoinView() {
 
   if (status === 'error') {
     return (
-      <div className="join-view" style={{ maxWidth: 520, margin: '80px auto', padding: '0 20px' }}>
+      <div className="content reading" style={{ paddingTop: '4rem' }}>
         <h2>Unable to join</h2>
-        <p style={{ color: 'var(--color-error, #c00)' }}>{error}</p>
+        <p className="error">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="join-view" style={{ maxWidth: 520, margin: '80px auto', padding: '0 20px' }}>
-      <h2>Welcome to {teamSlug}</h2>
-      <p>You now have web UI access. To set up your agent, add this to your project:</p>
-
-      <div style={{ position: 'relative' }}>
-        <pre style={{
-          background: 'var(--color-surface, #f5f5f5)',
-          padding: 16,
-          borderRadius: 8,
-          fontSize: 13,
-          overflow: 'auto',
-        }}>
-          <code>{`// .claude/settings.local.json (gitignored)\n${configSnippet}`}</code>
-        </pre>
-        <button
-          onClick={handleCopy}
-          style={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            padding: '4px 8px',
-            fontSize: 12,
-            cursor: 'pointer',
-          }}
-        >
-          {copied ? 'Copied!' : 'Copy'}
-        </button>
+    <div className="content reading" style={{ paddingTop: '4rem' }}>
+      <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+        <KilroyMark size={48} />
+        <h2 style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, marginTop: '0.5rem' }}>
+          Welcome to {team}
+        </h2>
       </div>
 
-      <div style={{ marginTop: 24 }}>
-        <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
+      <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+        You now have web UI access. To connect your agent, paste this in Claude Code:
+      </p>
+
+      {data?.setup_command && (
+        <div className="setup-block">
+          <div className="setup-block-label">Paste in Claude Code</div>
+          <div className="setup-block-content">
+            <code>{data.setup_command}</code>
+            <button
+              className="btn"
+              onClick={() => handleCopy(data.setup_command, 'setup')}
+            >
+              {copied === 'setup' ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ marginTop: '1.5rem' }}>
+        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 500 }}>
           What should we call you?
         </label>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Sarah"
-            style={{ flex: 1, padding: '8px 12px', borderRadius: 6, border: '1px solid var(--color-border, #ddd)' }}
+            className="team-input"
+            style={{ flex: 1 }}
             onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
           />
-          <button onClick={handleSaveName} style={{ padding: '8px 16px', cursor: 'pointer' }}>
-            Continue
-          </button>
+          <button className="btn btn-primary" onClick={handleSaveName}>Continue</button>
         </div>
       </div>
     </div>

@@ -1,27 +1,12 @@
-import { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { Omnibar } from './components/Omnibar';
-import { BrowseView } from './views/BrowseView';
-import { PostView } from './views/PostView';
-import { SearchView } from './views/SearchView';
-import { NewPostView } from './views/NewPostView';
-import { JoinView } from './views/JoinView';
-import { AuthorPrompt } from './components/AuthorPrompt';
+import { LandingView } from './views/LandingView';
+import { TeamShell } from './views/TeamShell';
 
 export default function App() {
-  const [currentTopic, setCurrentTopic] = useState('');
-
   return (
-    <div className="app">
-      <AuthorPrompt />
-      <Omnibar currentTopic={currentTopic} />
-      <Routes>
-        <Route path="/join" element={<JoinView />} />
-        <Route path="/post/:id" element={<PostView onTopicChange={setCurrentTopic} />} />
-        <Route path="/search" element={<SearchView />} />
-        <Route path="/new" element={<NewPostView />} />
-        <Route path="*" element={<BrowseView onTopicChange={setCurrentTopic} />} />
-      </Routes>
-    </div>
+    <Routes>
+      <Route path="/" element={<LandingView />} />
+      <Route path="/:team/*" element={<TeamShell />} />
+    </Routes>
   );
 }

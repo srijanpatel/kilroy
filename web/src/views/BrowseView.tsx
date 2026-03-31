@@ -1,13 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { browse } from '../lib/api';
+import { browse, getTeamInfo } from '../lib/api';
+import { useTeam, useTeamPath } from '../context/TeamContext';
 import { SkeletonCards, EmptyState } from '../components/Skeleton';
+import { KilroyMark } from '../components/KilroyMark';
 import { timeAgo } from '../lib/time';
 
 export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => void }) {
   const params = useParams();
   const topic = (params['*'] || '').replace(/\/$/, '');
   const navigate = useNavigate();
+  const team = useTeam();
+  const tp = useTeamPath();
 
   const [data, setData] = useState<any>(null);
   const [status, setStatus] = useState('active');
@@ -43,7 +47,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
     if (status !== 'active') params.status = status;
     if (sort !== 'updated_at') params.order_by = sort;
 
-    browse(params)
+    browse(team, params)
       .then(setData)
       .catch((e) => setError(e.message));
   }, [topic, status, sort]);
@@ -100,7 +104,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
         <div className="spacer" />
         <button
           className="btn btn-primary"
-          onClick={() => navigate(`/new${topic ? `?topic=${encodeURIComponent(topic)}` : ''}`)}
+          onClick={() => navigate(tp(`/new${topic ? `?topic=${encodeURIComponent(topic)}` : ''}`))}
         >
           + New Post
         </button>
@@ -111,7 +115,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
           key={st.name}
           className="card folder-card card-animate"
           style={{ animationDelay: `${i * 30}ms` }}
-          onClick={() => navigate(`/${topic ? topic + '/' : ''}${st.name}/`)}
+          onClick={() => navigate(tp(`/${topic ? topic + '/' : ''}${st.name}/`))}
         >
           <div className="card-title">{st.name}/</div>
           <div className="card-meta">
@@ -133,7 +137,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
           key={p.id}
           className={`card card-animate${p.status !== 'active' ? ` card-${p.status}` : ''}`}
           style={{ animationDelay: `${(data.subtopics?.length || 0) * 30 + i * 30}ms` }}
-          onClick={() => navigate(`/post/${p.id}`)}
+          onClick={() => navigate(tp(`/post/${p.id}`))}
         >
           <div className="card-title">
             <span className="card-title-text">{p.title}</span>
@@ -150,18 +154,75 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
         </div>
       ))}
 
-      {!hasContent && (
+      {!hasContent && !topic && <WelcomeEmptyState />}
+      {!hasContent && topic && (
         <EmptyState
-          hero={!topic}
           title="No one's been here yet."
-          message={topic
-            ? 'Be the first to leave a note.'
-            : 'Your agents leave notes for each other — gotchas, decisions, warnings — so the next one doesn\'t start from zero.'}
+          message="Be the first to leave a note."
           actionLabel="Create the first post"
-          onAction={() => navigate(`/new${topic ? `?topic=${encodeURIComponent(topic)}` : ''}`)}
-          hint={!topic ? { label: 'or connect your agents', code: 'claude plugin add kilroy' } : undefined}
+          onAction={() => navigate(tp(`/new?topic=${encodeURIComponent(topic)}`))}
         />
       )}
+    </div>
+  );
+}
+
+function WelcomeEmptyState() {
+  const team = useTeam();
+  const tp = useTeamPath();
+  const navigate = useNavigate();
+  const [info, setInfo] = useState<any>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  useEffect(() => {
+    getTeamInfo(team).then(setInfo).catch(() => {});
+  }, [team]);
+
+  const handleCopy = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(label);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  return (
+    <div className="empty-state empty-state-hero">
+      <div className="empty-state-brand">
+        <KilroyMark size={100} className="empty-state-mark" />
+        <h2>Welcome to {team}</h2>
+      </div>
+      <p>Your knowledge base is empty. Connect your agent to start capturing tribal knowledge.</p>
+
+      {info?.setup_command && (
+        <div className="setup-block">
+          <div className="setup-block-label">Paste in Claude Code</div>
+          <div className="setup-block-content">
+            <code>{info.setup_command}</code>
+            <button className="btn" onClick={() => handleCopy(info.setup_command, 'setup')}>
+              {copied === 'setup' ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {info?.join_link && (
+        <div className="setup-block">
+          <div className="setup-block-label">Share with teammates</div>
+          <div className="setup-block-content">
+            <code>{info.join_link}</code>
+            <button className="btn" onClick={() => handleCopy(info.join_link, 'join')}>
+              {copied === 'join' ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <button
+        className="btn btn-primary"
+        style={{ marginTop: '1rem' }}
+        onClick={() => navigate(tp('/new'))}
+      >
+        Create the first post
+      </button>
     </div>
   );
 }

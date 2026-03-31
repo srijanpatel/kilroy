@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { browse, search } from '../lib/api';
+import { useTeam, useTeamPath } from '../context/TeamContext';
 import { KilroyMark } from './KilroyMark';
 
 interface OmnibarProps {
@@ -15,6 +16,8 @@ function getInitialTheme(): string {
 
 export function Omnibar({ currentTopic }: OmnibarProps) {
   const navigate = useNavigate();
+  const team = useTeam();
+  const tp = useTeamPath();
   const [active, setActive] = useState(false);
   const [theme, setTheme] = useState(getInitialTheme);
 
@@ -34,7 +37,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
   const [allTopics, setAllTopics] = useState<string[]>([]);
 
   useEffect(() => {
-    browse({ recursive: 'true', status: 'all', limit: '200' })
+    browse(team, { recursive: 'true', status: 'all', limit: '200' })
       .then((data) => {
         const paths = new Set<string>();
         for (const p of data.posts || []) {
@@ -62,7 +65,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
     setTopics(matchedTopics);
 
     const timer = setTimeout(() => {
-      search({ query: query.trim(), status: 'all', limit: '5' })
+      search(team, { query: query.trim(), status: 'all', limit: '5' })
         .then((data) => setPosts(data.results || []))
         .catch(() => setPosts([]));
     }, 200);
@@ -118,10 +121,10 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
 
   const handleSelect = (index: number) => {
     if (index < topics.length) {
-      navigate(`/${topics[index]}/`);
+      navigate(tp(`/${topics[index]}/`));
     } else {
       const post = posts[index - topics.length];
-      if (post) navigate(`/post/${post.post_id}`);
+      if (post) navigate(tp(`/post/${post.post_id}`));
     }
     deactivate();
   };
@@ -138,7 +141,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
       if (selectedIndex >= 0) {
         handleSelect(selectedIndex);
       } else if (query.trim()) {
-        navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+        navigate(tp(`/search?q=${encodeURIComponent(query.trim())}`));
         deactivate();
       }
     }
@@ -198,7 +201,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
           </>
         ) : (
           <div className="omnibar-resting" onClick={activate}>
-            <Link to="/" className="omnibar-wordmark" onClick={(e) => e.stopPropagation()}>
+            <Link to={tp('/')} className="omnibar-wordmark" onClick={(e) => e.stopPropagation()}>
               <KilroyMark size={22} />
               kilroy<span className="omnibar-sep">/</span>
             </Link>
@@ -210,7 +213,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
                     <span key={path}>
                       {i > 0 && <span className="omnibar-sep">/</span>}
                       <Link
-                        to={`/${path}/`}
+                        to={tp(`/${path}/`)}
                         className="omnibar-segment"
                         onClick={(e) => e.stopPropagation()}
                       >
