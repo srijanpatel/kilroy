@@ -18,7 +18,7 @@ infoRouter.get("/", async (c) => {
 
   return c.json({
     slug: teamSlug,
-    setup_command: `/kilroy-setup ${teamUrl} ${projectKey}`,
+    setup_command: `claude plugin install kilroy && claude -p "/kilroy-setup ${teamUrl} ${projectKey}"`,
     join_link: `${teamUrl}/join?token=${projectKey}`,
   });
 });

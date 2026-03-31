@@ -76,35 +76,22 @@ export function JoinView() {
           <h1 className="landing-title">Kilroy <span className="landing-tagline">&mdash; you're in.</span></h1>
         </div>
 
-        {/* Zone 1: Hero action — install plugin + run setup */}
+        {/* Zone 1: Hero action — one-shot shell command */}
         <p className="landing-desc">
           You've joined <strong style={{ color: 'var(--text)' }}>{team}</strong>. Let's connect your agent.
         </p>
-
-        <p className="join-instruction">1. Install the plugin:</p>
-        <div className="join-command">
-          <code>/install-plugin kilroy</code>
-          <button
-            className="btn"
-            onClick={() => handleCopy('/install-plugin kilroy', 'plugin')}
-          >
-            {copied === 'plugin' ? 'Copied!' : 'Copy'}
-          </button>
-        </div>
+        <p className="join-instruction">Run this in your terminal:</p>
 
         {data?.setup_command && (
-          <>
-            <p className="join-instruction">2. Then run this:</p>
-            <div className="join-command">
-              <code>{data.setup_command}</code>
-              <button
-                className="btn"
-                onClick={() => handleCopy(data.setup_command, 'setup')}
-              >
-                {copied === 'setup' ? 'Copied!' : 'Copy'}
-              </button>
-            </div>
-          </>
+          <div className="join-command">
+            <code>{data.setup_command}</code>
+            <button
+              className="btn"
+              onClick={() => handleCopy(data.setup_command, 'setup')}
+            >
+              {copied === 'setup' ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
         )}
 
         {/* Zone 2: Secondary — invite teammates */}
