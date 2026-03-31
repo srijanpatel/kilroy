@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { initDatabase } from "./db";
 import { api } from "./routes/api";
-import { teamsRouter, joinHandler } from "./routes/teams";
+import { teamsRouter, joinApiHandler } from "./routes/teams";
 import { teamAuth } from "./middleware/team";
 import { createMcpServer } from "./mcp/server";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
@@ -20,8 +20,8 @@ app.route("/teams", teamsRouter);
 // Team-scoped routes
 const teamApp = new Hono<Env>();
 
-// Join page — validates token, sets cookie (no auth middleware — the join handler does its own validation)
-teamApp.route("/join", joinHandler);
+// Join API — validates token, sets cookie (before auth middleware — the token IS the auth)
+teamApp.route("/api/join", joinApiHandler);
 
 // Auth middleware for all other team routes
 teamApp.use("/api/*", teamAuth);

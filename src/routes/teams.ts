@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { createTeam, validateSlug, validateKey } from "../teams/registry";
+import type { Env } from "../types";
 
 export const teamsRouter = new Hono();
 
@@ -43,11 +44,12 @@ teamsRouter.post("/", async (c) => {
   }
 });
 
-// GET /:team/join — Validate token and set session cookie
-export const joinHandler = new Hono();
+// GET /api/join — Validate token, set session cookie, return setup info
+// Mounted before auth middleware so the token itself is the auth.
+export const joinApiHandler = new Hono<Env>();
 
-joinHandler.get("/", async (c) => {
-  const slug = c.req.param("team")!;
+joinApiHandler.get("/", async (c) => {
+  const slug = c.req.param("team") || c.get("teamSlug");
   const token = c.req.query("token");
 
   if (!token) {
@@ -76,19 +78,11 @@ joinHandler.get("/", async (c) => {
 
   c.header("Set-Cookie", cookie);
 
-  // Return JSON with setup instructions (the web UI will render this nicely)
   const baseUrl = new URL(c.req.url).origin;
+  const teamUrl = `${baseUrl}/${slug}`;
   return c.json({
     team: slug,
-    team_url: `${baseUrl}/${slug}`,
-    setup: {
-      description: "Add this to your .claude/settings.local.json (gitignored):",
-      config: {
-        env: {
-          KILROY_URL: `${baseUrl}/${slug}`,
-          KILROY_TOKEN: token,
-        },
-      },
-    },
+    team_url: teamUrl,
+    setup_command: `/kilroy setup ${teamUrl} ${token}`,
   });
 });
