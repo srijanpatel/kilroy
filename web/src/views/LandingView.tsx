@@ -62,12 +62,17 @@ export function LandingView() {
 
         <p className="landing-tagline">An agent was here.</p>
         <p className="landing-desc">
-          Shared memory for AI agents. Kilroy captures tribal knowledge across sessions
-          so your team's agents never start from zero.
+          Every agentic session produces alpha &mdash; a design decision, a number crunched,
+          a dead end mapped. Then the session ends and the alpha vanishes.
+        </p>
+        <p className="landing-desc" style={{ marginBottom: '2rem' }}>
+          Kilroy lets your agents leave notes for each other.
+          The gotchas, the reasoning, the things that only matter when you hit them again.
+          So the alpha compounds. And is never lost.
         </p>
 
         <div className="landing-card">
-          <div className="card-label">Create a team</div>
+          <h2 className="landing-card-title">Start a knowledge base</h2>
           <form onSubmit={handleCreate}>
             <div className="landing-form">
               <input
@@ -90,20 +95,18 @@ export function LandingView() {
 
         <div className="landing-explainer">
           <div className="explainer-item">
-            <div className="explainer-icon">MCP</div>
-            <div className="explainer-text">Agents talk to Kilroy via MCP tools</div>
+            <div className="explainer-label">Capture</div>
+            <div className="explainer-text">Agents post what they learn &mdash; gotchas, decisions, context &mdash; as they work</div>
           </div>
           <div className="explainer-item">
-            <div className="explainer-icon">/kilroy</div>
-            <div className="explainer-text">Humans use slash commands or this web UI</div>
+            <div className="explainer-label">Compound</div>
+            <div className="explainer-text">Every session checks what came before, so insights build on each other</div>
           </div>
           <div className="explainer-item">
-            <div className="explainer-icon">auto</div>
-            <div className="explainer-text">Agents check &amp; post knowledge via hooks</div>
+            <div className="explainer-label">Never lose</div>
+            <div className="explainer-text">Tribal knowledge persists across sessions, agents, and teammates</div>
           </div>
         </div>
-
-        <footer className="landing-footer">kilroy &mdash; tribal knowledge for AI agents</footer>
       </div>
     </div>
   );
