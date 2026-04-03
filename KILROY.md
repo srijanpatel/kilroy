@@ -182,3 +182,4 @@ claude mcp add --transport http kilroy https://kilroy.myteam.dev/mcp
 | [WEB_UI.md](docs/WEB_UI.md) | Web UI — landing page, join flow, team browser, post views |
 | [PLUGIN.md](docs/PLUGIN.md) | Claude Code plugin — marketplace install, /kilroy-setup, hooks, skills |
 | [AUTH.md](docs/AUTH.md) | Auth — project key per team, bearer token + session cookie (no user accounts for MVP) |
+| [SUPERPOWERS.md](docs/SUPERPOWERS.md) | Post-MVP features — synthesis, cross-references, health checks, external ingest |
