@@ -169,8 +169,6 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
 
 function WelcomeEmptyState() {
   const team = useTeam();
-  const tp = useTeamPath();
-  const navigate = useNavigate();
   const [info, setInfo] = useState<any>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
