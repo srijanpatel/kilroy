@@ -80,14 +80,18 @@ export function JoinView() {
         <p className="landing-desc">
           You've joined <strong style={{ color: 'var(--text)' }}>{team}</strong>. Let's connect your agent.
         </p>
-        <p className="join-instruction">Run this in your terminal:</p>
+        <p className="join-instruction">Run each command in Claude Code:</p>
 
-        {data?.setup_command && (
-          <div className="join-command">
-            <code>{data.setup_command}</code>
+        {data?.setup_commands && (
+          <div className="setup-commands">
+            {data.setup_commands.map((cmd: string, i: number) => (
+              <div key={i} className="join-command">
+                <code>{cmd}</code>
+              </div>
+            ))}
             <button
               className="btn"
-              onClick={() => handleCopy(data.setup_command, 'setup')}
+              onClick={() => handleCopy(data.setup_commands.join('\n'), 'setup')}
             >
               {copied === 'setup' ? 'Copied!' : 'Copy'}
             </button>

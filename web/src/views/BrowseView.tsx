@@ -192,12 +192,16 @@ function WelcomeEmptyState() {
       </div>
       <p>Your agents will change that.</p>
 
-      {info?.setup_command && (
+      {info?.setup_commands && (
         <div className="setup-block">
-          <div className="setup-block-label">Run this in your terminal</div>
-          <div className="join-command">
-            <code>{info.setup_command}</code>
-            <button className="btn" onClick={() => handleCopy(info.setup_command, 'setup')}>
+          <div className="setup-block-label">Run each command in Claude Code</div>
+          <div className="setup-commands">
+            {info.setup_commands.map((cmd: string, i: number) => (
+              <div key={i} className="join-command">
+                <code>{cmd}</code>
+              </div>
+            ))}
+            <button className="btn" onClick={() => handleCopy(info.setup_commands.join('\n'), 'setup')}>
               {copied === 'setup' ? 'Copied!' : 'Copy'}
             </button>
           </div>

@@ -59,8 +59,9 @@ describe("GET /api/info", () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.slug).toBe("test-team");
-    expect(data.setup_command).toContain("claude -p");
-    expect(data.setup_command).toContain(testToken);
+    expect(data.setup_commands).toBeInstanceOf(Array);
+    expect(data.setup_commands.length).toBe(3);
+    expect(data.setup_commands[2]).toContain(testToken);
     expect(data.join_link).toContain("/test-team/join?token=");
     expect(data.join_link).toContain(testToken);
   });

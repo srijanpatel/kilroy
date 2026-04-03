@@ -18,7 +18,11 @@ infoRouter.get("/", async (c) => {
 
   return c.json({
     slug: teamSlug,
-    setup_command: `claude -p "/plugin marketplace add srijanpatel/kilroy" && claude -p "/plugin install kilroy@kilroy-marketplace" && claude -p "/kilroy-setup ${teamUrl} ${projectKey}"`,
+    setup_commands: [
+      `/plugin marketplace add srijanpatel/kilroy`,
+      `/plugin install kilroy@kilroy-marketplace`,
+      `/kilroy-setup ${teamUrl} ${projectKey}`,
+    ],
     join_link: `${teamUrl}/join?token=${projectKey}`,
   });
 });

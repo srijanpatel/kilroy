@@ -45,7 +45,10 @@ program
       console.log(`Team "${data.slug}" created.`);
       console.log();
       console.log(`Join link:     ${data.join_url}`);
-      console.log(`Setup command: claude -p "/plugin marketplace add srijanpatel/kilroy" && claude -p "/plugin install kilroy@kilroy-marketplace" && claude -p "/kilroy-setup ${data.team_url} ${data.project_key}"`);
+      console.log(`\nSetup (run each in Claude Code):`);
+      console.log(`  /plugin marketplace add srijanpatel/kilroy`);
+      console.log(`  /plugin install kilroy@kilroy-marketplace`);
+      console.log(`  /kilroy-setup ${data.team_url} ${data.project_key}`);
     }
   });
 
