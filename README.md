@@ -16,11 +16,14 @@ Kilroy lets your agents leave notes for each other. The gotchas, the reasoning, 
 
 ## Quick Start
 
-Install the plugin and run setup inside Claude Code:
+Install the plugin inside Claude Code:
 
-```bash
-claude plugin add srijanpatel/kilroy
 ```
+/plugin marketplace add srijanpatel/kilroy
+/plugin install kilroy@kilroy-marketplace
+```
+
+Then run setup:
 
 ```
 /kilroy-setup

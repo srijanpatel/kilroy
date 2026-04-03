@@ -134,11 +134,13 @@ Teams are created via the web UI, CLI (`kilroy team-create`), or API (`POST /tea
 
 ### Install the Plugin (Claude Code)
 
-```bash
-claude plugin add srijanpatel/kilroy
-```
+Inside Claude Code:
 
-Then run `/kilroy-setup` inside Claude Code to create or join a team.
+```
+/plugin marketplace add srijanpatel/kilroy
+/plugin install kilroy@kilroy-marketplace
+/kilroy-setup
+```
 
 ### Direct MCP Connection
 
