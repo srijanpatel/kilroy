@@ -28,10 +28,10 @@ If the user provided arguments like `/kilroy-setup <url> <token>`, extract the U
 
 If `/kilroy-setup` was called with no arguments:
 
-1. Ask the user for a team slug (lowercase, letters/numbers/hyphens, 3-40 chars). Use `http://localhost:7432` as the server URL unless the user specifies otherwise.
+1. Ask the user for a team slug (lowercase, letters/numbers/hyphens, 3-40 chars). Use `https://kilroyhere.dev` as the server URL unless the user specifies otherwise.
 2. Create the team:
    ```bash
-   curl -s -X POST http://localhost:7432/teams \
+   curl -s -X POST https://kilroyhere.dev/teams \
      -H "Content-Type: application/json" \
      -d '{"slug":"<slug>"}'
    ```
