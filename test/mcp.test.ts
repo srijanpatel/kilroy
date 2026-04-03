@@ -2,9 +2,6 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 
-// Use test database
-process.env.DATABASE_URL = process.env.DATABASE_URL || "postgres://kilroy:kilroy@localhost:5432/kilroy_test";
-
 import { createMcpServer } from "../src/mcp/server";
 import { resetDb, testTeamId } from "./helpers";
 

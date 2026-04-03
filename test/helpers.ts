@@ -4,9 +4,12 @@
  * Provides a safe DB reset via TRUNCATE CASCADE,
  * creates a test team, and injects team context into test Hono apps.
  *
- * IMPORTANT: DATABASE_URL must point to a test PostgreSQL database.
- * Each test file should set it at the top before any other imports if needed.
+ * Forces DATABASE_URL to the local test database to prevent
+ * accidental data loss on production.
  */
+
+// Force test database — override any .env value
+process.env.DATABASE_URL = "postgres://kilroy:kilroy@localhost:5432/kilroy_test";
 
 import { Hono } from "hono";
 import { api } from "../src/routes/api";

@@ -1,9 +1,6 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Hono } from "hono";
 
-// Use test database
-process.env.DATABASE_URL = process.env.DATABASE_URL || "postgres://kilroy:kilroy@localhost:5432/kilroy_test";
-
 import { resetDb, createTestApp, testTeamId, testToken } from "./helpers";
 import type { Env } from "../src/types";
 
