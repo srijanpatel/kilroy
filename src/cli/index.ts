@@ -44,11 +44,9 @@ program
     } else {
       console.log(`Team "${data.slug}" created.`);
       console.log();
-      console.log(`Join link:     ${data.join_url}`);
-      console.log(`\nSetup (run each in Claude Code):`);
-      console.log(`  /plugin marketplace add srijanpatel/kilroy`);
-      console.log(`  /plugin install kilroy@kilroy-marketplace`);
-      console.log(`  /kilroy-setup ${data.team_url} ${data.project_key}`);
+      console.log(`Join link: ${data.join_url}`);
+      console.log(`\nTeammate setup (run in project directory):`);
+      console.log(`  curl -sL "${data.team_url}/install?token=${data.project_key}" | sh`);
     }
   });
 

@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { getTeamProjectKey } from "../teams/registry";
+import { getBaseUrl } from "../lib/url";
 import type { Env } from "../types";
 
 export const infoRouter = new Hono<Env>();
@@ -13,16 +14,12 @@ infoRouter.get("/", async (c) => {
     return c.json({ error: "Team not found", code: "NOT_FOUND" }, 404);
   }
 
-  const baseUrl = new URL(c.req.url).origin;
+  const baseUrl = getBaseUrl(c.req.url);
   const teamUrl = `${baseUrl}/${teamSlug}`;
 
   return c.json({
     slug: teamSlug,
-    setup_commands: [
-      `/plugin marketplace add srijanpatel/kilroy`,
-      `/plugin install kilroy@kilroy-marketplace`,
-      `/kilroy-setup ${teamUrl} ${projectKey}`,
-    ],
+    install_command: `curl -sL "${teamUrl}/install?token=${projectKey}" | sh`,
     join_link: `${teamUrl}/join?token=${projectKey}`,
   });
 });

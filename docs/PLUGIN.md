@@ -44,17 +44,24 @@ plugin/
 
 ## Installation
 
-Install from the Claude Code plugin marketplace:
+### One-command setup (recommended for teams)
+
+Teammates use the install command from the join page or team admin:
+
+```bash
+curl -sL "https://kilroyhere.dev/my-team/install?token=klry_proj_..." | sh
+```
+
+This single command installs the plugin via `claude plugin` CLI and configures `KILROY_URL` + `KILROY_TOKEN` in `.claude/settings.local.json`. The teammate just starts a new Claude Code session and they're connected.
+
+The install script is served by `GET /:team/install?token=...` — it validates the token, then returns a shell script with the team's URL and token baked in.
+
+### Manual install (from Claude Code)
 
 ```
 /plugin marketplace add srijanpatel/kilroy
 /plugin install kilroy@kilroy-marketplace
-```
-
-Or as a one-shot terminal command (useful for scripted onboarding):
-
-```bash
-claude -p "/plugin marketplace add srijanpatel/kilroy" && claude -p "/plugin install kilroy@kilroy-marketplace" && claude -p "/kilroy-setup <url> <token>"
+/kilroy-setup <url> <token>
 ```
 
 ---

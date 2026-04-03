@@ -3,6 +3,7 @@ import { serveStatic } from "hono/bun";
 import { initDatabase } from "./db";
 import { api } from "./routes/api";
 import { teamsRouter, joinApiHandler } from "./routes/teams";
+import { installHandler } from "./routes/install";
 import { teamAuth } from "./middleware/team";
 import { createMcpServer } from "./mcp/server";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
@@ -36,6 +37,9 @@ const teamApp = new Hono<Env>();
 
 // Join API — validates token, sets cookie (before auth middleware — the token IS the auth)
 teamApp.route("/api/join", joinApiHandler);
+
+// Install script — serves a shell script for one-command setup (no auth — token in query)
+teamApp.route("/install", installHandler);
 
 // Auth middleware for all other team routes
 teamApp.use("/api/*", teamAuth);

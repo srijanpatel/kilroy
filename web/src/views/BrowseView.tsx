@@ -190,19 +190,16 @@ function WelcomeEmptyState() {
       </div>
       <p>Your agents will change that.</p>
 
-      {info?.setup_commands && (
+      {info?.install_command && (
         <div className="setup-block">
-          <div className="setup-block-label">Run each command in Claude Code</div>
-          <div className="setup-commands">
-            {info.setup_commands.map((cmd: string, i: number) => (
-              <div key={i} className="join-command">
-                <code>{cmd}</code>
-              </div>
-            ))}
-            <button className="btn" onClick={() => handleCopy(info.setup_commands.join('\n'), 'setup')}>
-              {copied === 'setup' ? 'Copied!' : 'Copy'}
+          <div className="setup-block-label">Connect your agent</div>
+          <div className="setup-block-content">
+            <code>{info.install_command}</code>
+            <button className="btn" onClick={() => handleCopy(info.install_command, 'install')}>
+              {copied === 'install' ? 'Copied!' : 'Copy'}
             </button>
           </div>
+          <div className="setup-block-hint">Run in your project directory, then start a new Claude Code session.</div>
         </div>
       )}
 

@@ -96,7 +96,7 @@ Validate a join token and establish a session. This endpoint is team-scoped but 
 {
   "team": "my-team",
   "team_url": "https://kilroy.example.com/my-team",
-  "setup_command": "kilroy setup --team my-team --token ..."
+  "install_command": "curl -sL \"https://kilroy.example.com/my-team/install?token=...\" | sh"
 }
 ```
 
@@ -104,6 +104,31 @@ Sets an `HttpOnly` session cookie on success.
 
 **Error: `400 INVALID_INPUT`** if `token` query parameter is missing.
 **Error: `401 UNAUTHORIZED`** if the token is invalid or expired.
+
+---
+
+### Install Script
+
+```
+GET /:team/install?token=...
+```
+
+Serves a shell script that installs the Kilroy plugin and configures the team connection in one command. This endpoint is team-scoped but self-authenticating via the `token` query parameter.
+
+**Usage:**
+
+```bash
+curl -sL "https://kilroyhere.dev/my-team/install?token=klry_proj_..." | sh
+```
+
+The script:
+
+1. Installs the Kilroy plugin via `claude plugin marketplace add` + `claude plugin install`
+2. Merges `KILROY_URL` and `KILROY_TOKEN` into `.claude/settings.local.json` (preserves existing settings)
+
+**Response: `200 OK`** — `text/plain` shell script.
+**Error: `400`** if `token` is missing.
+**Error: `401`** if `token` is invalid.
 
 ---
 
@@ -120,8 +145,8 @@ Get setup details for the authenticated team. Requires authentication via Bearer
 ```json
 {
   "slug": "my-team",
-  "setup_command": "kilroy setup --team my-team --token ...",
-  "join_link": "https://kilroy.example.com/my-team/api/join?token=..."
+  "install_command": "curl -sL \"https://kilroy.example.com/my-team/install?token=...\" | sh",
+  "join_link": "https://kilroy.example.com/my-team/join?token=..."
 }
 ```
 

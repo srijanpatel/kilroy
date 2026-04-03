@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { createTeam, validateSlug, validateKey } from "../teams/registry";
+import { getBaseUrl } from "../lib/url";
 import type { Env } from "../types";
 
 export const teamsRouter = new Hono();
@@ -22,7 +23,7 @@ teamsRouter.post("/", async (c) => {
 
   try {
     const team = await createTeam(body.slug);
-    const baseUrl = new URL(c.req.url).origin;
+    const baseUrl = getBaseUrl(c.req.url);
 
     return c.json(
       {
@@ -82,15 +83,11 @@ joinApiHandler.get("/", async (c) => {
 
   c.header("Set-Cookie", cookie);
 
-  const baseUrl = new URL(c.req.url).origin;
+  const baseUrl = getBaseUrl(c.req.url);
   const teamUrl = `${baseUrl}/${slug}`;
   return c.json({
     team: slug,
     team_url: teamUrl,
-    setup_commands: [
-      `/plugin marketplace add srijanpatel/kilroy`,
-      `/plugin install kilroy@kilroy-marketplace`,
-      `/kilroy-setup ${teamUrl} ${token}`,
-    ],
+    install_command: `curl -sL "${teamUrl}/install?token=${token}" | sh`,
   });
 });

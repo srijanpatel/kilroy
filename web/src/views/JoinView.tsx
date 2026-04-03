@@ -80,23 +80,21 @@ export function JoinView() {
         <p className="landing-desc">
           You've joined <strong style={{ color: 'var(--text)' }}>{team}</strong>. Let's connect your agent.
         </p>
-        <p className="join-instruction">Run each command in Claude Code:</p>
+        <p className="join-instruction">Run this in your project directory:</p>
 
-        {data?.setup_commands && (
-          <div className="setup-commands">
-            {data.setup_commands.map((cmd: string, i: number) => (
-              <div key={i} className="join-command">
-                <code>{cmd}</code>
-              </div>
-            ))}
+        {data?.install_command && (
+          <div className="join-command">
+            <code>{data.install_command}</code>
             <button
               className="btn"
-              onClick={() => handleCopy(data.setup_commands.join('\n'), 'setup')}
+              onClick={() => handleCopy(data.install_command, 'install')}
             >
-              {copied === 'setup' ? 'Copied!' : 'Copy'}
+              {copied === 'install' ? 'Copied!' : 'Copy'}
             </button>
           </div>
         )}
+
+        <p className="join-hint">Then start a new Claude Code session. That's it.</p>
 
         {/* Zone 2: Secondary — invite teammates */}
         <div className="join-secondary">

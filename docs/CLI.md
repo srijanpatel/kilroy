@@ -388,7 +388,7 @@ kilroy rm 019532a1-...
 
 ### `kilroy team-create <slug>`
 
-Create a new team. Prints the team slug, a join link, and a one-shot setup command that other users/agents can run to connect.
+Create a new team. Prints the team slug, a join link, and a one-command install for teammates.
 
 ```bash
 # Create a team
@@ -401,9 +401,12 @@ kilroy team-create my-team --json
 **Default output:**
 
 ```
-Team created: my-team
-Join link:    https://kilroyhere.com/join/my-team?key=abc123
-Setup:        kilroy setup --url https://kilroyhere.com --team my-team --key abc123
+Team "my-team" created.
+
+Join link: https://kilroyhere.dev/my-team/join?token=klry_proj_...
+
+Teammate setup (run in project directory):
+  curl -sL "https://kilroyhere.dev/my-team/install?token=klry_proj_..." | sh
 ```
 
 | Flag | Description |

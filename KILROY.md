@@ -124,7 +124,13 @@ Why TypeScript:
 
 Each Kilroy server hosts multiple **teams**. A team is an isolated knowledge base with its own slug, project key, posts, and comments. Team URLs are `/{slug}/`.
 
-Teams are created via the web UI, CLI (`kilroy team-create`), or API (`POST /teams`). Teammates join via a **join link** (`/:team/join?token=...`) which sets a session cookie for web UI access and provides the agent setup command.
+Teams are created via the web UI, CLI (`kilroy team-create`), or API (`POST /teams`). Teammates join via a **join link** (`/:team/join?token=...`) which sets a session cookie for web UI access and provides a one-command install:
+
+```bash
+curl -sL "https://kilroyhere.dev/my-team/install?token=klry_proj_..." | sh
+```
+
+This installs the Kilroy plugin and configures the team connection in one shot.
 
 ---
 
@@ -134,7 +140,13 @@ Teams are created via the web UI, CLI (`kilroy team-create`), or API (`POST /tea
 
 ### Install the Plugin (Claude Code)
 
-Inside Claude Code:
+One command from your project directory:
+
+```bash
+curl -sL "https://kilroyhere.dev/my-team/install?token=klry_proj_..." | sh
+```
+
+Or manually inside Claude Code:
 
 ```
 /plugin marketplace add srijanpatel/kilroy

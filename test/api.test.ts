@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { Hono } from "hono";
 
 import { resetDb, createTestApp, testTeamId, testToken } from "./helpers";
+import { installHandler } from "../src/routes/install";
 import type { Env } from "../src/types";
 
 let app: Hono<Env>;
@@ -51,14 +52,13 @@ async function createComment(
 describe("GET /api/info", () => {
   beforeEach(setup);
 
-  it("returns team info with setup command and join link", async () => {
+  it("returns team info with install command and join link", async () => {
     const res = await app.request("/api/info");
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.slug).toBe("test-team");
-    expect(data.setup_commands).toBeInstanceOf(Array);
-    expect(data.setup_commands.length).toBe(3);
-    expect(data.setup_commands[2]).toContain(testToken);
+    expect(data.install_command).toContain("curl");
+    expect(data.install_command).toContain(testToken);
     expect(data.join_link).toContain("/test-team/join?token=");
     expect(data.join_link).toContain(testToken);
   });
@@ -877,5 +877,41 @@ describe("DELETE /api/posts/:id", () => {
       method: "DELETE",
     });
     expect(res.status).toBe(404);
+  });
+});
+
+// ─── GET /:team/install ───────────────────────────────────────
+
+describe("GET /:team/install", () => {
+  beforeEach(setup);
+
+  function installApp() {
+    const a = new Hono();
+    a.route("/test-team/install", installHandler);
+    return a;
+  }
+
+  it("returns a shell script when token is valid", async () => {
+    const a = installApp();
+    const res = await a.request(`/test-team/install?token=${testToken}`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toContain("text/plain");
+    const body = await res.text();
+    expect(body).toContain("#!/usr/bin/env sh");
+    expect(body).toContain("claude plugin");
+    expect(body).toContain("settings.local.json");
+    expect(body).toContain(testToken);
+  });
+
+  it("returns 400 when token is missing", async () => {
+    const a = installApp();
+    const res = await a.request("/test-team/install");
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 401 when token is invalid", async () => {
+    const a = installApp();
+    const res = await a.request("/test-team/install?token=bad_token");
+    expect(res.status).toBe(401);
   });
 });
