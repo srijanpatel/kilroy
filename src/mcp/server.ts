@@ -6,7 +6,7 @@ import type { Env } from "../types";
 
 /** Make an internal request to the API and return the parsed JSON response. */
 function createApiRequest(workspaceId: string) {
-  // Internal Hono app with team context injected
+  // Internal Hono app with workspace context injected
   const app = new Hono<Env>();
   app.use("*", async (c, next) => {
     c.set("workspaceId", workspaceId);

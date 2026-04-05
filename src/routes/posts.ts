@@ -159,7 +159,7 @@ postsRouter.patch("/:id/comments/:commentId", async (c) => {
 
   const workspaceId = c.get("workspaceId");
 
-  // Find the comment and verify it belongs to this post and team
+  // Find the comment and verify it belongs to this post and workspace
   const [comment] = await db.select().from(comments)
     .where(and(eq(comments.id, commentId), eq(comments.workspaceId, workspaceId)));
 
