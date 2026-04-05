@@ -1244,6 +1244,63 @@ a:hover { color: var(--accent-hover); }
   margin-bottom: 2rem;
 }
 
+.landing-teams {
+  max-width: 480px;
+  margin-bottom: 2rem;
+}
+
+.landing-teams-label {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.landing-teams-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.landing-team-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.9rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.landing-team-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 2px 12px var(--accent-glow);
+  color: var(--text);
+}
+
+.landing-team-slug {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.landing-team-arrow {
+  margin-left: auto;
+  color: var(--text-dim);
+  transition: color 0.15s;
+}
+
+.landing-team-card:hover .landing-team-arrow {
+  color: var(--accent);
+}
+
 .landing-bar {
   position: relative;
   display: flex;

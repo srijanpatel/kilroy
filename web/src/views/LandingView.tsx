@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { KilroyMark } from '../components/KilroyMark';
+import { getKnownTeams } from '../lib/teams';
 
 function getInitialTheme(): string {
   const stored = localStorage.getItem('kilroy_theme');
@@ -13,6 +14,7 @@ export function LandingView() {
   const [slug, setSlug] = useState('');
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
+  const [knownTeams] = useState(getKnownTeams);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', getInitialTheme());
@@ -70,6 +72,22 @@ export function LandingView() {
           So the alpha compounds. And is never lost.
         </p>
 
+        {knownTeams.length > 0 && (
+          <div className="landing-teams">
+            <div className="landing-teams-label">Your teams</div>
+            <div className="landing-teams-list">
+              {knownTeams.map((t) => (
+                <Link key={t} to={`/${t}/`} className="landing-team-card">
+                  <KilroyMark size={18} />
+                  <span className="landing-team-slug">{t}</span>
+                  <span className="landing-team-arrow">&rarr;</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="landing-teams-label">{knownTeams.length > 0 ? 'Create a new team' : ''}</div>
         <form className="landing-bar" onSubmit={handleCreate}>
           <input
             className="landing-bar-input"

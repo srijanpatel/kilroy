@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTeam, useTeamPath } from '../context/TeamContext';
 import { joinTeam } from '../lib/api';
+import { trackTeam } from '../lib/teams';
 import { KilroyMark } from '../components/KilroyMark';
 
 export function JoinView() {
@@ -25,6 +26,7 @@ export function JoinView() {
 
     joinTeam(team, token)
       .then((d) => {
+        trackTeam(team);
         setData(d);
         setStatus('success');
       })
