@@ -25,6 +25,9 @@ if (indexHtml) {
   // Root-level assets (JS/CSS bundles for the landing page)
   app.use("/assets/*", serveStatic({ root: webDistPath }));
 
+  // Favicon
+  app.use("/kilroy.svg", serveStatic({ root: webDistPath, path: "kilroy.svg" }));
+
   // Landing page — SPA shell at root
   app.get("/", (c) => c.html(indexHtml));
 }
