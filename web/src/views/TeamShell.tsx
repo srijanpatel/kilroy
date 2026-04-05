@@ -7,7 +7,7 @@ import { AuthorPrompt } from '../components/AuthorPrompt';
 import { BrowseView } from './BrowseView';
 import { PostView } from './PostView';
 import { SearchView } from './SearchView';
-import { NewPostView } from './NewPostView';
+import { PostEditorView } from './NewPostView';
 import { JoinView } from './JoinView';
 
 export function TeamShell() {
@@ -30,9 +30,10 @@ export function TeamShell() {
             <AuthorPrompt />
             <Omnibar currentTopic={currentTopic} />
             <Routes>
+              <Route path="post/:id/edit" element={<PostEditorView onTopicChange={setCurrentTopic} />} />
               <Route path="post/:id" element={<PostView onTopicChange={setCurrentTopic} />} />
               <Route path="search" element={<SearchView />} />
-              <Route path="new" element={<NewPostView />} />
+              <Route path="new" element={<PostEditorView onTopicChange={setCurrentTopic} />} />
               <Route path="*" element={<BrowseView onTopicChange={setCurrentTopic} />} />
             </Routes>
           </div>

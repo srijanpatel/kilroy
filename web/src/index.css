@@ -268,6 +268,16 @@ a:hover { color: var(--accent-hover); }
   white-space: nowrap;
 }
 
+.card-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.card-edit-action {
+  font-size: 0.72rem;
+}
+
 .card-meta {
   font-family: var(--font-mono);
   font-size: 0.8rem;
@@ -685,6 +695,26 @@ a:hover { color: var(--accent-hover); }
 
 .title-input::placeholder {
   color: var(--text-dim);
+}
+
+.form-heading {
+  margin-bottom: 1.5rem;
+}
+
+.form-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.form-title {
+  margin: 0;
+  font-size: 1.8rem;
+  line-height: 1.15;
+  color: var(--text);
 }
 
 /* Buttons */

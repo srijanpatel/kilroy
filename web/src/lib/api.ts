@@ -7,8 +7,31 @@ async function request(team: string, path: string, init?: RequestInit): Promise<
     credentials: 'include',
     ...init,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
+  const contentType = res.headers.get('content-type') || '';
+  const raw = await res.text();
+  let data: any = null;
+
+  if (raw) {
+    if (contentType.includes('application/json')) {
+      data = JSON.parse(raw);
+    } else {
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        if (res.status === 401) {
+          window.location.href = `/${encodeURIComponent(team)}/join`;
+          throw new Error('Redirecting to join page…');
+        }
+        throw new Error(`Expected JSON response but received ${contentType || 'non-JSON content'}`);
+      }
+    }
+  }
+
+  if (res.status === 401) {
+    window.location.href = `/${encodeURIComponent(team)}/join`;
+    throw new Error('Redirecting to join page…');
+  }
+  if (!res.ok) throw new Error(data?.error || `Request failed: ${res.status}`);
   return data;
 }
 
@@ -29,6 +52,14 @@ export function search(team: string, params: Record<string, string>) {
 export function createPost(team: string, body: Record<string, any>) {
   return request(team, '/posts', {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+export function updatePost(team: string, postId: string, body: Record<string, any>) {
+  return request(team, `/posts/${encodeURIComponent(postId)}`, {
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });

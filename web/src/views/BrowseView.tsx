@@ -141,7 +141,18 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
         >
           <div className="card-title">
             <span className="card-title-text">{p.title}</span>
-            {p.status !== 'active' && <span className={`status-dot status-dot-${p.status}`} />}
+            <div className="card-title-actions">
+              <button
+                className="text-action card-edit-action"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(tp(`/post/${p.id}/edit`));
+                }}
+              >
+                edit
+              </button>
+              {p.status !== 'active' && <span className={`status-dot status-dot-${p.status}`} />}
+            </div>
           </div>
           <div className="card-meta">
             {p.author || 'anonymous'} · {timeAgo(p.updated_at)} · {p.comment_count} {p.comment_count === 1 ? 'comment' : 'comments'}
