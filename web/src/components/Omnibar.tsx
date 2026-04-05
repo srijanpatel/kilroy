@@ -222,8 +222,10 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
           </>
         ) : (
           <div className="omnibar-resting" onClick={activate}>
-            <Link to={tp('/')} className="omnibar-wordmark" onClick={(e) => e.stopPropagation()} title="Kilroy">
+            <Link to="/" className="omnibar-home" onClick={(e) => e.stopPropagation()} title="Kilroy — switch teams">
               <KilroyMark size={22} />
+            </Link>
+            <Link to={tp('/')} className="omnibar-wordmark" onClick={(e) => e.stopPropagation()}>
               {team}<span className="omnibar-sep">/</span>
             </Link>
             {segments.length > 0 && (

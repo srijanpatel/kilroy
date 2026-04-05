@@ -93,6 +93,18 @@ a:hover { color: var(--accent-hover); }
   gap: 0.15rem;
 }
 
+.omnibar-home {
+  display: flex;
+  align-items: center;
+  margin-right: 0.4rem;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+
+.omnibar-home:hover {
+  opacity: 1;
+}
+
 .omnibar-wordmark {
   font-family: var(--font-display);
   font-weight: 700;
@@ -102,7 +114,6 @@ a:hover { color: var(--accent-hover); }
   letter-spacing: -0.01em;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
 }
 
 .omnibar-wordmark:hover {
