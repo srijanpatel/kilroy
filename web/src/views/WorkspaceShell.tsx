@@ -3,6 +3,7 @@ import { Routes, Route, useParams, useLocation } from 'react-router-dom';
 import { WorkspaceProvider } from '../context/WorkspaceContext';
 import { trackWorkspace } from '../lib/workspaces';
 import { Omnibar } from '../components/Omnibar';
+import { TopicTree } from '../components/TopicTree';
 import { AuthorPrompt } from '../components/AuthorPrompt';
 import { BrowseView } from './BrowseView';
 import { PostView } from './PostView';
@@ -75,8 +76,7 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
 
   // Derive active post ID from URL (used by TopicTree in Task 4)
   const postMatch = location.pathname.match(/\/post\/([^/]+)/);
-  const _activePostId = postMatch ? postMatch[1] : null;
-  void _activePostId;
+  const activePostId = postMatch ? postMatch[1] : null;
 
   return (
     <div className="app">
@@ -91,7 +91,7 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
                 <button className="sidebar-toggle" onClick={toggle} title="Collapse sidebar (⌘\\)">«</button>
               </div>
               <div className="sidebar-tree">
-                {/* TopicTree goes here in Task 3 */}
+                <TopicTree activePostId={activePostId} onNavigate={() => setPeeking(false)} />
               </div>
             </aside>
           ) : (
@@ -110,7 +110,7 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
                     <button className="sidebar-toggle" onClick={() => { expand(); setPeeking(false); }} title="Pin sidebar (⌘\\)">»</button>
                   </div>
                   <div className="sidebar-tree">
-                    {/* TopicTree goes here in Task 3 */}
+                    <TopicTree activePostId={activePostId} onNavigate={() => setPeeking(false)} />
                   </div>
                 </aside>
               )}
