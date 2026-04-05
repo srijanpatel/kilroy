@@ -5,6 +5,7 @@ import { api } from "./routes/api";
 import { workspacesRouter, joinApiHandler } from "./routes/workspaces";
 import { installHandler } from "./routes/install";
 import { workspaceAuth } from "./middleware/workspace";
+import { statsRouter } from "./routes/stats";
 import { createMcpServer } from "./mcp/server";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { existsSync, readFileSync } from "fs";
@@ -34,6 +35,14 @@ if (indexHtml) {
 
 // Workspace creation — no auth required
 app.route("/workspaces", workspacesRouter);
+
+// System namespace — public, no auth
+app.route("/_/api", statsRouter);
+
+// Serve SPA for system pages
+if (indexHtml) {
+  app.get("/_/*", (c) => c.html(indexHtml));
+}
 
 // Workspace-scoped routes
 const workspaceApp = new Hono<Env>();
