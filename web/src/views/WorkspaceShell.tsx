@@ -99,20 +99,28 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
               <div
                 className="sidebar-stripe"
                 onMouseEnter={() => setPeeking(true)}
+                onClick={() => setPeeking(true)}
               />
               {peeking && (
-                <aside
-                  className="sidebar sidebar-peek"
-                  onMouseLeave={() => setTimeout(() => setPeeking(false), 300)}
-                >
-                  <div className="sidebar-header">
-                    <span className="sidebar-title">{workspace}</span>
-                    <button className="sidebar-toggle" onClick={() => { expand(); setPeeking(false); }} title="Pin sidebar (⌘\\)">»</button>
-                  </div>
-                  <div className="sidebar-tree">
-                    <TopicTree activePostId={activePostId} onNavigate={() => setPeeking(false)} />
-                  </div>
-                </aside>
+                <>
+                  <div className="sidebar-backdrop" onClick={() => setPeeking(false)} />
+                  <aside
+                    className="sidebar sidebar-peek"
+                    onMouseLeave={() => {
+                      if (window.innerWidth > 768) {
+                        setTimeout(() => setPeeking(false), 300);
+                      }
+                    }}
+                  >
+                    <div className="sidebar-header">
+                      <span className="sidebar-title">{workspace}</span>
+                      <button className="sidebar-toggle" onClick={() => { expand(); setPeeking(false); }} title="Pin sidebar (⌘\\)">»</button>
+                    </div>
+                    <div className="sidebar-tree">
+                      <TopicTree activePostId={activePostId} onNavigate={() => { expand(); setPeeking(false); }} />
+                    </div>
+                  </aside>
+                </>
               )}
             </>
           )}
