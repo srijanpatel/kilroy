@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { browse, search } from '../lib/api';
+import { browse, search, getTeamInfo } from '../lib/api';
 import { useTeam, useTeamPath } from '../context/TeamContext';
 import { KilroyMark } from './KilroyMark';
 
@@ -35,6 +35,27 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const [allTopics, setAllTopics] = useState<string[]>([]);
+  const [joinLink, setJoinLink] = useState<string | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const inviteRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    getTeamInfo(team)
+      .then((info) => setJoinLink(info?.join_link || null))
+      .catch(() => {});
+  }, [team]);
+
+  useEffect(() => {
+    if (!inviteOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (inviteRef.current && !inviteRef.current.contains(e.target as Node)) {
+        setInviteOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [inviteOpen]);
 
   useEffect(() => {
     browse(team, { recursive: 'true', status: 'all', limit: '200' })
@@ -201,9 +222,9 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
           </>
         ) : (
           <div className="omnibar-resting" onClick={activate}>
-            <Link to={tp('/')} className="omnibar-wordmark" onClick={(e) => e.stopPropagation()}>
+            <Link to={tp('/')} className="omnibar-wordmark" onClick={(e) => e.stopPropagation()} title="Kilroy">
               <KilroyMark size={22} />
-              kilroy<span className="omnibar-sep">/</span>
+              {team}<span className="omnibar-sep">/</span>
             </Link>
             {segments.length > 0 && (
               <span className="omnibar-path">
@@ -227,6 +248,35 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
             <span className="omnibar-hint">
               <kbd>⌘K</kbd>
             </span>
+            {joinLink && (
+              <div className="invite-wrapper" ref={inviteRef}>
+                <button
+                  className="invite-btn"
+                  onClick={(e) => { e.stopPropagation(); setInviteOpen((o) => !o); }}
+                  title="Invite teammates"
+                >
+                  + Invite
+                </button>
+                {inviteOpen && (
+                  <div className="invite-popover">
+                    <div className="invite-popover-label">Invite teammates</div>
+                    <div className="invite-popover-row">
+                      <code className="invite-popover-link">{joinLink}</code>
+                      <button
+                        className="btn btn-sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(joinLink);
+                          setInviteCopied(true);
+                          setTimeout(() => setInviteCopied(false), 2000);
+                        }}
+                      >
+                        {inviteCopied ? 'Copied!' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <button
               className="theme-toggle"
               onClick={(e) => { e.stopPropagation(); toggleTheme(); }}
