@@ -31,8 +31,6 @@ workspacesRouter.post("/", async (c) => {
         project_key: workspace.projectKey,
         join_url: `${baseUrl}/${workspace.slug}/join?token=${workspace.projectKey}`,
         workspace_url: `${baseUrl}/${workspace.slug}`,
-        // Legacy field for backwards compatibility
-        team_url: `${baseUrl}/${workspace.slug}`,
       },
       201
     );
@@ -90,9 +88,6 @@ joinApiHandler.get("/", async (c) => {
   return c.json({
     workspace: slug,
     workspace_url: workspaceUrl,
-    // Legacy fields
-    team: slug,
-    team_url: workspaceUrl,
     install_command: `curl -sL "${workspaceUrl}/install?token=${token}" | sh`,
   });
 });

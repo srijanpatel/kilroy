@@ -34,8 +34,6 @@ if (indexHtml) {
 
 // Workspace creation — no auth required
 app.route("/workspaces", workspacesRouter);
-// Legacy endpoint — keep for backwards compatibility with existing clients
-app.route("/teams", workspacesRouter);
 
 // Workspace-scoped routes
 const workspaceApp = new Hono<Env>();
