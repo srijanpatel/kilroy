@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, useParams, useLocation } from 'react-router-dom';
 import { WorkspaceProvider } from '../context/WorkspaceContext';
 import { trackWorkspace } from '../lib/workspaces';
@@ -60,6 +60,7 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
 }) {
   const { expanded, toggle, expand } = useSidebarState(workspace);
   const [peeking, setPeeking] = useState(false);
+  const peekTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
   const location = useLocation();
 
   // Keyboard shortcut: Cmd+\ or Ctrl+\ to toggle sidebar
@@ -98,7 +99,7 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
             <>
               <div
                 className="sidebar-stripe"
-                onMouseEnter={() => setPeeking(true)}
+                onMouseEnter={() => { if (peekTimeoutRef.current) clearTimeout(peekTimeoutRef.current); setPeeking(true); }}
                 onClick={() => setPeeking(true)}
               />
               {peeking && (
@@ -106,9 +107,10 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
                   <div className="sidebar-backdrop" onClick={() => setPeeking(false)} />
                   <aside
                     className="sidebar sidebar-peek"
+                    onMouseEnter={() => { if (peekTimeoutRef.current) clearTimeout(peekTimeoutRef.current); }}
                     onMouseLeave={() => {
                       if (window.innerWidth > 768) {
-                        setTimeout(() => setPeeking(false), 300);
+                        peekTimeoutRef.current = setTimeout(() => setPeeking(false), 300);
                       }
                     }}
                   >

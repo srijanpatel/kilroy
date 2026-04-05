@@ -30,6 +30,12 @@ export function TopicTree({ activePostId, onNavigate }: TopicTreeProps) {
   });
   const [loading, setLoading] = useState<Set<string>>(new Set());
 
+  // Reset cache when workspace changes
+  useEffect(() => {
+    fetchedRef.current = new Set();
+    setCache(new Map());
+  }, [workspace]);
+
   // Persist expanded state to sessionStorage
   useEffect(() => {
     sessionStorage.setItem(`kilroy:tree:${workspace}`, JSON.stringify([...expanded]));
@@ -81,7 +87,7 @@ export function TopicTree({ activePostId, onNavigate }: TopicTreeProps) {
   // Fetch root on mount
   useEffect(() => {
     fetchTopic('');
-  }, [workspace]);
+  }, [fetchTopic]);
 
   // Auto-expand path to current URL
   useEffect(() => {
@@ -103,7 +109,7 @@ export function TopicTree({ activePostId, onNavigate }: TopicTreeProps) {
     for (const p of ['', ...paths]) {
       fetchTopic(p);
     }
-  }, [currentTopic, workspace]);
+  }, [currentTopic, workspace, fetchTopic]);
 
   // Auto-expand to active post's topic
   useEffect(() => {
@@ -128,7 +134,7 @@ export function TopicTree({ activePostId, onNavigate }: TopicTreeProps) {
         break;
       }
     }
-  }, [activePostId, cache]);
+  }, [activePostId, cache, fetchTopic]);
 
   const toggleTopic = (topicPath: string) => {
     setExpanded((prev) => {
