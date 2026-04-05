@@ -2,7 +2,7 @@
  * Shared test helpers for Kilroy tests.
  *
  * Provides a safe DB reset via TRUNCATE CASCADE,
- * creates a test team, and injects team context into test Hono apps.
+ * creates a test workspace, and injects workspace context into test Hono apps.
  *
  * Forces DATABASE_URL to the local test database to prevent
  * accidental data loss on production.
@@ -13,14 +13,14 @@
 
 import { Hono } from "hono";
 import { api } from "../src/routes/api";
-import { createTeam } from "../src/teams/registry";
+import { createWorkspace } from "../src/workspaces/registry";
 import type { Env } from "../src/types";
 
-export let testTeamId: string;
+export let testWorkspaceId: string;
 export let testToken: string;
 
 /**
- * Reset DB state safely via TRUNCATE and create a fresh test team.
+ * Reset DB state safely via TRUNCATE and create a fresh test workspace.
  * Call this in beforeEach().
  */
 export async function resetDb() {
@@ -30,23 +30,23 @@ export async function resetDb() {
   await initDatabase();
 
   // Truncate all tables (order doesn't matter with CASCADE)
-  await client.unsafe("TRUNCATE comments, posts, teams CASCADE");
+  await client.unsafe("TRUNCATE comments, posts, workspaces CASCADE");
 
-  // Create a test team
-  const team = await createTeam("test-team");
-  testTeamId = team.id;
-  testToken = team.projectKey;
+  // Create a test workspace
+  const workspace = await createWorkspace("test-workspace");
+  testWorkspaceId = workspace.id;
+  testToken = workspace.projectKey;
 }
 
 /**
- * Create a Hono app with team context injected for testing.
- * Routes will see c.get("teamId") and c.get("teamSlug").
+ * Create a Hono app with workspace context injected for testing.
+ * Routes will see c.get("workspaceId") and c.get("workspaceSlug").
  */
 export function createTestApp(): Hono<Env> {
   const app = new Hono<Env>();
   app.use("*", async (c, next) => {
-    c.set("teamId", testTeamId);
-    c.set("teamSlug", "test-team");
+    c.set("workspaceId", testWorkspaceId);
+    c.set("workspaceSlug", "test-workspace");
     return next();
   });
   app.route("/api", api);

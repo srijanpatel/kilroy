@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { search } from '../lib/api';
-import { useTeam, useTeamPath } from '../context/TeamContext';
+import { useWorkspace, useWorkspacePath } from '../context/WorkspaceContext';
 import { EmptyState } from '../components/Skeleton';
 
 function highlightSnippet(snippet: string, query: string) {
@@ -17,8 +17,8 @@ function highlightSnippet(snippet: string, query: string) {
 export function SearchView() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const team = useTeam();
-  const tp = useTeamPath();
+  const workspace = useWorkspace();
+  const tp = useWorkspacePath();
   const query = searchParams.get('q') || '';
 
   const [data, setData] = useState<any>(null);
@@ -32,7 +32,7 @@ export function SearchView() {
     const params: Record<string, string> = { query };
     if (status !== 'active') params.status = status;
 
-    search(team, params)
+    search(workspace, params)
       .then(setData)
       .catch((e) => setError(e.message));
   }, [query, status]);

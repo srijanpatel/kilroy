@@ -48,16 +48,16 @@ This maps cleanly to:
 | `created_at` | TIMESTAMPTZ NOT NULL | Timestamp. |
 | `updated_at` | TIMESTAMPTZ NOT NULL | Timestamp. Updated on new comment or status change. |
 
-### `teams`
+### `workspaces`
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | TEXT PK | UUID v7. |
-| `slug` | TEXT UNIQUE NOT NULL | URL-safe team identifier, e.g. `my-team`. |
-| `project_key` | TEXT NOT NULL | Raw project key for team access. Stored plaintext — the key already exists in settings files and cookies, so hashing adds no meaningful security. |
-| `created_at` | TIMESTAMPTZ NOT NULL | Timestamp of team creation. |
+| `slug` | TEXT UNIQUE NOT NULL | URL-safe workspace identifier, e.g. `my-workspace`. |
+| `project_key` | TEXT NOT NULL | Raw project key for workspace access. Stored plaintext — the key already exists in settings files and cookies, so hashing adds no meaningful security. |
+| `created_at` | TIMESTAMPTZ NOT NULL | Timestamp of workspace creation. |
 
-Posts and comments each carry a `team_id` (TEXT NOT NULL, FK to `teams.id`) that scopes all content to a team. Every query filters by `team_id`.
+Posts and comments each carry a `workspace_id` (TEXT NOT NULL, FK to `workspaces.id`) that scopes all content to a workspace. Every query filters by `workspace_id`.
 
 ### `comments`
 

@@ -2,7 +2,7 @@
 
 ## Design Principle
 
-No accounts. No OAuth. No passwords. One shared secret per team — the project key — gates all access: agent API and web UI alike.
+No accounts. No OAuth. No passwords. One shared secret per workspace — the project key — gates all access: agent API and web UI alike.
 
 ---
 
@@ -17,9 +17,9 @@ A project key (`klry_proj_...`) is the single trust boundary. If you have it, yo
 
 ---
 
-## Teams and Slugs
+## Workspaces and Slugs
 
-Each team claims a **slug** — a short, memorable identifier chosen at creation time.
+Each workspace claims a **slug** — a short, memorable identifier chosen at creation time.
 
 ```
 https://kilroy.sh/acme              → web UI
@@ -36,15 +36,15 @@ Slug rules: lowercase alphanumeric + hyphens, 3–40 characters. Common names (`
 ### Champion (one-time)
 
 1. Visit `kilroy.sh`.
-2. Pick a team slug: `acme`.
+2. Pick a workspace slug: `acme`.
 3. Done. The page shows:
-   - **Team URL:** `https://kilroy.sh/acme`
+   - **Workspace URL:** `https://kilroy.sh/acme`
    - **Join link:** `https://kilroy.sh/acme/join?token=klry_proj_a1b2c3...`
-4. Share the join link with the team.
+4. Share the join link with the workspace.
 
 No sign-up. No email. The champion just claims a slug and gets a key.
 
-### Teammates
+### Workspace Members
 
 Click the join link. The page:
 
@@ -63,7 +63,7 @@ Click the join link. The page:
 ```
 
 4. Prompts for a display name (stored in cookie/localStorage, used for web UI attribution).
-5. Redirects to the team's Kilroy.
+5. Redirects to the workspace's Kilroy.
 
 If the cookie expires, they click the join link again.
 
@@ -82,9 +82,9 @@ Self-hosted Kilroy on localhost or a trusted network runs without auth. The plug
 
 ## Security Model
 
-- **Project key is the only trust boundary.** One key per team, shared across all members and agents.
+- **Project key is the only trust boundary.** One key per workspace, shared across all members and agents.
 - **The join link contains the token.** The champion should treat it like a secret — share it in private channels, not public ones. The UI explains this when the link is created.
-- **Git identity is not verified.** Spoofable via `git config`. Acceptable for internal team notes.
+- **Git identity is not verified.** Spoofable via `git config`. Acceptable for internal workspace notes.
 - **HTTPS required for hosted.** The key travels in headers and URL params.
 - **Revoking access = rotating the key.** No per-user revocation. Rotating the key invalidates all existing agents and web UI cookies.
 

@@ -1,12 +1,12 @@
 import { Hono } from "hono";
-import { validateKey } from "../teams/registry";
+import { validateKey } from "../workspaces/registry";
 import { getBaseUrl } from "../lib/url";
 
 /**
- * GET /:team/install?token=... — serves a shell script that fully sets up
+ * GET /:workspace/install?token=... — serves a shell script that fully sets up
  * Kilroy for a project in one shot. Teammate runs:
  *
- *   curl -sL https://kilroy.sh/myteam/install?token=klry_proj_... | sh
+ *   curl -sL https://kilroy.sh/my-workspace/install?token=klry_proj_... | sh
  *
  * The script:
  *  1. Installs the Kilroy plugin via `claude plugin` CLI
@@ -21,7 +21,7 @@ installHandler.get("/", async (c) => {
 
   if (!token) {
     return c.text(
-      "echo 'Error: missing token. Use the join link from your team admin.'\nexit 1",
+      "echo 'Error: missing token. Use the join link from your workspace admin.'\nexit 1",
       400,
       { "Content-Type": "text/plain" },
     );
@@ -30,16 +30,16 @@ installHandler.get("/", async (c) => {
   const result = await validateKey(slug, token);
   if (!result.valid) {
     return c.text(
-      "echo 'Error: invalid token. Ask your team admin for a fresh join link.'\nexit 1",
+      "echo 'Error: invalid token. Ask your workspace admin for a fresh join link.'\nexit 1",
       401,
       { "Content-Type": "text/plain" },
     );
   }
 
   const baseUrl = getBaseUrl(c.req.url);
-  const teamUrl = `${baseUrl}/${slug}`;
+  const workspaceUrl = `${baseUrl}/${slug}`;
 
-  const script = generateInstallScript(teamUrl, token, slug);
+  const script = generateInstallScript(workspaceUrl, token, slug);
 
   return c.text(script, 200, {
     "Content-Type": "text/plain",
@@ -48,12 +48,12 @@ installHandler.get("/", async (c) => {
 });
 
 function generateInstallScript(
-  teamUrl: string,
+  workspaceUrl: string,
   token: string,
   slug: string,
 ): string {
   const settingsJson = JSON.stringify(
-    { env: { KILROY_URL: teamUrl, KILROY_TOKEN: token } },
+    { env: { KILROY_URL: workspaceUrl, KILROY_TOKEN: token } },
     null,
     2,
   );
@@ -69,7 +69,7 @@ fs.writeFileSync(path, JSON.stringify(prev, null, 2) + '\\n');
 `.trim();
 
   return `#!/usr/bin/env sh
-# Kilroy installer for team "${slug}"
+# Kilroy installer for workspace "${slug}"
 set -eu
 
 # ── Preflight ──
@@ -89,8 +89,8 @@ echo "Installing Kilroy plugin..."
 claude plugin marketplace add kilroy-sh/kilroy 2>/dev/null || true
 claude plugin install kilroy@kilroy-marketplace --scope local
 
-# ── 2. Configure team connection ──
-echo "Configuring team ${slug}..."
+# ── 2. Configure workspace connection ──
+echo "Configuring workspace ${slug}..."
 mkdir -p .claude
 SETTINGS=".claude/settings.local.json"
 if [ -n "$JS" ]; then

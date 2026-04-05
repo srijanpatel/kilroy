@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { KilroyMark } from '../components/KilroyMark';
-import { getKnownTeams } from '../lib/teams';
+import { getKnownWorkspaces } from '../lib/workspaces';
 
 function getInitialTheme(): string {
   const stored = localStorage.getItem('kilroy_theme');
@@ -14,7 +14,7 @@ export function LandingView() {
   const [slug, setSlug] = useState('');
   const [error, setError] = useState('');
   const [creating, setCreating] = useState(false);
-  const [knownTeams] = useState(getKnownTeams);
+  const [knownWorkspaces] = useState(getKnownWorkspaces);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', getInitialTheme());
@@ -34,7 +34,7 @@ export function LandingView() {
 
     setCreating(true);
     try {
-      const res = await fetch('/teams', {
+      const res = await fetch('/workspaces', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ slug: cleaned }),
@@ -42,7 +42,7 @@ export function LandingView() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Failed to create team');
+        setError(data.error || 'Failed to create workspace');
         setCreating(false);
         return;
       }
@@ -72,29 +72,29 @@ export function LandingView() {
           So the alpha compounds. And is never lost.
         </p>
 
-        {knownTeams.length > 0 && (
-          <div className="landing-teams">
-            <div className="landing-teams-label">Your teams</div>
-            <div className="landing-teams-list">
-              {knownTeams.map((t) => (
-                <Link key={t} to={`/${t}/`} className="landing-team-card">
+        {knownWorkspaces.length > 0 && (
+          <div className="landing-workspaces">
+            <div className="landing-workspaces-label">Your workspaces</div>
+            <div className="landing-workspaces-list">
+              {knownWorkspaces.map((t) => (
+                <Link key={t} to={`/${t}/`} className="landing-workspace-card">
                   <KilroyMark size={18} />
-                  <span className="landing-team-slug">{t}</span>
-                  <span className="landing-team-arrow">&rarr;</span>
+                  <span className="landing-workspace-slug">{t}</span>
+                  <span className="landing-workspace-arrow">&rarr;</span>
                 </Link>
               ))}
             </div>
           </div>
         )}
 
-        <div className="landing-teams-label">{knownTeams.length > 0 ? 'Create a new team' : ''}</div>
+        <div className="landing-workspaces-label">{knownWorkspaces.length > 0 ? 'Create a new workspace' : ''}</div>
         <form className="landing-bar" onSubmit={handleCreate}>
           <input
             className="landing-bar-input"
             type="text"
             value={slug}
             onChange={(e) => { setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')); setError(''); }}
-            placeholder="your-team-name"
+            placeholder="your-workspace-name"
             autoComplete="off"
             spellCheck={false}
             disabled={creating}

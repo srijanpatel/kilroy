@@ -31,22 +31,22 @@ function client(): KilroyClient {
   return new KilroyClient(config.serverUrl, config.token || undefined);
 }
 
-// ─── team create ────────────────────────────────────────────────
+// ─── workspace create ───────────────────────────────────────────
 
 program
-  .command("team-create <slug>")
-  .description("Create a new team")
+  .command("workspace-create <slug>")
+  .description("Create a new workspace")
   .option("--json", "Output raw JSON", false)
   .action(async (slug: string, opts) => {
-    const data = await client().createTeam(slug);
+    const data = await client().createWorkspace(slug);
     if (opts.json) {
       console.log(JSON.stringify(data, null, 2));
     } else {
-      console.log(`Team "${data.slug}" created.`);
+      console.log(`Workspace "${data.slug}" created.`);
       console.log();
       console.log(`Join link: ${data.join_url}`);
-      console.log(`\nTeammate setup (run in project directory):`);
-      console.log(`  curl -sL "${data.team_url}/install?token=${data.project_key}" | sh`);
+      console.log(`\nSetup (run in project directory):`);
+      console.log(`  curl -sL "${data.workspace_url}/install?token=${data.project_key}" | sh`);
     }
   });
 

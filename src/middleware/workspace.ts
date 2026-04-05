@@ -1,12 +1,12 @@
 import { createMiddleware } from "hono/factory";
 import type { Env } from "../types";
-import { validateKey, getTeamBySlug } from "../teams/registry";
+import { validateKey, getWorkspaceBySlug } from "../workspaces/registry";
 
-export const teamAuth = createMiddleware<Env>(async (c, next) => {
-  const slug = c.req.param("team");
+export const workspaceAuth = createMiddleware<Env>(async (c, next) => {
+  const slug = c.req.param("workspace");
   if (!slug) {
     return c.json(
-      { error: "Missing team identifier", code: "BAD_REQUEST" },
+      { error: "Missing workspace identifier", code: "BAD_REQUEST" },
       400
     );
   }
@@ -17,8 +17,8 @@ export const teamAuth = createMiddleware<Env>(async (c, next) => {
     const token = authHeader.slice(7);
     const result = await validateKey(slug, token);
     if (result.valid) {
-      c.set("teamId", result.teamId);
-      c.set("teamSlug", slug);
+      c.set("workspaceId", result.workspaceId);
+      c.set("workspaceSlug", slug);
       return next();
     }
   }
@@ -28,8 +28,8 @@ export const teamAuth = createMiddleware<Env>(async (c, next) => {
   if (cookie) {
     const result = await validateKey(slug, cookie);
     if (result.valid) {
-      c.set("teamId", result.teamId);
-      c.set("teamSlug", slug);
+      c.set("workspaceId", result.workspaceId);
+      c.set("workspaceSlug", slug);
       return next();
     }
   }

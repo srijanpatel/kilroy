@@ -1,6 +1,6 @@
 export type Env = {
   Variables: {
-    teamId: string;
-    teamSlug: string;
+    workspaceId: string;
+    workspaceSlug: string;
   };
 };

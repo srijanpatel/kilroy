@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, useParams } from 'react-router-dom';
-import { TeamProvider } from '../context/TeamContext';
-import { trackTeam } from '../lib/teams';
+import { WorkspaceProvider } from '../context/WorkspaceContext';
+import { trackWorkspace } from '../lib/workspaces';
 import { Omnibar } from '../components/Omnibar';
 import { AuthorPrompt } from '../components/AuthorPrompt';
 import { BrowseView } from './BrowseView';
@@ -10,21 +10,21 @@ import { SearchView } from './SearchView';
 import { PostEditorView } from './NewPostView';
 import { JoinView } from './JoinView';
 
-export function TeamShell() {
-  const { team } = useParams();
+export function WorkspaceShell() {
+  const { workspace } = useParams();
   const [currentTopic, setCurrentTopic] = useState('');
 
-  useEffect(() => { if (team) trackTeam(team); }, [team]);
+  useEffect(() => { if (workspace) trackWorkspace(workspace); }, [workspace]);
 
-  if (!team) return null;
+  if (!workspace) return null;
 
   return (
-    <TeamProvider team={team}>
+    <WorkspaceProvider workspace={workspace}>
       <Routes>
         {/* Join page — no Omnibar, no AuthorPrompt. Its own layout. */}
         <Route path="join" element={<JoinView />} />
 
-        {/* All other team routes get the standard shell */}
+        {/* All other workspace routes get the standard shell */}
         <Route path="*" element={
           <div className="app">
             <AuthorPrompt />
@@ -39,6 +39,6 @@ export function TeamShell() {
           </div>
         } />
       </Routes>
-    </TeamProvider>
+    </WorkspaceProvider>
   );
 }

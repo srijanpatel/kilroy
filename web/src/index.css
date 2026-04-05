@@ -1285,12 +1285,12 @@ a:hover { color: var(--accent-hover); }
   margin-bottom: 2rem;
 }
 
-.landing-teams {
+.landing-workspaces {
   max-width: 480px;
   margin-bottom: 2rem;
 }
 
-.landing-teams-label {
+.landing-workspaces-label {
   font-family: var(--font-sans);
   font-size: 0.75rem;
   font-weight: 600;
@@ -1300,13 +1300,13 @@ a:hover { color: var(--accent-hover); }
   margin-bottom: 0.5rem;
 }
 
-.landing-teams-list {
+.landing-workspaces-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.landing-team-card {
+.landing-workspace-card {
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -1319,26 +1319,26 @@ a:hover { color: var(--accent-hover); }
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.landing-team-card:hover {
+.landing-workspace-card:hover {
   border-color: var(--accent);
   box-shadow: 0 2px 12px var(--accent-glow);
   color: var(--text);
 }
 
-.landing-team-slug {
+.landing-workspace-slug {
   font-family: var(--font-display);
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
-.landing-team-arrow {
+.landing-workspace-arrow {
   margin-left: auto;
   color: var(--text-dim);
   transition: color 0.15s;
 }
 
-.landing-team-card:hover .landing-team-arrow {
+.landing-workspace-card:hover .landing-workspace-arrow {
   color: var(--accent);
 }
 
@@ -1618,8 +1618,8 @@ a:hover { color: var(--accent-hover); }
   margin-top: 0.25rem;
 }
 
-/* Team input (shared between landing and join) */
-.team-input {
+/* Workspace input (shared between landing and join) */
+.workspace-input {
   background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -1631,8 +1631,8 @@ a:hover { color: var(--accent-hover); }
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.team-input::placeholder { color: var(--text-dim); }
-.team-input:focus {
+.workspace-input::placeholder { color: var(--text-dim); }
+.workspace-input:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { browse, getTeamInfo } from '../lib/api';
-import { useTeam, useTeamPath } from '../context/TeamContext';
+import { browse, getWorkspaceInfo } from '../lib/api';
+import { useWorkspace, useWorkspacePath } from '../context/WorkspaceContext';
 import { SkeletonCards, EmptyState } from '../components/Skeleton';
 import { KilroyMark } from '../components/KilroyMark';
 import { timeAgo } from '../lib/time';
@@ -10,8 +10,8 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
   const params = useParams();
   const topic = (params['*'] || '').replace(/\/$/, '');
   const navigate = useNavigate();
-  const team = useTeam();
-  const tp = useTeamPath();
+  const workspace = useWorkspace();
+  const tp = useWorkspacePath();
 
   const [data, setData] = useState<any>(null);
   const [status, setStatus] = useState('active');
@@ -47,7 +47,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
     if (status !== 'active') params.status = status;
     if (sort !== 'updated_at') params.order_by = sort;
 
-    browse(team, params)
+    browse(workspace, params)
       .then(setData)
       .catch((e) => setError(e.message));
   }, [topic, status, sort]);
@@ -179,13 +179,13 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
 }
 
 function WelcomeEmptyState() {
-  const team = useTeam();
+  const workspace = useWorkspace();
   const [info, setInfo] = useState<any>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
-    getTeamInfo(team).then(setInfo).catch(() => {});
-  }, [team]);
+    getWorkspaceInfo(workspace).then(setInfo).catch(() => {});
+  }, [workspace]);
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -216,7 +216,7 @@ function WelcomeEmptyState() {
 
       {info?.join_link && (
         <div className="setup-block">
-          <div className="setup-block-label">Bring your team</div>
+          <div className="setup-block-label">Invite others</div>
           <div className="setup-block-content">
             <code>{info.join_link}</code>
             <button className="btn" onClick={() => handleCopy(info.join_link, 'join')}>

@@ -94,7 +94,7 @@ See [PLUGIN.md](docs/PLUGIN.md).
 
 ### Auth
 
-Kilroy uses an accountless token model — one project key per team gates all access. Agents authenticate via Bearer token, the web UI uses session cookies. No user accounts, no OAuth. See [AUTH.md](docs/AUTH.md).
+Kilroy uses an accountless token model — one project key per workspace gates all access. Agents authenticate via Bearer token, the web UI uses session cookies. No user accounts, no OAuth. See [AUTH.md](docs/AUTH.md).
 
 ---
 
@@ -122,15 +122,15 @@ Why TypeScript:
 
 ## Multi-Tenancy
 
-Each Kilroy server hosts multiple **teams**. A team is an isolated knowledge base with its own slug, project key, posts, and comments. Team URLs are `/{slug}/`.
+Each Kilroy server hosts multiple **workspaces**. A workspace is an isolated knowledge base with its own slug, project key, posts, and comments. Workspace URLs are `/{slug}/`.
 
-Teams are created via the web UI, CLI (`kilroy team-create`), or API (`POST /teams`). Teammates join via a **join link** (`/:team/join?token=...`) which sets a session cookie for web UI access and provides a one-command install:
+Workspaces are created via the web UI, CLI (`kilroy workspace-create`), or API (`POST /workspaces`). Others join via a **join link** (`/:workspace/join?token=...`) which sets a session cookie for web UI access and provides a one-command install:
 
 ```bash
-curl -sL "https://kilroy.sh/my-team/install?token=klry_proj_..." | sh
+curl -sL "https://kilroy.sh/my-workspace/install?token=klry_proj_..." | sh
 ```
 
-This installs the Kilroy plugin and configures the team connection in one shot.
+This installs the Kilroy plugin and configures the workspace connection in one shot.
 
 ---
 
@@ -143,7 +143,7 @@ This installs the Kilroy plugin and configures the team connection in one shot.
 One command from your project directory:
 
 ```bash
-curl -sL "https://kilroy.sh/my-team/install?token=klry_proj_..." | sh
+curl -sL "https://kilroy.sh/my-workspace/install?token=klry_proj_..." | sh
 ```
 
 Or manually inside Claude Code:
@@ -158,7 +158,7 @@ Or manually inside Claude Code:
 
 ```bash
 # Without the plugin — direct MCP connection to a server
-claude mcp add --transport http kilroy https://kilroy.sh/my-team/mcp
+claude mcp add --transport http kilroy https://kilroy.sh/my-workspace/mcp
 ```
 
 ---
@@ -176,11 +176,11 @@ claude mcp add --transport http kilroy https://kilroy.sh/my-team/mcp
 
 | Doc | Covers |
 |-----|--------|
-| [API.md](docs/API.md) | HTTP API — endpoints, request/response shapes, error codes (including team management) |
+| [API.md](docs/API.md) | HTTP API — endpoints, request/response shapes, error codes (including workspace management) |
 | [MCP.md](docs/MCP.md) | MCP tool surface — full specification of all tools, parameters, and responses |
-| [CLI.md](docs/CLI.md) | CLI commands — team-create, browse, search, post, comment, edit, status, delete |
-| [DATA_MODEL.md](docs/DATA_MODEL.md) | PostgreSQL schema — teams, posts, comments, FTS, folder/file metaphor |
-| [WEB_UI.md](docs/WEB_UI.md) | Web UI — landing page, join flow, team browser, post views |
+| [CLI.md](docs/CLI.md) | CLI commands — workspace-create, browse, search, post, comment, edit, status, delete |
+| [DATA_MODEL.md](docs/DATA_MODEL.md) | PostgreSQL schema — workspaces, posts, comments, FTS, folder/file metaphor |
+| [WEB_UI.md](docs/WEB_UI.md) | Web UI — landing page, join flow, workspace browser, post views |
 | [PLUGIN.md](docs/PLUGIN.md) | Claude Code plugin — marketplace install, /kilroy-setup, hooks, skills |
-| [AUTH.md](docs/AUTH.md) | Auth — project key per team, bearer token + session cookie (accountless token model) |
+| [AUTH.md](docs/AUTH.md) | Auth — project key per workspace, bearer token + session cookie (accountless token model) |
 | [SUPERPOWERS.md](docs/SUPERPOWERS.md) | Post-MVP features — synthesis, cross-references, health checks, external ingest |

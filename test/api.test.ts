@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Hono } from "hono";
 
-import { resetDb, createTestApp, testTeamId, testToken } from "./helpers";
+import { resetDb, createTestApp, testWorkspaceId, testToken } from "./helpers";
 import { installHandler } from "../src/routes/install";
 import type { Env } from "../src/types";
 
@@ -51,14 +51,14 @@ async function createComment(
 describe("GET /api/info", () => {
   beforeEach(setup);
 
-  it("returns team info with install command and join link", async () => {
+  it("returns workspace info with install command and join link", async () => {
     const res = await app.request("/api/info");
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.slug).toBe("test-team");
+    expect(data.slug).toBe("test-workspace");
     expect(data.install_command).toContain("curl");
     expect(data.install_command).toContain(testToken);
-    expect(data.join_link).toContain("/test-team/join?token=");
+    expect(data.join_link).toContain("/test-workspace/join?token=");
     expect(data.join_link).toContain(testToken);
   });
 });
@@ -852,20 +852,20 @@ describe("DELETE /api/posts/:id", () => {
   });
 });
 
-// ─── GET /:team/install ───────────────────────────────────────
+// ─── GET /:workspace/install ───────────────────────────────────────
 
-describe("GET /:team/install", () => {
+describe("GET /:workspace/install", () => {
   beforeEach(setup);
 
   function installApp() {
     const a = new Hono();
-    a.route("/test-team/install", installHandler);
+    a.route("/test-workspace/install", installHandler);
     return a;
   }
 
   it("returns a shell script when token is valid", async () => {
     const a = installApp();
-    const res = await a.request(`/test-team/install?token=${testToken}`);
+    const res = await a.request(`/test-workspace/install?token=${testToken}`);
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toContain("text/plain");
     const body = await res.text();
@@ -877,13 +877,13 @@ describe("GET /:team/install", () => {
 
   it("returns 400 when token is missing", async () => {
     const a = installApp();
-    const res = await a.request("/test-team/install");
+    const res = await a.request("/test-workspace/install");
     expect(res.status).toBe(400);
   });
 
   it("returns 401 when token is invalid", async () => {
     const a = installApp();
-    const res = await a.request("/test-team/install?token=bad_token");
+    const res = await a.request("/test-workspace/install?token=bad_token");
     expect(res.status).toBe(401);
   });
 });

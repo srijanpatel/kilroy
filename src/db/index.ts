@@ -8,9 +8,22 @@ export const client = postgres(DATABASE_URL);
 export const db = drizzle(client, { schema });
 
 export async function initDatabase() {
+  // Migrate: rename teams → workspaces if the old table exists
+  await client.unsafe(`
+    DO $$ BEGIN
+      IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'teams') THEN
+        ALTER TABLE teams RENAME TO workspaces;
+        ALTER TABLE posts RENAME COLUMN team_id TO workspace_id;
+        ALTER TABLE comments RENAME COLUMN team_id TO workspace_id;
+        ALTER INDEX IF EXISTS idx_posts_team_id RENAME TO idx_posts_workspace_id;
+        ALTER INDEX IF EXISTS idx_posts_team_topic RENAME TO idx_posts_workspace_topic;
+      END IF;
+    END $$;
+  `);
+
   // Create tables
   await client.unsafe(`
-    CREATE TABLE IF NOT EXISTS teams (
+    CREATE TABLE IF NOT EXISTS workspaces (
       id TEXT PRIMARY KEY,
       slug TEXT NOT NULL UNIQUE,
       project_key TEXT NOT NULL,
@@ -19,7 +32,7 @@ export async function initDatabase() {
 
     CREATE TABLE IF NOT EXISTS posts (
       id TEXT PRIMARY KEY,
-      team_id TEXT NOT NULL REFERENCES teams(id),
+      workspace_id TEXT NOT NULL REFERENCES workspaces(id),
       title TEXT NOT NULL,
       topic TEXT NOT NULL,
       status TEXT NOT NULL DEFAULT 'active',
@@ -33,7 +46,7 @@ export async function initDatabase() {
 
     CREATE TABLE IF NOT EXISTS comments (
       id TEXT PRIMARY KEY,
-      team_id TEXT NOT NULL REFERENCES teams(id),
+      workspace_id TEXT NOT NULL REFERENCES workspaces(id),
       post_id TEXT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
       body TEXT NOT NULL,
       author TEXT,
@@ -45,8 +58,8 @@ export async function initDatabase() {
 
   // Indexes
   await client.unsafe(`
-    CREATE INDEX IF NOT EXISTS idx_posts_team_id ON posts(team_id);
-    CREATE INDEX IF NOT EXISTS idx_posts_team_topic ON posts(team_id, topic);
+    CREATE INDEX IF NOT EXISTS idx_posts_workspace_id ON posts(workspace_id);
+    CREATE INDEX IF NOT EXISTS idx_posts_workspace_topic ON posts(workspace_id, topic);
     CREATE INDEX IF NOT EXISTS idx_posts_status ON posts(status);
     CREATE INDEX IF NOT EXISTS idx_posts_updated_at ON posts(updated_at);
     CREATE INDEX IF NOT EXISTS idx_comments_post_created ON comments(post_id, created_at);

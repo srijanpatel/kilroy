@@ -1,12 +1,12 @@
 import { Hono } from "hono";
-import { createTeam, validateSlug, validateKey } from "../teams/registry";
+import { createWorkspace, validateSlug, validateKey } from "../workspaces/registry";
 import { getBaseUrl } from "../lib/url";
 import type { Env } from "../types";
 
-export const teamsRouter = new Hono();
+export const workspacesRouter = new Hono();
 
-// POST /teams — Create a new team
-teamsRouter.post("/", async (c) => {
+// POST /workspaces — Create a new workspace
+workspacesRouter.post("/", async (c) => {
   const body = await c.req.json();
 
   if (!body.slug) {
@@ -22,15 +22,15 @@ teamsRouter.post("/", async (c) => {
   }
 
   try {
-    const team = await createTeam(body.slug);
+    const workspace = await createWorkspace(body.slug);
     const baseUrl = getBaseUrl(c.req.url);
 
     return c.json(
       {
-        slug: team.slug,
-        project_key: team.projectKey,
-        join_url: `${baseUrl}/${team.slug}/join?token=${team.projectKey}`,
-        team_url: `${baseUrl}/${team.slug}`,
+        slug: workspace.slug,
+        project_key: workspace.projectKey,
+        join_url: `${baseUrl}/${workspace.slug}/join?token=${workspace.projectKey}`,
+        workspace_url: `${baseUrl}/${workspace.slug}`,
       },
       201
     );
@@ -50,9 +50,9 @@ teamsRouter.post("/", async (c) => {
 export const joinApiHandler = new Hono<Env>();
 
 joinApiHandler.get("/", async (c) => {
-  // Extract team slug from URL path — this handler is mounted at /:team/api/join
+  // Extract workspace slug from URL path — this handler is mounted at /:workspace/api/join
   // but Hono child routers don't inherit parent route params, and auth middleware
-  // (which sets teamSlug) is intentionally bypassed for this endpoint.
+  // (which sets workspaceSlug) is intentionally bypassed for this endpoint.
   const url = new URL(c.req.url);
   const slug = url.pathname.split("/")[1];
   const token = c.req.query("token");
@@ -84,10 +84,10 @@ joinApiHandler.get("/", async (c) => {
   c.header("Set-Cookie", cookie);
 
   const baseUrl = getBaseUrl(c.req.url);
-  const teamUrl = `${baseUrl}/${slug}`;
+  const workspaceUrl = `${baseUrl}/${slug}`;
   return c.json({
-    team: slug,
-    team_url: teamUrl,
-    install_command: `curl -sL "${teamUrl}/install?token=${token}" | sh`,
+    workspace: slug,
+    workspace_url: workspaceUrl,
+    install_command: `curl -sL "${workspaceUrl}/install?token=${token}" | sh`,
   });
 });

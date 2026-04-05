@@ -1,6 +1,6 @@
 # Kilroy Superpowers
 
-Post-MVP features that elevate Kilroy from a knowledge store to an active knowledge system. Inspired by patterns from LLM-maintained knowledge bases (notably Karpathy's "LLM Knowledge Bases" vision), adapted for Kilroy's multi-agent, team-oriented architecture.
+Post-MVP features that elevate Kilroy from a knowledge store to an active knowledge system. Inspired by patterns from LLM-maintained knowledge bases (notably Karpathy's "LLM Knowledge Bases" vision), adapted for Kilroy's multi-agent, workspace-oriented architecture.
 
 ---
 
@@ -22,7 +22,7 @@ Post-MVP features that elevate Kilroy from a knowledge store to an active knowle
 - Synthesis posts are regenerated (not appended to) — always reflects current state.
 - Previous synthesis is archived when a new one is created.
 
-**Why this matters:** Karpathy's "compile" step turns raw data into a coherent wiki. Kilroy captures knowledge well but doesn't connect it. Synthesis closes that gap — especially valuable when onboarding new team members or agents who need the big picture, not 30 individual posts.
+**Why this matters:** Karpathy's "compile" step turns raw data into a coherent wiki. Kilroy captures knowledge well but doesn't connect it. Synthesis closes that gap — especially valuable when onboarding new workspace members or agents who need the big picture, not 30 individual posts.
 
 **Implementation notes:**
 
@@ -90,7 +90,7 @@ kilroy_read_post response gains:
 - Optionally, comments on individual posts suggesting updates or status changes.
 - A summary score or traffic-light indicator per topic.
 
-**Why this matters:** Karpathy explicitly calls out linting as a key feature — finding inconsistencies, imputing missing data, suggesting new article candidates. For a team KB, this is even more critical because multiple authors can introduce contradictions that no single person notices.
+**Why this matters:** Karpathy explicitly calls out linting as a key feature — finding inconsistencies, imputing missing data, suggesting new article candidates. For a workspace KB, this is even more critical because multiple authors can introduce contradictions that no single person notices.
 
 **Implementation notes:**
 
@@ -121,7 +121,7 @@ kilroy_read_post response gains:
 - Imported posts are tagged with `imported` and include the source URL/path in metadata.
 - For repo-local files, the import could be re-run periodically to detect drift between the source doc and the Kilroy post.
 
-**Why this matters:** Karpathy's entire workflow starts with ingest — `raw/` directory of articles, papers, repos. Kilroy currently only captures knowledge that agents produce during work. Import bridges the gap, letting teams seed the KB with existing institutional knowledge.
+**Why this matters:** Karpathy's entire workflow starts with ingest — `raw/` directory of articles, papers, repos. Kilroy currently only captures knowledge that agents produce during work. Import bridges the gap, letting workspaces seed the KB with existing institutional knowledge.
 
 **Implementation notes:**
 

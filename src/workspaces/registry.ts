@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "../db";
-import { teams } from "../db/schema";
+import { workspaces } from "../db/schema";
 import { uuidv7 } from "../lib/uuid";
 
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
@@ -13,6 +13,7 @@ const RESERVED_SLUGS = new Set([
   "status",
   "mcp",
   "assets",
+  "workspaces",
   "teams",
   "join",
   "health",
@@ -45,7 +46,7 @@ export function validateSlug(slug: string): { valid: boolean; error?: string } {
   return { valid: true };
 }
 
-export async function createTeam(slug: string): Promise<{
+export async function createWorkspace(slug: string): Promise<{
   slug: string;
   id: string;
   projectKey: string;
@@ -55,15 +56,15 @@ export async function createTeam(slug: string): Promise<{
     throw new Error(validation.error);
   }
 
-  const [existing] = await db.select().from(teams).where(eq(teams.slug, slug));
+  const [existing] = await db.select().from(workspaces).where(eq(workspaces.slug, slug));
   if (existing) {
-    throw new Error(`Team "${slug}" already exists`);
+    throw new Error(`Workspace "${slug}" already exists`);
   }
 
   const id = uuidv7();
   const projectKey = generateProjectKey();
 
-  await db.insert(teams).values({
+  await db.insert(workspaces).values({
     id,
     slug,
     projectKey,
@@ -75,28 +76,28 @@ export async function createTeam(slug: string): Promise<{
 export async function validateKey(
   slug: string,
   key: string
-): Promise<{ valid: true; teamId: string } | { valid: false }> {
-  const [team] = await db.select().from(teams).where(eq(teams.slug, slug));
-  if (!team) {
+): Promise<{ valid: true; workspaceId: string } | { valid: false }> {
+  const [workspace] = await db.select().from(workspaces).where(eq(workspaces.slug, slug));
+  if (!workspace) {
     return { valid: false };
   }
 
-  if (key !== team.projectKey) {
+  if (key !== workspace.projectKey) {
     return { valid: false };
   }
 
-  return { valid: true, teamId: team.id };
+  return { valid: true, workspaceId: workspace.id };
 }
 
-export async function getTeamBySlug(
+export async function getWorkspaceBySlug(
   slug: string
 ): Promise<{ id: string; slug: string; createdAt: string } | null> {
-  const [team] = await db.select().from(teams).where(eq(teams.slug, slug));
-  if (!team) return null;
-  return { id: team.id, slug: team.slug, createdAt: team.createdAt.toISOString() };
+  const [workspace] = await db.select().from(workspaces).where(eq(workspaces.slug, slug));
+  if (!workspace) return null;
+  return { id: workspace.id, slug: workspace.slug, createdAt: workspace.createdAt.toISOString() };
 }
 
-export async function getTeamProjectKey(teamId: string): Promise<string | null> {
-  const [team] = await db.select().from(teams).where(eq(teams.id, teamId));
-  return team?.projectKey ?? null;
+export async function getWorkspaceProjectKey(workspaceId: string): Promise<string | null> {
+  const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId));
+  return workspace?.projectKey ?? null;
 }

@@ -25,11 +25,11 @@ findRouter.get("/", async (c) => {
     );
   }
 
-  const teamId = c.get("teamId");
+  const workspaceId = c.get("workspaceId");
 
-  // Build SQL query — always scoped to team
-  const conditions: string[] = ["team_id = $1"];
-  const params: any[] = [teamId];
+  // Build SQL query — always scoped to workspace
+  const conditions: string[] = ["workspace_id = $1"];
+  const params: any[] = [workspaceId];
   let paramIdx = 2;
 
   if (author) {

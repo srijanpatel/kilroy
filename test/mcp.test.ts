@@ -3,16 +3,16 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 
 import { createMcpServer } from "../src/mcp/server";
-import { resetDb, testTeamId } from "./helpers";
+import { resetDb, testWorkspaceId } from "./helpers";
 
 let client: Client;
 
 async function setupMcp() {
   await resetDb();
 
-  // Import testTeamId after resetDb populates it
-  const { testTeamId: teamId } = await import("./helpers");
-  const mcp = createMcpServer(teamId);
+  // Import testWorkspaceId after resetDb populates it
+  const { testWorkspaceId: workspaceId } = await import("./helpers");
+  const mcp = createMcpServer(workspaceId);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
 
   await mcp.connect(serverTransport);

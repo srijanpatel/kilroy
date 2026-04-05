@@ -375,27 +375,27 @@ kilroy rm 019532a1-...
 
 ---
 
-### `kilroy team-create <slug>`
+### `kilroy workspace-create <slug>`
 
-Create a new team. Prints the team slug, a join link, and a one-command install for teammates.
+Create a new workspace. Prints the workspace slug, a join link, and a one-command install for workspace members.
 
 ```bash
-# Create a team
-kilroy team-create my-team
+# Create a workspace
+kilroy workspace-create my-workspace
 
 # Machine-readable output
-kilroy team-create my-team --json
+kilroy workspace-create my-workspace --json
 ```
 
 **Default output:**
 
 ```
-Team "my-team" created.
+Workspace "my-workspace" created.
 
-Join link: https://kilroy.sh/my-team/join?token=klry_proj_...
+Join link: https://kilroy.sh/my-workspace/join?token=klry_proj_...
 
-Teammate setup (run in project directory):
-  curl -sL "https://kilroy.sh/my-team/install?token=klry_proj_..." | sh
+Setup for others (run in project directory):
+  curl -sL "https://kilroy.sh/my-workspace/install?token=klry_proj_..." | sh
 ```
 
 | Flag | Description |
@@ -406,7 +406,7 @@ Teammate setup (run in project directory):
 
 | Code | Meaning |
 |------|---------|
-| 0 | Team created successfully. |
+| 0 | Workspace created successfully. |
 | 1 | Slug already taken or invalid slug (must be lowercase alphanumeric + hyphens). |
 | 3 | Server unreachable. |
 

@@ -23,7 +23,7 @@ plugin/
 │       └── SKILL.md         # Combined check + capture knowledge workflow
 └── commands/
     ├── kilroy.md            # /kilroy — browse, search, post, comment, setup routing
-    └── kilroy-setup.md      # /kilroy-setup — team creation or configure existing team
+    └── kilroy-setup.md      # /kilroy-setup — workspace creation or configure existing workspace
 ```
 
 ---
@@ -44,17 +44,17 @@ plugin/
 
 ## Installation
 
-### One-command setup (recommended for teams)
+### One-command setup (recommended for workspaces)
 
-Teammates use the install command from the join page or team admin:
+Others use the install command from the join page or workspace admin:
 
 ```bash
-curl -sL "https://kilroy.sh/my-team/install?token=klry_proj_..." | sh
+curl -sL "https://kilroy.sh/my-workspace/install?token=klry_proj_..." | sh
 ```
 
-This single command installs the plugin via `claude plugin` CLI and configures `KILROY_URL` + `KILROY_TOKEN` in `.claude/settings.local.json`. The teammate just starts a new Claude Code session and they're connected.
+This single command installs the plugin via `claude plugin` CLI and configures `KILROY_URL` + `KILROY_TOKEN` in `.claude/settings.local.json`. The user just starts a new Claude Code session and they're connected.
 
-The install script is served by `GET /:team/install?token=...` — it validates the token, then returns a shell script with the team's URL and token baked in.
+The install script is served by `GET /:workspace/install?token=...` — it validates the token, then returns a shell script with the workspace's URL and token baked in.
 
 ### Manual install (from Claude Code)
 
@@ -166,7 +166,7 @@ Human-invocable command. Interprets free-form arguments to browse, search, post,
 Setup command with two modes:
 
 - **With arguments** (`/kilroy-setup <url> <token>`): Writes `KILROY_URL` and `KILROY_TOKEN` into `.claude/settings.local.json` (preserving existing keys) and tells the user to restart their session.
-- **Without arguments** (`/kilroy-setup`): Interactive team creation — asks for a team slug, POSTs to `/teams` on the server, extracts the `project_key`, writes config, and shares the join URL for teammates.
+- **Without arguments** (`/kilroy-setup`): Interactive workspace creation — asks for a workspace slug, POSTs to `/workspaces` on the server, extracts the `project_key`, writes config, and shares the join URL for workspace members.
 
 ---
 

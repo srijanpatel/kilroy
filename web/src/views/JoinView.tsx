@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useTeam, useTeamPath } from '../context/TeamContext';
-import { joinTeam } from '../lib/api';
-import { trackTeam } from '../lib/teams';
+import { useWorkspace, useWorkspacePath } from '../context/WorkspaceContext';
+import { joinWorkspace } from '../lib/api';
+import { trackWorkspace } from '../lib/workspaces';
 import { KilroyMark } from '../components/KilroyMark';
 
 export function JoinView() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const team = useTeam();
-  const tp = useTeamPath();
+  const workspace = useWorkspace();
+  const wp = useWorkspacePath();
   const token = searchParams.get('token');
 
   const [status, setStatus] = useState<'validating' | 'success' | 'error'>('validating');
@@ -20,13 +20,13 @@ export function JoinView() {
   useEffect(() => {
     if (!token) {
       setStatus('error');
-      setError('No token provided. Ask your team admin for the join link.');
+      setError('No token provided. Ask your workspace admin for the join link.');
       return;
     }
 
-    joinTeam(team, token)
+    joinWorkspace(workspace, token)
       .then((d) => {
-        trackTeam(team);
+        trackWorkspace(workspace);
         setData(d);
         setStatus('success');
       })
@@ -34,7 +34,7 @@ export function JoinView() {
         setStatus('error');
         setError(e.message || 'Invalid token');
       });
-  }, [token, team]);
+  }, [token, workspace]);
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -79,8 +79,8 @@ export function JoinView() {
         </div>
 
         <p className="landing-desc">
-          Welcome to <strong style={{ color: 'var(--text)' }}>{team}</strong>.
-          Now let's connect your agent so it can read and write to this team's shared knowledge.
+          Welcome to <strong style={{ color: 'var(--text)' }}>{workspace}</strong>.
+          Now let's connect your agent so it can read and write to this workspace's shared knowledge.
         </p>
 
         {/* Zone 1: Install command with explanation */}
@@ -88,7 +88,7 @@ export function JoinView() {
           <div className="join-section-label">Set up your agent</div>
           <p className="join-section-desc">
             This installs the Kilroy plugin for Claude Code. It connects your agent
-            to <strong>{team}</strong> so anything it learns gets shared with the team.
+            to <strong>{workspace}</strong> so anything it learns gets shared with the workspace.
           </p>
           <p className="join-instruction">Run in your project directory:</p>
 
@@ -109,9 +109,9 @@ export function JoinView() {
 
         {/* Zone 2: Invite link */}
         <div className="join-section">
-          <div className="join-section-label">Invite teammates</div>
+          <div className="join-section-label">Invite others</div>
           <p className="join-section-desc">
-            Anyone with this link can join <strong>{team}</strong> and connect their own agents.
+            Anyone with this link can join <strong>{workspace}</strong> and connect their own agents.
           </p>
           <div className="join-command">
             <code>{window.location.href}</code>
@@ -127,10 +127,10 @@ export function JoinView() {
         {/* Zone 3: Browse */}
         <a
           className="join-browse"
-          href={tp('/')}
-          onClick={(e) => { e.preventDefault(); navigate(tp('/')); }}
+          href={wp('/')}
+          onClick={(e) => { e.preventDefault(); navigate(wp('/')); }}
         >
-          Browse {team} <span className="join-browse-arrow">&rarr;</span>
+          Browse {workspace} <span className="join-browse-arrow">&rarr;</span>
         </a>
       </div>
     </div>

@@ -11,12 +11,12 @@ const TEAM_API = `${SERVER_URL}/${TEAM_SLUG}`;
 const CLI = ["bun", "run", "src/cli/index.ts", "--server", TEAM_API];
 
 let serverProc: ReturnType<typeof spawn>;
-let teamToken: string;
+let workspaceToken: string;
 
 async function cli(...args: string[]): Promise<{ stdout: string; stderr: string; code: number }> {
   return new Promise((resolve) => {
     const proc = spawn(CLI[0], [...CLI.slice(1), ...args], {
-      env: { ...process.env, KILROY_URL: undefined, KILROY_TOKEN: teamToken, KILROY_SESSION_ID: undefined, CLAUDE_SESSION_ID: undefined },
+      env: { ...process.env, KILROY_URL: undefined, KILROY_TOKEN: workspaceToken, KILROY_SESSION_ID: undefined, CLAUDE_SESSION_ID: undefined },
     });
     let stdout = "";
     let stderr = "";
@@ -31,7 +31,7 @@ async function apiPost(path: string, body: any): Promise<any> {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${teamToken}`,
+      "Authorization": `Bearer ${workspaceToken}`,
     },
     body: JSON.stringify(body),
   });
@@ -41,7 +41,7 @@ async function apiPost(path: string, body: any): Promise<any> {
 async function apiDelete(path: string): Promise<void> {
   await fetch(`${TEAM_API}${path}`, {
     method: "DELETE",
-    headers: { "Authorization": `Bearer ${teamToken}` },
+    headers: { "Authorization": `Bearer ${workspaceToken}` },
   });
 }
 
@@ -49,10 +49,10 @@ async function waitForServer(url: string, maxMs = 30000) {
   const start = Date.now();
   while (Date.now() - start < maxMs) {
     try {
-      const res = await fetch(`${url}/teams`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: "healthcheck" }) });
+      const res = await fetch(`${url}/workspaces`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: "healthcheck" }) });
       // Either 201 (created) or 409 (already exists) means server is up
       if (res.status === 201 || res.status === 409) {
-        // Clean up the healthcheck team
+        // Clean up the healthcheck workspace
         return;
       }
     } catch {
@@ -71,14 +71,14 @@ beforeAll(async () => {
   });
   await waitForServer(SERVER_URL);
 
-  // Create a test team (unique slug per run)
-  const res = await fetch(`${SERVER_URL}/teams`, {
+  // Create a test workspace (unique slug per run)
+  const res = await fetch(`${SERVER_URL}/workspaces`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ slug: TEAM_SLUG }),
   });
   const data = await res.json();
-  teamToken = data.project_key;
+  workspaceToken = data.project_key;
 });
 
 afterAll(() => {
@@ -408,7 +408,7 @@ describe("kilroy edit", () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${teamToken}`,
+        "Authorization": `Bearer ${workspaceToken}`,
       },
       body: JSON.stringify({ body: "original comment", author: "commenter" }),
     })).json();

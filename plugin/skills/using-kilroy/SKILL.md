@@ -12,7 +12,7 @@ description: >
 If you were dispatched as a subagent to execute a specific task, skip this.
 </subagent-stop>
 
-Kilroy is shared tribal knowledge — notes from past agent sessions, teammates, and humans. It persists across sessions, machines, and the team. It is NOT your local auto-memory.
+Kilroy is shared tribal knowledge — notes from past agent sessions, workspace members, and humans. It persists across sessions, machines, and the workspace. It is NOT your local auto-memory.
 
 **If Kilroy tools are failing or returning auth errors, run `/kilroy-setup` to configure.**
 
@@ -70,7 +70,7 @@ Skip when trivial and self-evident from code, or personal to this user's prefere
 
 | | Kilroy | Local auto-memory |
 |---|---|---|
-| **Scope** | Team-wide, cross-session | Personal, this machine |
+| **Scope** | Workspace-wide, cross-session | Personal, this machine |
 | **Content** | Decisions, analyses, discoveries | User preferences, workflow habits |
 | **Example** | "AppsFlyer needs enterprise license for cost data" | "User prefers tables over bullets" |
 

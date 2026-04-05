@@ -21,20 +21,20 @@ searchRouter.get("/", async (c) => {
   const limit = Math.min(Math.max(parseInt(c.req.query("limit") || "20"), 1), 100);
   const cursor = c.req.query("cursor");
 
-  const teamId = c.get("teamId");
+  const workspaceId = c.get("workspaceId");
 
   if (regex) {
-    return regexSearch(c, { query, teamId, topic, tagsParam, status, orderBy, limit, cursor });
+    return regexSearch(c, { query, workspaceId, topic, tagsParam, status, orderBy, limit, cursor });
   }
 
-  return ftsSearch(c, { query, teamId, topic, tagsParam, status, orderBy, limit, cursor });
+  return ftsSearch(c, { query, workspaceId, topic, tagsParam, status, orderBy, limit, cursor });
 });
 
 async function ftsSearch(
   c: any,
   opts: {
     query: string;
-    teamId: string;
+    workspaceId: string;
     topic?: string;
     tagsParam?: string;
     status: string;
@@ -43,7 +43,7 @@ async function ftsSearch(
     cursor?: string;
   }
 ) {
-  const { query, teamId, topic, tagsParam, status, orderBy, limit, cursor } = opts;
+  const { query, workspaceId, topic, tagsParam, status, orderBy, limit, cursor } = opts;
   const tsquery = toTsquery(query);
 
   // Search posts using tsvector
@@ -57,10 +57,10 @@ async function ftsSearch(
         'StartSel=**, StopSel=**') as title_headline
     FROM posts p
     WHERE p.search_vector @@ to_tsquery('english', $1)
-      AND p.team_id = $2
+      AND p.workspace_id = $2
     ORDER BY rank DESC
     LIMIT $3
-  `, [tsquery, teamId, limit * 2]) as Array<{
+  `, [tsquery, workspaceId, limit * 2]) as Array<{
     post_id: string;
     snippet: string;
     rank: number;
@@ -77,10 +77,10 @@ async function ftsSearch(
       ts_rank(cm.search_vector, to_tsquery('english', $1)) as rank
     FROM comments cm
     WHERE cm.search_vector @@ to_tsquery('english', $1)
-      AND cm.team_id = $2
+      AND cm.workspace_id = $2
     ORDER BY rank DESC
     LIMIT $3
-  `, [tsquery, teamId, limit * 2]) as Array<{
+  `, [tsquery, workspaceId, limit * 2]) as Array<{
     post_id: string;
     comment_id: string;
     snippet: string;
@@ -122,8 +122,8 @@ async function ftsSearch(
   }
 
   const placeholders = postIds.map((_, i) => `$${i + 1}`).join(",");
-  let postQuery = `SELECT * FROM posts WHERE id IN (${placeholders}) AND team_id = $${postIds.length + 1}`;
-  const params: any[] = [...postIds, teamId];
+  let postQuery = `SELECT * FROM posts WHERE id IN (${placeholders}) AND workspace_id = $${postIds.length + 1}`;
+  const params: any[] = [...postIds, workspaceId];
   let paramIdx = postIds.length + 2;
 
   if (status !== "all") {
@@ -217,7 +217,7 @@ async function regexSearch(
   c: any,
   opts: {
     query: string;
-    teamId: string;
+    workspaceId: string;
     topic?: string;
     tagsParam?: string;
     status: string;
@@ -226,11 +226,11 @@ async function regexSearch(
     cursor?: string;
   }
 ) {
-  const { query, teamId, topic, tagsParam, status, orderBy, limit, cursor } = opts;
+  const { query, workspaceId, topic, tagsParam, status, orderBy, limit, cursor } = opts;
 
   // PostgreSQL native regex with ~* (case-insensitive)
-  let postQuery = `SELECT * FROM posts WHERE team_id = $1 AND (title ~* $2 OR body ~* $3)`;
-  const params: any[] = [teamId, query, query];
+  let postQuery = `SELECT * FROM posts WHERE workspace_id = $1 AND (title ~* $2 OR body ~* $3)`;
+  const params: any[] = [workspaceId, query, query];
   let paramIdx = 4;
 
   if (status !== "all") {
@@ -245,10 +245,10 @@ async function regexSearch(
 
   let matchedPosts = await client.unsafe(postQuery, params) as any[];
 
-  // Also search comments (scoped to team)
+  // Also search comments (scoped to workspace)
   const commentResults = await client.unsafe(
-    `SELECT DISTINCT post_id FROM comments WHERE team_id = $1 AND body ~* $2`,
-    [teamId, query]
+    `SELECT DISTINCT post_id FROM comments WHERE workspace_id = $1 AND body ~* $2`,
+    [workspaceId, query]
   ) as Array<{ post_id: string }>;
   const commentPostIds = commentResults.map((r) => r.post_id);
 
@@ -258,8 +258,8 @@ async function regexSearch(
 
   if (commentOnlyIds.length > 0) {
     const placeholders = commentOnlyIds.map((_, i) => `$${i + 1}`).join(",");
-    let extraQuery = `SELECT * FROM posts WHERE id IN (${placeholders}) AND team_id = $${commentOnlyIds.length + 1}`;
-    const extraParams: any[] = [...commentOnlyIds, teamId];
+    let extraQuery = `SELECT * FROM posts WHERE id IN (${placeholders}) AND workspace_id = $${commentOnlyIds.length + 1}`;
+    const extraParams: any[] = [...commentOnlyIds, workspaceId];
     let extraIdx = commentOnlyIds.length + 2;
     if (status !== "all") {
       extraQuery += ` AND status = $${extraIdx++}`;

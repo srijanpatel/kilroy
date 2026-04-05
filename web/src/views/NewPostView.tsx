@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { createPost, readPost, updatePost } from '../lib/api';
-import { useTeam, useTeamPath } from '../context/TeamContext';
+import { useWorkspace, useWorkspacePath } from '../context/WorkspaceContext';
 import { SkeletonCards } from '../components/Skeleton';
 
 export function PostEditorView({ onTopicChange }: { onTopicChange: (t: string) => void }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const team = useTeam();
-  const tp = useTeamPath();
+  const workspace = useWorkspace();
+  const tp = useWorkspacePath();
   const isEditing = Boolean(id);
 
   const [topic, setTopic] = useState(searchParams.get('topic') || '');
@@ -35,7 +35,7 @@ export function PostEditorView({ onTopicChange }: { onTopicChange: (t: string) =
     setLoading(true);
     setError('');
 
-    readPost(team, id!)
+    readPost(workspace, id!)
       .then((post) => {
         setTopic(post.topic || '');
         setTitle(post.title || '');
@@ -45,7 +45,7 @@ export function PostEditorView({ onTopicChange }: { onTopicChange: (t: string) =
       })
       .catch((e: any) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [id, isEditing, onTopicChange, searchParams, team]);
+  }, [id, isEditing, onTopicChange, searchParams, workspace]);
 
   useEffect(() => {
     if (!bodyRef.current) return;
@@ -77,8 +77,8 @@ export function PostEditorView({ onTopicChange }: { onTopicChange: (t: string) =
       if (author) payload.author = author;
 
       const post = isEditing && id
-        ? await updatePost(team, id, payload)
-        : await createPost(team, payload);
+        ? await updatePost(workspace, id, payload)
+        : await createPost(workspace, payload);
 
       navigate(tp(`/post/${post.id}`));
     } catch (e: any) {

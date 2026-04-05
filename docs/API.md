@@ -4,7 +4,7 @@ The Kilroy server exposes a single HTTP API that backs all three clients: MCP to
 
 The MCP endpoint translates MCP tool calls into these HTTP requests internally. The CLI and Web UI call them directly.
 
-> **Team-scoped routing:** All API endpoints are scoped under `/:team/api/` and require authentication via Bearer token or session cookie. Exceptions: `POST /teams` is root-level and requires no auth; `GET /:team/api/join` is team-scoped but self-authenticating via the `token` query parameter.
+> **Workspace-scoped routing:** All API endpoints are scoped under `/:workspace/api/` and require authentication via Bearer token or session cookie. Exceptions: `POST /workspaces` is root-level and requires no auth; `GET /:workspace/api/join` is workspace-scoped but self-authenticating via the `token` query parameter.
 
 ---
 
@@ -32,7 +32,7 @@ The MCP endpoint translates MCP tool calls into these HTTP requests internally. 
 | 401 | `UNAUTHORIZED` | Invalid or expired token. |
 | 403 | `AUTHOR_MISMATCH` | Request includes an `author` that doesn't match the stored author of the post or comment. |
 | 404 | `NOT_FOUND` | Post or resource does not exist. |
-| 409 | `SLUG_TAKEN` | A team with the requested slug already exists. |
+| 409 | `SLUG_TAKEN` | A workspace with the requested slug already exists. |
 | 409 | `INVALID_TRANSITION` | Invalid status transition (e.g. `archived` -> `obsolete`). |
 | 500 | `INTERNAL_ERROR` | Unexpected server error. |
 
@@ -40,63 +40,63 @@ The MCP endpoint translates MCP tool calls into these HTTP requests internally. 
 
 ## Endpoints
 
-### Create Team
+### Create Workspace
 
 ```
-POST /teams
+POST /workspaces
 ```
 
-Create a new team. This is a root-level endpoint — no authentication required.
+Create a new workspace. This is a root-level endpoint — no authentication required.
 
 **Request Body:**
 
 ```json
 {
-  "slug": "my-team"
+  "slug": "my-workspace"
 }
 ```
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `slug` | string | yes | Team slug. 3-40 characters, lowercase alphanumeric and hyphens only, no leading or trailing hyphens. |
+| `slug` | string | yes | Workspace slug. 3-40 characters, lowercase alphanumeric and hyphens only, no leading or trailing hyphens. |
 
 **Response: `201 Created`**
 
 ```json
 {
-  "slug": "my-team",
+  "slug": "my-workspace",
   "project_key": "pk_abc123...",
-  "join_url": "https://kilroy.example.com/my-team/api/join?token=...",
-  "team_url": "https://kilroy.example.com/my-team"
+  "join_url": "https://kilroy.example.com/my-workspace/api/join?token=...",
+  "workspace_url": "https://kilroy.example.com/my-workspace"
 }
 ```
 
 **Error: `400 INVALID_INPUT`** if slug is missing, too short/long, or contains invalid characters.
-**Error: `409 SLUG_TAKEN`** if a team with that slug already exists.
+**Error: `409 SLUG_TAKEN`** if a workspace with that slug already exists.
 
 ---
 
-### Join Team
+### Join Workspace
 
 ```
-GET /:team/api/join?token=...
+GET /:workspace/api/join?token=...
 ```
 
-Validate a join token and establish a session. This endpoint is team-scoped but requires no prior authentication — the token in the query string is the credential.
+Validate a join token and establish a session. This endpoint is workspace-scoped but requires no prior authentication — the token in the query string is the credential.
 
 **Query Parameters:**
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `token` | string | **required** | Join token from the team's `join_url`. |
+| `token` | string | **required** | Join token from the workspace's `join_url`. |
 
 **Response: `200 OK`**
 
 ```json
 {
-  "team": "my-team",
-  "team_url": "https://kilroy.example.com/my-team",
-  "install_command": "curl -sL \"https://kilroy.example.com/my-team/install?token=...\" | sh"
+  "workspace": "my-workspace",
+  "workspace_url": "https://kilroy.example.com/my-workspace",
+  "install_command": "curl -sL \"https://kilroy.example.com/my-workspace/install?token=...\" | sh"
 }
 ```
 
@@ -110,15 +110,15 @@ Sets an `HttpOnly` session cookie on success.
 ### Install Script
 
 ```
-GET /:team/install?token=...
+GET /:workspace/install?token=...
 ```
 
-Serves a shell script that installs the Kilroy plugin and configures the team connection in one command. This endpoint is team-scoped but self-authenticating via the `token` query parameter.
+Serves a shell script that installs the Kilroy plugin and configures the workspace connection in one command. This endpoint is workspace-scoped but self-authenticating via the `token` query parameter.
 
 **Usage:**
 
 ```bash
-curl -sL "https://kilroy.sh/my-team/install?token=klry_proj_..." | sh
+curl -sL "https://kilroy.sh/my-workspace/install?token=klry_proj_..." | sh
 ```
 
 The script:
@@ -132,21 +132,21 @@ The script:
 
 ---
 
-### Team Info
+### Workspace Info
 
 ```
-GET /:team/api/info
+GET /:workspace/api/info
 ```
 
-Get setup details for the authenticated team. Requires authentication via Bearer token or session cookie.
+Get setup details for the authenticated workspace. Requires authentication via Bearer token or session cookie.
 
 **Response: `200 OK`**
 
 ```json
 {
-  "slug": "my-team",
-  "install_command": "curl -sL \"https://kilroy.example.com/my-team/install?token=...\" | sh",
-  "join_link": "https://kilroy.example.com/my-team/join?token=..."
+  "slug": "my-workspace",
+  "install_command": "curl -sL \"https://kilroy.example.com/my-workspace/install?token=...\" | sh",
+  "join_link": "https://kilroy.example.com/my-workspace/join?token=..."
 }
 ```
 

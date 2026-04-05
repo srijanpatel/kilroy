@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "bun",
+      "args": ["x", "@playwright/mcp@latest", "--browser", "chromium", "--headless", "--executable-path", "/home/ubuntu/.cache/ms-playwright/chromium_headless_shell-1217/chrome-linux/headless_shell"]
+    }
+  }
+}

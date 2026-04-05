@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { marked } from 'marked';
 import { readPost, createComment, updateStatus, deletePost } from '../lib/api';
-import { useTeam, useTeamPath } from '../context/TeamContext';
+import { useWorkspace, useWorkspacePath } from '../context/WorkspaceContext';
 import { SkeletonCards } from '../components/Skeleton';
 import { timeAgo } from '../lib/time';
 
@@ -19,8 +19,8 @@ function Markdown({ content, className }: { content: string; className?: string 
 export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const team = useTeam();
-  const tp = useTeamPath();
+  const workspace = useWorkspace();
+  const tp = useWorkspacePath();
 
   const [post, setPost] = useState<any>(null);
   const [error, setError] = useState('');
@@ -31,7 +31,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
   const load = () => {
     if (!id) return;
     setError('');
-    readPost(team, id).then((data) => {
+    readPost(workspace, id).then((data) => {
       setPost(data);
       onTopicChange(data.topic);
     }).catch((e) => setError(e.message));
@@ -51,7 +51,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
     setSubmitting(true);
     try {
       const author = localStorage.getItem('kilroy_author') || undefined;
-      await createComment(team, id, { body: commentBody, author });
+      await createComment(workspace, id, { body: commentBody, author });
       setCommentBody('');
       if (textareaRef.current) textareaRef.current.style.height = 'auto';
       load();
@@ -65,7 +65,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
   const handleStatus = async (newStatus: string) => {
     if (!id) return;
     try {
-      await updateStatus(team, id, newStatus);
+      await updateStatus(workspace, id, newStatus);
       load();
     } catch (e: any) {
       setError(e.message);
@@ -75,7 +75,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
   const handleDelete = async () => {
     if (!id || !confirm('Permanently delete this post?')) return;
     try {
-      await deletePost(team, id);
+      await deletePost(workspace, id);
       navigate(post?.topic ? tp(`/${post.topic}/`) : tp('/'));
     } catch (e: any) {
       setError(e.message);

@@ -1,6 +1,6 @@
 import { pgTable, text, index, timestamp } from "drizzle-orm/pg-core";
 
-export const teams = pgTable("teams", {
+export const workspaces = pgTable("workspaces", {
   id: text("id").primaryKey(),
   slug: text("slug").notNull().unique(),
   projectKey: text("project_key").notNull(),
@@ -11,9 +11,9 @@ export const posts = pgTable(
   "posts",
   {
     id: text("id").primaryKey(),
-    teamId: text("team_id")
+    workspaceId: text("workspace_id")
       .notNull()
-      .references(() => teams.id),
+      .references(() => workspaces.id),
     title: text("title").notNull(),
     topic: text("topic").notNull(),
     status: text("status", { enum: ["active", "archived", "obsolete"] })
@@ -26,8 +26,8 @@ export const posts = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
-    index("idx_posts_team_id").on(table.teamId),
-    index("idx_posts_team_topic").on(table.teamId, table.topic),
+    index("idx_posts_workspace_id").on(table.workspaceId),
+    index("idx_posts_workspace_topic").on(table.workspaceId, table.topic),
     index("idx_posts_status").on(table.status),
     index("idx_posts_updated_at").on(table.updatedAt),
   ]
@@ -37,9 +37,9 @@ export const comments = pgTable(
   "comments",
   {
     id: text("id").primaryKey(),
-    teamId: text("team_id")
+    workspaceId: text("workspace_id")
       .notNull()
-      .references(() => teams.id),
+      .references(() => workspaces.id),
     postId: text("post_id")
       .notNull()
       .references(() => posts.id, { onDelete: "cascade" }),

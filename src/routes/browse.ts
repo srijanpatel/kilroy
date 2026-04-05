@@ -8,7 +8,7 @@ import type { Env } from "../types";
 export const browseRouter = new Hono<Env>();
 
 browseRouter.get("/", async (c) => {
-  const teamId = c.get("teamId");
+  const workspaceId = c.get("workspaceId");
   const topic = c.req.query("topic") || "";
   const status = c.req.query("status") || "active";
   const recursive = c.req.query("recursive") === "true";
@@ -18,7 +18,7 @@ browseRouter.get("/", async (c) => {
   const cursor = c.req.query("cursor");
 
   // Build conditions for posts at this exact topic
-  const conditions: any[] = [eq(posts.teamId, teamId)];
+  const conditions: any[] = [eq(posts.workspaceId, workspaceId)];
 
   if (recursive) {
     // All posts at and below this topic
@@ -101,7 +101,7 @@ browseRouter.get("/", async (c) => {
 
   // Subtopics (only in non-recursive mode)
   if (!recursive) {
-    response.subtopics = await getSubtopics(teamId, topic, status);
+    response.subtopics = await getSubtopics(workspaceId, topic, status);
   }
 
   if (hasMore) {
@@ -113,7 +113,7 @@ browseRouter.get("/", async (c) => {
 });
 
 async function getSubtopics(
-  teamId: string,
+  workspaceId: string,
   parentTopic: string,
   status: string
 ): Promise<Array<{
@@ -127,7 +127,7 @@ async function getSubtopics(
   const prefixLen = prefix.length;
 
   // Build the CTE query with PostgreSQL string functions
-  const params: any[] = [prefix + "%", teamId, prefixLen];
+  const params: any[] = [prefix + "%", workspaceId, prefixLen];
   let statusCondition = "";
   if (status !== "all") {
     params.push(status);
@@ -139,7 +139,7 @@ async function getSubtopics(
       SELECT *
       FROM posts
       WHERE topic LIKE $1
-      AND team_id = $2
+      AND workspace_id = $2
       ${statusCondition}
     ),
     immediate_children AS (

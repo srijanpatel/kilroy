@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { browse, search, getTeamInfo } from '../lib/api';
-import { useTeam, useTeamPath } from '../context/TeamContext';
+import { browse, search, getWorkspaceInfo } from '../lib/api';
+import { useWorkspace, useWorkspacePath } from '../context/WorkspaceContext';
 import { KilroyMark } from './KilroyMark';
 
 interface OmnibarProps {
@@ -16,8 +16,8 @@ function getInitialTheme(): string {
 
 export function Omnibar({ currentTopic }: OmnibarProps) {
   const navigate = useNavigate();
-  const team = useTeam();
-  const tp = useTeamPath();
+  const workspace = useWorkspace();
+  const tp = useWorkspacePath();
   const [active, setActive] = useState(false);
   const [theme, setTheme] = useState(getInitialTheme);
 
@@ -41,10 +41,10 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
   const inviteRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    getTeamInfo(team)
+    getWorkspaceInfo(workspace)
       .then((info) => setJoinLink(info?.join_link || null))
       .catch(() => {});
-  }, [team]);
+  }, [workspace]);
 
   useEffect(() => {
     if (!inviteOpen) return;
@@ -58,7 +58,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
   }, [inviteOpen]);
 
   useEffect(() => {
-    browse(team, { recursive: 'true', status: 'all', limit: '200' })
+    browse(workspace, { recursive: 'true', status: 'all', limit: '200' })
       .then((data) => {
         const paths = new Set<string>();
         for (const p of data.posts || []) {
@@ -86,7 +86,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
     setTopics(matchedTopics);
 
     const timer = setTimeout(() => {
-      search(team, { query: query.trim(), status: 'all', limit: '5' })
+      search(workspace, { query: query.trim(), status: 'all', limit: '5' })
         .then((data) => setPosts(data.results || []))
         .catch(() => setPosts([]));
     }, 200);
@@ -222,11 +222,11 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
           </>
         ) : (
           <div className="omnibar-resting" onClick={activate}>
-            <Link to="/" className="omnibar-home" onClick={(e) => e.stopPropagation()} title="Kilroy — switch teams">
+            <Link to="/" className="omnibar-home" onClick={(e) => e.stopPropagation()} title="Kilroy — switch workspaces">
               <KilroyMark size={22} />
             </Link>
             <Link to={tp('/')} className="omnibar-wordmark" onClick={(e) => e.stopPropagation()}>
-              {team}<span className="omnibar-sep">/</span>
+              {workspace}<span className="omnibar-sep">/</span>
             </Link>
             {segments.length > 0 && (
               <span className="omnibar-path">
@@ -255,13 +255,13 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
                 <button
                   className="invite-btn"
                   onClick={(e) => { e.stopPropagation(); setInviteOpen((o) => !o); }}
-                  title="Invite teammates"
+                  title="Invite others"
                 >
                   + Invite
                 </button>
                 {inviteOpen && (
                   <div className="invite-popover">
-                    <div className="invite-popover-label">Invite teammates</div>
+                    <div className="invite-popover-label">Invite others</div>
                     <div className="invite-popover-row">
                       <code className="invite-popover-link">{joinLink}</code>
                       <button
