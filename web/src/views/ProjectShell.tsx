@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Routes, Route, useParams, useLocation, Navigate } from 'react-router-dom';
-import { ProjectProvider } from '../context/ProjectContext';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Routes, Route, useParams, useLocation, Navigate, Link } from 'react-router-dom';
+import { ProjectProvider, useProjectPath } from '../context/ProjectContext';
+import { useAuth } from '../context/AuthContext';
 import { trackProject } from '../lib/projects';
 import { Omnibar } from '../components/Omnibar';
 import { TopicTree } from '../components/TopicTree';
@@ -10,6 +11,7 @@ import { PostView } from './PostView';
 import { SearchView } from './SearchView';
 import { PostEditorView } from './NewPostView';
 import { JoinView } from './JoinView';
+import { ProjectSettingsView } from './ProjectSettingsView';
 
 function useSidebarState(key: string) {
   const storageKey = `kilroy:sidebar:${key}`;
@@ -56,6 +58,64 @@ export function ProjectShell() {
   );
 }
 
+function AccountMenu(_props: { account: string; project: string }) {
+  const { user, account: kilroyAccount, signOut } = useAuth();
+  const pp = useProjectPath();
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  if (!user) return null;
+
+  const displayName = kilroyAccount?.slug || user.name || user.email;
+
+  return (
+    <div className="account-menu-wrapper" ref={menuRef}>
+      <button
+        className="account-menu-btn"
+        onClick={() => setOpen((o) => !o)}
+        title={displayName}
+      >
+        {displayName}
+      </button>
+      {open && (
+        <div className="account-menu-popover">
+          <Link
+            className="account-menu-item"
+            to="/projects"
+            onClick={() => setOpen(false)}
+          >
+            My Projects
+          </Link>
+          <Link
+            className="account-menu-item"
+            to={pp('/settings')}
+            onClick={() => setOpen(false)}
+          >
+            Project Settings
+          </Link>
+          <button
+            className="account-menu-item account-menu-item-danger"
+            onClick={async () => { setOpen(false); await signOut(); }}
+          >
+            Sign Out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProjectLayout({ account, project, currentTopic, onTopicChange }: {
   account: string;
   project: string;
@@ -98,6 +158,7 @@ function ProjectLayout({ account, project, currentTopic, onTopicChange }: {
           </svg>
         </button>
         <Omnibar currentTopic={currentTopic} />
+        <AccountMenu account={account} project={project} />
       </div>
       <div className="workspace-layout">
         {expanded && (
@@ -121,6 +182,7 @@ function ProjectLayout({ account, project, currentTopic, onTopicChange }: {
             <Route path="post/new" element={<PostEditorView onTopicChange={onTopicChange} />} />
             <Route path="search" element={<SearchView />} />
             <Route path="browse/*" element={<BrowseView onTopicChange={onTopicChange} />} />
+            <Route path="settings" element={<ProjectSettingsView />} />
             <Route path="" element={<Navigate to="browse/" replace />} />
             <Route path="*" element={<Navigate to="browse/" replace />} />
           </Routes>
