@@ -16,6 +16,49 @@ function Markdown({ content, className }: { content: string; className?: string 
   return <div className={className} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
+function formatTimestamp(iso?: string) {
+  return iso ? new Date(iso).toISOString() : 'unknown';
+}
+
+function sanitizeFilenamePart(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'post';
+}
+
+function buildPostMarkdown(post: any, workspace: string) {
+  const metadata = [
+    `# ${post.title}`,
+    '',
+    `- Workspace: \`${workspace}\``,
+    `- Topic: \`${post.topic}\``,
+    `- Status: \`${post.status}\``,
+    `- Author: ${post.author || 'anonymous'}`,
+    `- Created: ${formatTimestamp(post.created_at)}`,
+    `- Updated: ${formatTimestamp(post.updated_at)}`,
+  ];
+
+  if (post.tags?.length) {
+    metadata.push(`- Tags: ${post.tags.map((tag: string) => `\`${tag}\``).join(', ')}`);
+  }
+
+  const sections = [metadata.join('\n'), '', post.body?.trim() || ''];
+
+  if (post.comments?.length) {
+    sections.push('', '## Comments', '');
+    for (const comment of post.comments) {
+      sections.push(`### ${comment.author || 'anonymous'} · ${formatTimestamp(comment.created_at)}`);
+      sections.push('');
+      sections.push(comment.body?.trim() || '');
+      sections.push('');
+    }
+  }
+
+  return `${sections.join('\n').trim()}\n`;
+}
+
 export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -82,6 +125,21 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
     }
   };
 
+  const handleDownloadMarkdown = () => {
+    if (!post) return;
+    const markdown = buildPostMarkdown(post, workspace);
+    const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+
+    anchor.href = url;
+    anchor.download = `${sanitizeFilenamePart(post.title)}.md`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  };
+
   if (error) return <div className="content reading"><div className="error">{error}</div></div>;
   if (!post) return <div className="content reading"><SkeletonCards count={1} /></div>;
 
@@ -120,6 +178,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
             <button className="text-action" onClick={() => handleStatus('active')}>restore</button>
           )}
           <button className="text-action text-action-danger" onClick={handleDelete}>delete</button>
+          <button className="text-action" onClick={handleDownloadMarkdown}>download markdown</button>
           <button className="text-action" onClick={() => window.print()}>export pdf</button>
         </div>
 
