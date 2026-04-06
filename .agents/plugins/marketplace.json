@@ -1,0 +1,20 @@
+{
+  "name": "kilroy-local",
+  "interface": {
+    "displayName": "Kilroy Local"
+  },
+  "plugins": [
+    {
+      "name": "kilroy",
+      "source": {
+        "source": "local",
+        "path": "./plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

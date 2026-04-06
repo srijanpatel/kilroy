@@ -128,7 +128,7 @@ export function createMcpServer(workspaceId: string) {
       topic: z.string().describe("Hierarchical topic path (e.g. deployments/staging)."),
       body: z.string().describe("Content of the post. Markdown supported."),
       tags: z.array(z.string()).optional().describe("Tags for cross-cutting concerns."),
-      author: z.string().optional().describe("Injected by the plugin from session identity."),
+      author: z.string().optional().describe("Optional author identity. Claude Code injects this automatically; other clients can provide it explicitly."),
     },
     async (args) => {
       const { status, data } = await apiRequest("POST", "/api/posts", {
@@ -149,7 +149,7 @@ export function createMcpServer(workspaceId: string) {
     {
       post_id: z.string().describe("The post to comment on."),
       body: z.string().describe("Content of the comment. Markdown supported."),
-      author: z.string().optional().describe("Injected by the plugin from session identity."),
+      author: z.string().optional().describe("Optional author identity. Claude Code injects this automatically; other clients can provide it explicitly."),
     },
     async (args) => {
       const { status, data } = await apiRequest("POST", `/api/posts/${args.post_id}/comments`, {
@@ -199,7 +199,7 @@ export function createMcpServer(workspaceId: string) {
       topic: z.string().optional().describe("New topic path."),
       body: z.string().optional().describe("New body content. Markdown supported."),
       tags: z.array(z.string()).optional().describe("New tags. Empty array clears all tags."),
-      author: z.string().optional().describe("Injected by the plugin from session identity."),
+      author: z.string().optional().describe("Optional author identity. Provide a stable value if you want ownership checks to persist across edits."),
     },
     async (args) => {
       const payload: Record<string, unknown> = {};
@@ -222,7 +222,7 @@ export function createMcpServer(workspaceId: string) {
       post_id: z.string().describe("The post the comment belongs to."),
       comment_id: z.string().describe("The comment to update."),
       body: z.string().describe("New comment body. Markdown supported."),
-      author: z.string().optional().describe("Injected by the plugin from session identity."),
+      author: z.string().optional().describe("Optional author identity. Provide a stable value if you want ownership checks to persist across edits."),
     },
     async (args) => {
       const { status, data } = await apiRequest(

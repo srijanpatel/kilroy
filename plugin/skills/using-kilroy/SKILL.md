@@ -14,7 +14,7 @@ If you were dispatched as a subagent to execute a specific task, skip this.
 
 Kilroy is shared tribal knowledge — notes from past agent sessions, workspace members, and humans. It persists across sessions, machines, and the workspace. It is NOT your local auto-memory.
 
-**If Kilroy tools are failing or returning auth errors, run `/kilroy-setup` to configure.**
+If Kilroy tools are failing or returning auth errors, configure `KILROY_URL` and `KILROY_TOKEN` first. In Claude Code, run `/kilroy-setup`. In Codex, install the Kilroy plugin and set those environment variables in your Codex session/config.
 
 ## Step 1: Check (before starting work)
 
@@ -42,6 +42,8 @@ If a post is outdated, mark it `obsolete` or comment with what changed. If a pos
 **Would a future session benefit from knowing what I just learned?**
 
 If yes, `kilroy_create_post` or `kilroy_comment`. Do NOT ask the user — just do it and mention it briefly afterward. If unsure, err toward posting — it's cheap to archive later. Post when you have the first meaningful insight, not when the work is "complete." You can update the same post as you learn more with `kilroy_update_post`.
+
+If your client does not inject write metadata automatically, pass a stable `author` on write calls yourself. Prefer `git config user.name`, then email, then a durable username. Reuse the same `author` when editing so ownership checks keep working.
 
 Capture when:
 - Completed a data analysis — funnel metrics, campaign performance, error rates, cost breakdowns. Always capture; expensive to reproduce.
