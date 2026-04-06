@@ -1,58 +1,35 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { KilroyMark } from '../components/KilroyMark';
-import { getKnownWorkspaces } from '../lib/workspaces';
-
-function getInitialTheme(): string {
-  const stored = localStorage.getItem('kilroy_theme');
-  if (stored) return stored;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
 
 export function LandingView() {
+  const { user, account, loading } = useAuth();
   const navigate = useNavigate();
-  const [slug, setSlug] = useState('');
-  const [error, setError] = useState('');
-  const [creating, setCreating] = useState(false);
-  const [knownWorkspaces] = useState(getKnownWorkspaces);
+  const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', getInitialTheme());
+    document.documentElement.setAttribute(
+      'data-theme',
+      localStorage.getItem('kilroy_theme') ||
+        (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    );
   }, []);
 
-  const slugPattern = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
+  useEffect(() => {
+    if (loading) return;
+    if (user && account) { navigate('/projects'); return; }
+    if (user && !account) { navigate('/onboarding'); return; }
+  }, [user, account, loading]);
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  useEffect(() => {
+    fetch('/api/stats')
+      .then((r) => r.json())
+      .then(setStats)
+      .catch(() => {});
+  }, []);
 
-    const cleaned = slug.trim().toLowerCase();
-    if (!slugPattern.test(cleaned)) {
-      setError('3-40 characters, lowercase letters, numbers, and hyphens. Cannot start or end with a hyphen.');
-      return;
-    }
-
-    setCreating(true);
-    try {
-      const res = await fetch('/workspaces', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: cleaned }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Failed to create workspace');
-        setCreating(false);
-        return;
-      }
-
-      navigate(`/${data.slug}/_/join?token=${data.project_key}`);
-    } catch {
-      setError('Failed to connect to server');
-      setCreating(false);
-    }
-  };
+  if (loading) return null;
 
   return (
     <div className="app">
@@ -72,38 +49,24 @@ export function LandingView() {
           So the alpha compounds. And is never lost.
         </p>
 
-        {knownWorkspaces.length > 0 && (
-          <div className="landing-workspaces">
-            <div className="landing-workspaces-label">Your workspaces</div>
-            <div className="landing-workspaces-list">
-              {knownWorkspaces.map((t) => (
-                <Link key={t} to={`/${t}/`} className="landing-workspace-card">
-                  <KilroyMark size={18} />
-                  <span className="landing-workspace-slug">{t}</span>
-                  <span className="landing-workspace-arrow">&rarr;</span>
-                </Link>
-              ))}
+        {stats && (
+          <div className="stats-grid" style={{ marginBottom: '2rem' }}>
+            <div className="stats-card">
+              <span className="stats-number">{stats.projects?.toLocaleString() ?? 0}</span>
+              <span className="stats-label">Projects</span>
+            </div>
+            <div className="stats-card">
+              <span className="stats-number">{stats.writes?.total?.toLocaleString() ?? 0}</span>
+              <span className="stats-label">Writes</span>
             </div>
           </div>
         )}
 
-        <div className="landing-workspaces-label">{knownWorkspaces.length > 0 ? 'Create a new workspace' : ''}</div>
-        <form className="landing-bar" onSubmit={handleCreate}>
-          <input
-            className="landing-bar-input"
-            type="text"
-            value={slug}
-            onChange={(e) => { setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')); setError(''); }}
-            placeholder="your-workspace-name"
-            autoComplete="off"
-            spellCheck={false}
-            disabled={creating}
-          />
-          <button type="submit" className="landing-bar-btn" disabled={creating || !slug.trim()}>
-            {creating ? 'Creating...' : 'Start'}
+        <div className="login-buttons">
+          <button className="btn btn-primary login-btn" onClick={() => navigate('/login')}>
+            Get Started
           </button>
-          {error && <p className="landing-error">{error}</p>}
-        </form>
+        </div>
         <p className="landing-hint">Designed for Claude Code</p>
       </div>
     </div>

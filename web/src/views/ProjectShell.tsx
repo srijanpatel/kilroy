@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Routes, Route, useParams, useLocation } from 'react-router-dom';
-import { WorkspaceProvider } from '../context/WorkspaceContext';
-import { trackWorkspace } from '../lib/workspaces';
+import { Routes, Route, useParams, useLocation, Navigate } from 'react-router-dom';
+import { ProjectProvider } from '../context/ProjectContext';
+import { trackProject } from '../lib/projects';
 import { Omnibar } from '../components/Omnibar';
 import { TopicTree } from '../components/TopicTree';
 import { AuthorPrompt } from '../components/AuthorPrompt';
@@ -11,54 +11,58 @@ import { SearchView } from './SearchView';
 import { PostEditorView } from './NewPostView';
 import { JoinView } from './JoinView';
 
-function useSidebarState(workspace: string) {
-  const key = `kilroy:sidebar:${workspace}`;
+function useSidebarState(key: string) {
+  const storageKey = `kilroy:sidebar:${key}`;
   const [expanded, setExpanded] = useState(() => {
-    const stored = localStorage.getItem(key);
+    const stored = localStorage.getItem(storageKey);
     return stored === null ? true : stored === 'true';
   });
 
   const toggle = useCallback(() => {
     setExpanded((prev) => {
-      localStorage.setItem(key, String(!prev));
+      localStorage.setItem(storageKey, String(!prev));
       return !prev;
     });
-  }, [key]);
+  }, [storageKey]);
 
   return { expanded, toggle };
 }
 
-export function WorkspaceShell() {
-  const { workspace } = useParams();
+export function ProjectShell() {
+  const { account, project } = useParams();
   const [currentTopic, setCurrentTopic] = useState('');
 
-  useEffect(() => { if (workspace) trackWorkspace(workspace); }, [workspace]);
+  useEffect(() => {
+    if (account && project) trackProject(account, project);
+  }, [account, project]);
 
-  if (!workspace) return null;
+  if (!account || !project) return null;
 
   return (
-    <WorkspaceProvider workspace={workspace}>
+    <ProjectProvider accountSlug={account} projectSlug={project}>
       <Routes>
-        <Route path="_/join" element={<JoinView />} />
+        <Route path="join" element={<JoinView />} />
         <Route path="*" element={
-          <WorkspaceLayout
-            key={workspace}
-            workspace={workspace}
+          <ProjectLayout
+            key={`${account}/${project}`}
+            account={account}
+            project={project}
             currentTopic={currentTopic}
             onTopicChange={setCurrentTopic}
           />
         } />
       </Routes>
-    </WorkspaceProvider>
+    </ProjectProvider>
   );
 }
 
-function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
-  workspace: string;
+function ProjectLayout({ account, project, currentTopic, onTopicChange }: {
+  account: string;
+  project: string;
   currentTopic: string;
   onTopicChange: (t: string) => void;
 }) {
-  const { expanded, toggle } = useSidebarState(workspace);
+  const { expanded, toggle } = useSidebarState(`${account}/${project}`);
   const location = useLocation();
 
   // Keyboard shortcut: Cmd+\ or Ctrl+\ to toggle sidebar
@@ -73,7 +77,7 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
     return () => window.removeEventListener('keydown', handler);
   }, [toggle]);
 
-  const postMatch = location.pathname.match(/\/_\/post\/([^/]+)/);
+  const postMatch = location.pathname.match(/\/post\/([^/]+)/);
   const activePostId = postMatch ? postMatch[1] : null;
 
   return (
@@ -101,7 +105,7 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
             <div className="sidebar-backdrop" onClick={toggle} />
             <aside className="sidebar">
               <div className="sidebar-header">
-                <span className="sidebar-title">{workspace}</span>
+                <span className="sidebar-title">{account}/{project}</span>
                 <button className="sidebar-toggle" onClick={toggle} title="Collapse sidebar (⌘\)">«</button>
               </div>
               <div className="sidebar-tree">
@@ -112,11 +116,13 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
         )}
         <div className="workspace-content">
           <Routes>
-            <Route path="_/post/:id/edit" element={<PostEditorView onTopicChange={onTopicChange} />} />
-            <Route path="_/post/:id" element={<PostView onTopicChange={onTopicChange} />} />
-            <Route path="_/search" element={<SearchView />} />
-            <Route path="_/new" element={<PostEditorView onTopicChange={onTopicChange} />} />
-            <Route path="*" element={<BrowseView onTopicChange={onTopicChange} />} />
+            <Route path="post/:id/edit" element={<PostEditorView onTopicChange={onTopicChange} />} />
+            <Route path="post/:id" element={<PostView onTopicChange={onTopicChange} />} />
+            <Route path="post/new" element={<PostEditorView onTopicChange={onTopicChange} />} />
+            <Route path="search" element={<SearchView />} />
+            <Route path="browse/*" element={<BrowseView onTopicChange={onTopicChange} />} />
+            <Route path="" element={<Navigate to="browse/" replace />} />
+            <Route path="*" element={<Navigate to="browse/" replace />} />
           </Routes>
         </div>
       </div>
