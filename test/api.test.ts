@@ -51,14 +51,15 @@ async function createComment(
 describe("GET /api/info", () => {
   beforeEach(setup);
 
-  it("returns workspace info with install command and join link", async () => {
+  it("returns project info with install command and join link", async () => {
     const res = await app.request("/api/info");
     expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.slug).toBe("test-workspace");
+    expect(data.account).toBe("test-account");
+    expect(data.project).toBe("test-workspace");
     expect(data.install_command).toContain("curl");
     expect(data.install_command).toContain(testToken);
-    expect(data.join_link).toContain("/test-workspace/_/join?token=");
+    expect(data.join_link).toContain("/join?token=");
     expect(data.join_link).toContain(testToken);
   });
 });
@@ -852,20 +853,20 @@ describe("DELETE /api/posts/:id", () => {
   });
 });
 
-// ─── GET /:workspace/_/install ─────────────────────────────────────
+// ─── GET /:account/:project/install ────────────────────────────────
 
-describe("GET /:workspace/_/install", () => {
+describe("GET /:account/:project/install", () => {
   beforeEach(setup);
 
   function installApp() {
     const a = new Hono();
-    a.route("/test-workspace/_/install", installHandler);
+    a.route("/test-account/test-workspace/install", installHandler);
     return a;
   }
 
   it("returns a shell script when token is valid", async () => {
     const a = installApp();
-    const res = await a.request(`/test-workspace/_/install?token=${testToken}`);
+    const res = await a.request(`/test-account/test-workspace/install?token=${testToken}`);
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toContain("text/plain");
     const body = await res.text();
@@ -877,13 +878,13 @@ describe("GET /:workspace/_/install", () => {
 
   it("returns 400 when token is missing", async () => {
     const a = installApp();
-    const res = await a.request("/test-workspace/_/install");
+    const res = await a.request("/test-account/test-workspace/install");
     expect(res.status).toBe(400);
   });
 
   it("returns 401 when token is invalid", async () => {
     const a = installApp();
-    const res = await a.request("/test-workspace/_/install?token=bad_token");
+    const res = await a.request("/test-account/test-workspace/install?token=bad_token");
     expect(res.status).toBe(401);
   });
 });
