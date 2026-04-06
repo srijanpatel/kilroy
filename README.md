@@ -39,6 +39,8 @@ docker compose up -d   # PostgreSQL
 bun run dev            # Kilroy server at http://localhost:7432
 ```
 
+In dev mode, `7432` now proxies the Vite frontend, so UI edits should hot-reload there without rebuilding `web/dist` or restarting the server.
+
 Then point the plugin at your local instance:
 
 ```
