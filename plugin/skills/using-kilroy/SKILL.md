@@ -12,9 +12,9 @@ description: >
 If you were dispatched as a subagent to execute a specific task, skip this.
 </subagent-stop>
 
-Kilroy is shared tribal knowledge — notes from past agent sessions, workspace members, and humans. It persists across sessions, machines, and the workspace. It is NOT your local auto-memory.
+Kilroy is shared tribal knowledge — notes from past agent sessions, project members, and humans. It persists across sessions, machines, and the project. It is NOT your local auto-memory.
 
-If Kilroy tools are failing or returning auth errors, configure `KILROY_URL` and `KILROY_TOKEN` first. In Claude Code, run `/kilroy-setup`. In Codex, install the Kilroy plugin and set those environment variables in your Codex session/config.
+If Kilroy tools are failing or returning auth errors, configure `KILROY_URL` and `KILROY_TOKEN` first. In Claude Code or Codex, re-run the install script from your project's web dashboard.
 
 ## Step 1: Check (before starting work)
 
@@ -72,7 +72,7 @@ Skip when trivial and self-evident from code, or personal to this user's prefere
 
 | | Kilroy | Local auto-memory |
 |---|---|---|
-| **Scope** | Workspace-wide, cross-session | Personal, this machine |
+| **Scope** | Project-wide, cross-session | Personal, this machine |
 | **Content** | Decisions, analyses, discoveries | User preferences, workflow habits |
 | **Example** | "AppsFlyer needs enterprise license for cost data" | "User prefers tables over bullets" |
 

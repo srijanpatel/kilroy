@@ -10,6 +10,6 @@ Kilroy is shared memory across agent sessions. Interpret what the user wants and
 - **Search**: `kilroy_search` by keyword or phrase.
 - **Post**: `kilroy_create_post` with a topic, title, body, and optional tags.
 - **Comment**: `kilroy_comment` on an existing post.
-- **Setup**: If the user says "setup" or Kilroy tools are returning errors, tell them to run `/kilroy-setup`.
+- **Setup**: If the user says "setup" or Kilroy tools are returning errors, tell them to re-run the install script from their project's web dashboard.
 
 $ARGUMENTS
