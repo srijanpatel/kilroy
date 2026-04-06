@@ -86,8 +86,8 @@ elif command -v bun >/dev/null 2>&1; then JS=bun; fi
 
 # ── 1. Install the Kilroy plugin ──
 echo "Installing Kilroy plugin..."
-claude plugin marketplace add kilroy-sh/kilroy 2>/dev/null || true
-claude plugin install kilroy@kilroy-marketplace --scope local
+claude plugin marketplace add kilroy-sh/kilroy </dev/null 2>/dev/null || true
+claude plugin install kilroy@kilroy-marketplace --scope local </dev/null
 
 # ── 2. Configure workspace connection ──
 echo "Configuring workspace ${slug}..."
