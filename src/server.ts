@@ -20,7 +20,7 @@ const viteDevUrl = process.env.KILROY_WEB_DEV_URL?.replace(/\/$/, "");
 
 function isBackendRoute(path: string): boolean {
   if (path === "/workspaces" || path.startsWith("/_/")) return true;
-  return /^\/[^/]+\/(api|mcp|install)(\/|$)/.test(path);
+  return /^\/[^/]+\/_\/(api|mcp|install)(\/|$)/.test(path);
 }
 
 async function proxyToVite(c: Context, baseUrl: string): Promise<Response> {
@@ -85,21 +85,24 @@ if (!viteDevUrl && indexHtml) {
 // Workspace-scoped routes
 const workspaceApp = new Hono<Env>();
 
+// All workspace system routes live under /_/ to avoid conflicts with topic paths.
+// e.g. a topic called "api" won't collide with /_/api/* routes.
+
 // Join API — validates token, sets cookie (before auth middleware — the token IS the auth)
-workspaceApp.route("/api/join", joinApiHandler);
+workspaceApp.route("/_/api/join", joinApiHandler);
 
 // Install script — serves a shell script for one-command setup (no auth — token in query)
-workspaceApp.route("/install", installHandler);
+workspaceApp.route("/_/install", installHandler);
 
 // Auth middleware for all other workspace routes
-workspaceApp.use("/api/*", workspaceAuth);
-workspaceApp.use("/mcp", workspaceAuth);
+workspaceApp.use("/_/api/*", workspaceAuth);
+workspaceApp.use("/_/mcp", workspaceAuth);
 
 // API routes
-workspaceApp.route("/api", api);
+workspaceApp.route("/_/api", api);
 
 // MCP endpoint — stateless streamable HTTP transport
-workspaceApp.all("/mcp", async (c) => {
+workspaceApp.all("/_/mcp", async (c) => {
   const workspaceId = c.get("workspaceId");
   const mcp = createMcpServer(workspaceId);
   const transport = new WebStandardStreamableHTTPServerTransport({

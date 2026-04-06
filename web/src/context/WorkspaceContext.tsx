@@ -14,7 +14,7 @@ export function useWorkspace(): string {
 
 /**
  * Returns a function that prefixes paths with the workspace slug.
- * Usage: const wp = useWorkspacePath(); navigate(wp('/post/123'));
+ * Usage: const wp = useWorkspacePath(); navigate(wp('/_/post/123'));
  */
 export function useWorkspacePath(): (path: string) => string {
   const workspace = useWorkspace();

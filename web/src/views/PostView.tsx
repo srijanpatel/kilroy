@@ -109,7 +109,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
         )}
 
         <div className="post-actions">
-          <button className="text-action" onClick={() => navigate(tp(`/post/${post.id}/edit`))}>edit</button>
+          <button className="text-action" onClick={() => navigate(tp(`/_/post/${post.id}/edit`))}>edit</button>
           {post.status === 'active' && (
             <>
               <button className="text-action" onClick={() => handleStatus('archived')}>archive</button>

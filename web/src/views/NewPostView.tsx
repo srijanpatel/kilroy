@@ -80,7 +80,7 @@ export function PostEditorView({ onTopicChange }: { onTopicChange: (t: string) =
         ? await updatePost(workspace, id, payload)
         : await createPost(workspace, payload);
 
-      navigate(tp(`/post/${post.id}`));
+      navigate(tp(`/_/post/${post.id}`));
     } catch (e: any) {
       setError(e.message);
     } finally {

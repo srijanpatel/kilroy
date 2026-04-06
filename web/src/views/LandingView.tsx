@@ -47,7 +47,7 @@ export function LandingView() {
         return;
       }
 
-      navigate(`/${data.slug}/join?token=${data.project_key}`);
+      navigate(`/${data.slug}/_/join?token=${data.project_key}`);
     } catch {
       setError('Failed to connect to server');
       setCreating(false);

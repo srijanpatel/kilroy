@@ -104,7 +104,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
         <div className="spacer" />
         <button
           className="btn btn-primary"
-          onClick={() => navigate(tp(`/new${topic ? `?topic=${encodeURIComponent(topic)}` : ''}`))}
+          onClick={() => navigate(tp(`/_/new${topic ? `?topic=${encodeURIComponent(topic)}` : ''}`))}
         >
           + New Post
         </button>
@@ -137,7 +137,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
           key={p.id}
           className={`card card-animate${p.status !== 'active' ? ` card-${p.status}` : ''}`}
           style={{ animationDelay: `${(data.subtopics?.length || 0) * 30 + i * 30}ms` }}
-          onClick={() => navigate(tp(`/post/${p.id}`))}
+          onClick={() => navigate(tp(`/_/post/${p.id}`))}
         >
           <div className="card-title">
             <span className="card-title-text">{p.title}</span>
@@ -146,7 +146,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
                 className="text-action card-edit-action"
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(tp(`/post/${p.id}/edit`));
+                  navigate(tp(`/_/post/${p.id}/edit`));
                 }}
               >
                 edit
@@ -171,7 +171,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
           title="No one's been here yet."
           message="Be the first to leave a note."
           actionLabel="Create the first post"
-          onAction={() => navigate(tp(`/new?topic=${encodeURIComponent(topic)}`))}
+          onAction={() => navigate(tp(`/_/new?topic=${encodeURIComponent(topic)}`))}
         />
       )}
     </div>

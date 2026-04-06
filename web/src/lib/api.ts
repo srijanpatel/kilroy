@@ -1,5 +1,5 @@
 function getBase(workspace: string): string {
-  return `/${workspace}/api`;
+  return `/${workspace}/_/api`;
 }
 
 async function request(workspace: string, path: string, init?: RequestInit): Promise<any> {
@@ -19,7 +19,7 @@ async function request(workspace: string, path: string, init?: RequestInit): Pro
         data = JSON.parse(raw);
       } catch {
         if (res.status === 401) {
-          window.location.href = `/${encodeURIComponent(workspace)}/join`;
+          window.location.href = `/${encodeURIComponent(workspace)}/_/join`;
           throw new Error('Redirecting to join page…');
         }
         throw new Error(`Expected JSON response but received ${contentType || 'non-JSON content'}`);
@@ -28,7 +28,7 @@ async function request(workspace: string, path: string, init?: RequestInit): Pro
   }
 
   if (res.status === 401) {
-    window.location.href = `/${encodeURIComponent(workspace)}/join`;
+    window.location.href = `/${encodeURIComponent(workspace)}/_/join`;
     throw new Error('Redirecting to join page…');
   }
   if (!res.ok) throw new Error(data?.error || `Request failed: ${res.status}`);

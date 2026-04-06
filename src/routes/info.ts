@@ -19,7 +19,7 @@ infoRouter.get("/", async (c) => {
 
   return c.json({
     slug: workspaceSlug,
-    install_command: `curl -sL "${workspaceUrl}/install?token=${projectKey}" | sh`,
-    join_link: `${workspaceUrl}/join?token=${projectKey}`,
+    install_command: `curl -sL "${workspaceUrl}/_/install?token=${projectKey}" | sh`,
+    join_link: `${workspaceUrl}/_/join?token=${projectKey}`,
   });
 });

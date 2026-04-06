@@ -46,7 +46,7 @@ program
       console.log();
       console.log(`Join link: ${data.join_url}`);
       console.log(`\nSetup (run in project directory):`);
-      console.log(`  curl -sL "${data.workspace_url}/install?token=${data.project_key}" | sh`);
+      console.log(`  curl -sL "${data.workspace_url}/_/install?token=${data.project_key}" | sh`);
     }
   });
 
