@@ -58,16 +58,44 @@ a:hover { color: var(--accent-hover); }
 }
 
 /* Omnibar */
-.omnibar-wrapper {
+.omnibar-row {
   position: sticky;
   top: 0;
   z-index: 100;
   width: 100%;
   display: flex;
-  justify-content: center;
+  align-items: center;
   padding: 1rem 1.5rem;
   background: linear-gradient(to bottom, var(--bg) 60%, transparent);
   pointer-events: none;
+}
+
+.omnibar-row > * {
+  pointer-events: all;
+}
+
+.omnibar-row .omnibar {
+  margin: 0 auto;
+}
+
+.sidebar-toggle-btn {
+  position: absolute;
+  left: 1.5rem;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background 0.15s;
+}
+
+.sidebar-toggle-btn:hover {
+  color: var(--text);
+  background: var(--bg-hover);
 }
 
 .omnibar {
@@ -1912,6 +1940,12 @@ a:hover { color: var(--accent-hover); }
   font-size: 0.62rem;
   color: var(--text-dim);
   flex-shrink: 0;
+}
+
+@media (min-width: 769px) {
+  .sidebar-backdrop {
+    display: none;
+  }
 }
 
 /* Mobile sidebar */

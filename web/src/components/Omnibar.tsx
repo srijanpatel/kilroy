@@ -171,8 +171,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
   const segments = currentTopic ? currentTopic.split('/') : [];
 
   return (
-    <div className="omnibar-wrapper">
-      <div className={`omnibar ${active ? 'active' : ''}`} ref={wrapperRef}>
+    <div className={`omnibar ${active ? 'active' : ''}`} ref={wrapperRef}>
         {active ? (
           <>
             <input
@@ -288,7 +287,6 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
             </button>
           </div>
         )}
-      </div>
     </div>
   );
 }
