@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, useParams, useLocation } from 'react-router-dom';
 import { WorkspaceProvider } from '../context/WorkspaceContext';
 import { trackWorkspace } from '../lib/workspaces';
@@ -25,12 +25,7 @@ function useSidebarState(workspace: string) {
     });
   }, [key]);
 
-  const expand = useCallback(() => {
-    setExpanded(true);
-    localStorage.setItem(key, 'true');
-  }, [key]);
-
-  return { expanded, toggle, expand };
+  return { expanded, toggle };
 }
 
 export function WorkspaceShell() {
@@ -63,9 +58,7 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
   currentTopic: string;
   onTopicChange: (t: string) => void;
 }) {
-  const { expanded, toggle, expand } = useSidebarState(workspace);
-  const [peeking, setPeeking] = useState(false);
-  const peekTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { expanded, toggle } = useSidebarState(workspace);
   const location = useLocation();
 
   // Keyboard shortcut: Cmd+\ or Ctrl+\ to toggle sidebar
@@ -80,63 +73,43 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
     return () => window.removeEventListener('keydown', handler);
   }, [toggle]);
 
-  useEffect(() => {
-    return () => {
-      if (peekTimeoutRef.current) clearTimeout(peekTimeoutRef.current);
-    };
-  }, []);
-
   const postMatch = location.pathname.match(/\/post\/([^/]+)/);
   const activePostId = postMatch ? postMatch[1] : null;
 
   return (
     <div className="app">
       <AuthorPrompt />
-      <Omnibar currentTopic={currentTopic} />
-      <div className={`workspace-layout ${expanded ? '' : 'workspace-layout-collapsed'}`}>
-        <div className="sidebar-region">
-          {expanded ? (
+      <div className="omnibar-row">
+        <button
+          className={`sidebar-toggle-btn${expanded ? ' sidebar-open' : ''}`}
+          onClick={toggle}
+          title={expanded ? 'Collapse sidebar (⌘\\)' : 'Expand sidebar (⌘\\)'}
+          aria-label="Toggle sidebar"
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+            <rect x="1" y="2" width="16" height="14" rx="2" />
+            <line x1="6.5" y1="2" x2="6.5" y2="16" />
+            <line x1="3" y1="7" x2="5" y2="7" />
+            <line x1="3" y1="10" x2="5" y2="10" />
+          </svg>
+        </button>
+        <Omnibar currentTopic={currentTopic} />
+      </div>
+      <div className="workspace-layout">
+        {expanded && (
+          <div className="sidebar-region">
+            <div className="sidebar-backdrop" onClick={toggle} />
             <aside className="sidebar">
               <div className="sidebar-header">
                 <span className="sidebar-title">{workspace}</span>
-                <button className="sidebar-toggle" onClick={toggle} title="Collapse sidebar (⌘\\)">«</button>
+                <button className="sidebar-toggle" onClick={toggle} title="Collapse sidebar (⌘\)">«</button>
               </div>
               <div className="sidebar-tree">
-                <TopicTree activePostId={activePostId} onNavigate={() => setPeeking(false)} />
+                <TopicTree activePostId={activePostId} />
               </div>
             </aside>
-          ) : (
-            <>
-              <div
-                className="sidebar-stripe"
-                onMouseEnter={() => { if (peekTimeoutRef.current) clearTimeout(peekTimeoutRef.current); setPeeking(true); }}
-                onClick={() => setPeeking(true)}
-              />
-              {peeking && (
-                <>
-                  <div className="sidebar-backdrop" onClick={() => setPeeking(false)} />
-                  <aside
-                    className="sidebar sidebar-peek"
-                    onMouseEnter={() => { if (peekTimeoutRef.current) clearTimeout(peekTimeoutRef.current); }}
-                    onMouseLeave={() => {
-                      if (window.innerWidth > 768) {
-                        peekTimeoutRef.current = setTimeout(() => setPeeking(false), 300);
-                      }
-                    }}
-                  >
-                    <div className="sidebar-header">
-                      <span className="sidebar-title">{workspace}</span>
-                      <button className="sidebar-toggle" onClick={() => { expand(); setPeeking(false); }} title="Pin sidebar (⌘\\)">»</button>
-                    </div>
-                    <div className="sidebar-tree">
-                      <TopicTree activePostId={activePostId} onNavigate={() => { expand(); setPeeking(false); }} />
-                    </div>
-                  </aside>
-                </>
-              )}
-            </>
-          )}
-        </div>
+          </div>
+        )}
         <div className="workspace-content">
           <Routes>
             <Route path="post/:id/edit" element={<PostEditorView onTopicChange={onTopicChange} />} />

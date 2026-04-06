@@ -58,16 +58,48 @@ a:hover { color: var(--accent-hover); }
 }
 
 /* Omnibar */
-.omnibar-wrapper {
+.omnibar-row {
   position: sticky;
   top: 0;
   z-index: 100;
   width: 100%;
   display: flex;
-  justify-content: center;
+  align-items: center;
   padding: 1rem 1.5rem;
   background: linear-gradient(to bottom, var(--bg) 60%, transparent);
   pointer-events: none;
+}
+
+.omnibar-row > * {
+  pointer-events: all;
+}
+
+.omnibar-row .omnibar {
+  margin: 0 auto;
+}
+
+.sidebar-toggle-btn {
+  position: absolute;
+  left: 1.5rem;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, background 0.15s;
+}
+
+.sidebar-toggle-btn:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.sidebar-toggle-btn.sidebar-open {
+  color: var(--text);
 }
 
 .omnibar {
@@ -1757,11 +1789,15 @@ a:hover { color: var(--accent-hover); }
   display: flex;
   width: 100%;
   flex: 1;
+  position: relative;
 }
 
 .sidebar-region {
-  position: relative;
-  flex-shrink: 0;
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 10;
 }
 
 .sidebar {
@@ -1775,12 +1811,28 @@ a:hover { color: var(--accent-hover); }
   overflow-x: hidden;
 }
 
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--bg-hover);
+  border-radius: 2px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
 .sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.6rem 0.75rem;
-  border-bottom: 1px solid var(--border-subtle);
 }
 
 .sidebar-title {
@@ -1810,6 +1862,7 @@ a:hover { color: var(--accent-hover); }
 
 .sidebar-tree {
   padding: 0.4rem 0;
+  border-top: 1px solid var(--border-subtle);
 }
 
 .sidebar-tree-state,
@@ -1851,62 +1904,19 @@ a:hover { color: var(--accent-hover); }
   min-width: 0;
 }
 
-.workspace-content .content {
-  max-width: 100%;
-}
-
-/* Collapsed state */
-.workspace-layout-collapsed .sidebar-region {
-  width: 0;
-}
-
-.sidebar-stripe {
-  position: fixed;
-  left: 0;
-  top: var(--omnibar-height);
-  bottom: 0;
-  width: 12px;
-  cursor: pointer;
-  z-index: 50;
-}
-
-.sidebar-stripe::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: var(--accent);
-  opacity: 0.3;
-}
-
-.sidebar-stripe:hover::after {
-  opacity: 0.6;
-}
-
-/* Peek overlay */
-.sidebar-peek {
-  position: fixed;
-  left: 0;
-  top: var(--omnibar-height);
-  z-index: 60;
-  box-shadow: 4px 0 20px rgba(44, 37, 32, 0.12);
-}
-
-/* Topic tree nodes */
+/* Compact tree */
 .tree-node {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.2rem 0.5rem;
   cursor: pointer;
-  border-radius: 4px;
-  font-size: 0.82rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
   color: var(--text);
-  text-decoration: none;
+  padding: 0.15rem 0.5rem 0.15rem 0;
   margin: 0 0.25rem;
+  border-radius: 4px;
   min-width: 0;
+  border-left: 2px solid transparent;
 }
 
 .tree-node:hover {
@@ -1915,55 +1925,123 @@ a:hover { color: var(--accent-hover); }
 
 .tree-node-active {
   background: var(--bg-hover);
+  border-left-color: var(--accent);
 }
 
-.tree-chevron {
-  color: var(--text-dim);
-  font-size: 0.6rem;
-  width: 0.75rem;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.tree-topic-name {
-  font-family: var(--font-mono);
-  font-weight: 600;
+.tree-node-active .tree-topic-name {
   color: var(--accent);
-  font-size: 0.8rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.tree-post-name {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.tree-node-active .tree-post-name {
+  color: var(--accent);
 }
 
-.tree-post-icon {
-  color: var(--text-dim);
-  font-size: 0.7rem;
+/* Connector line infrastructure */
+.tree-indent {
+  display: inline-block;
+  width: 12px;
   flex-shrink: 0;
 }
 
+.tree-indent-line {
+  border-left: 1px solid var(--border);
+  align-self: stretch;
+  position: relative;
+}
+
+.tree-branch {
+  display: inline-block;
+  width: 12px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.tree-branch::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 50%;
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+  width: 8px;
+}
+
+/* After the last branch, no continuing vertical line */
+.tree-branch::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  bottom: 0;
+  border-left: 1px solid var(--border);
+}
+
+.tree-branch-last::after {
+  display: none;
+}
+
+/* Topic names */
+.tree-topic-name {
+  font-weight: 500;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Post names */
+.tree-post-name {
+  font-weight: 400;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Status dot before posts */
+.tree-status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  flex-shrink: 0;
+  margin-right: 0.3rem;
+}
+
+/* Post count */
 .tree-count {
   margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
   color: var(--text-dim);
   flex-shrink: 0;
+  padding-left: 0.5rem;
+}
+
+/* +N more link */
+.tree-more {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-style: italic;
+}
+
+.tree-node-more:hover .tree-more {
+  color: var(--accent);
+}
+
+@media (min-width: 769px) {
+  .sidebar-backdrop {
+    display: none;
+  }
 }
 
 /* Mobile sidebar */
 @media (max-width: 768px) {
-  .workspace-layout .sidebar-region {
-    width: 0;
-  }
-
-  .workspace-layout .sidebar {
+  .sidebar {
     position: fixed;
     left: 0;
     top: var(--omnibar-height);
@@ -1972,27 +2050,11 @@ a:hover { color: var(--accent-hover); }
     box-shadow: 4px 0 20px rgba(44, 37, 32, 0.12);
   }
 
-  .sidebar-stripe {
-    display: block;
-  }
-
-  .sidebar-peek {
-    width: min(280px, calc(100vw - 1rem));
-    height: calc(100vh - var(--omnibar-height));
-    top: var(--omnibar-height);
-  }
-
   .sidebar-backdrop {
     position: fixed;
     inset: 0;
+    top: var(--omnibar-height);
     background: rgba(44, 37, 32, 0.4);
     z-index: 55;
-  }
-}
-
-@media (min-width: 769px) {
-  .sidebar-backdrop {
-    display: none;
-    pointer-events: none;
   }
 }

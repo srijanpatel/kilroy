@@ -20,7 +20,6 @@ interface TreeNode {
 
 interface TopicTreeProps {
   activePostId: string | null;
-  onNavigate?: () => void;
 }
 
 function buildTree(posts: Post[]): TreeNode {
@@ -80,7 +79,7 @@ async function fetchAllPosts(workspace: string, signal?: AbortSignal): Promise<P
   return allPosts;
 }
 
-export function TopicTree({ activePostId, onNavigate }: TopicTreeProps) {
+export function TopicTree({ activePostId }: TopicTreeProps) {
   const workspace = useWorkspace();
   const wp = useWorkspacePath();
   const navigate = useNavigate();
@@ -185,54 +184,89 @@ export function TopicTree({ activePostId, onNavigate }: TopicTreeProps) {
 
   const handleNavigate = (path: string) => {
     navigate(path);
-    onNavigate?.();
   };
 
-  const renderNode = (node: TreeNode, depth: number = 0) => {
+  const MAX_VISIBLE_POSTS = 10;
+
+  const renderPosts = (node: TreeNode, _depth: number, parentIsLast: boolean[]) => {
+    if (node.posts.length === 0) return null;
+
+    const visiblePosts = node.posts.slice(0, MAX_VISIBLE_POSTS);
+    const remaining = node.posts.length - MAX_VISIBLE_POSTS;
+
+    return (
+      <>
+        {visiblePosts.map((post, idx) => {
+          const isActive = post.id === activePostId;
+          const isLast = idx === visiblePosts.length - 1 && remaining <= 0;
+
+          return (
+            <div
+              key={post.id}
+              className={`tree-node tree-node-post ${isActive ? 'tree-node-active' : ''}`}
+              onClick={() => handleNavigate(wp(`/post/${post.id}`))}
+            >
+              {parentIsLast.map((pIsLast, i) => (
+                <span key={i} className={`tree-indent ${pIsLast ? '' : 'tree-indent-line'}`} />
+              ))}
+              <span className={`tree-branch ${isLast ? 'tree-branch-last' : ''}`} />
+              <span className={`tree-status-dot status-dot-${post.status}`} />
+              <span className="tree-post-name">{post.title}</span>
+            </div>
+          );
+        })}
+        {remaining > 0 && (
+          <div
+            className="tree-node tree-node-more"
+            onClick={() => handleNavigate(wp(`/${node.fullPath}/`))}
+          >
+            {parentIsLast.map((pIsLast, i) => (
+              <span key={i} className={`tree-indent ${pIsLast ? '' : 'tree-indent-line'}`} />
+            ))}
+            <span className="tree-branch tree-branch-last" />
+            <span className="tree-more">+{remaining} more</span>
+          </div>
+        )}
+      </>
+    );
+  };
+
+  const renderNode = (node: TreeNode, depth: number = 0, parentIsLast: boolean[] = []) => {
     const sortedChildren = [...node.children.values()].sort((a, b) => a.name.localeCompare(b.name));
 
     return (
       <>
-        {sortedChildren.map((child) => {
+        {sortedChildren.map((child, idx) => {
           const isExpanded = visibleExpanded.has(child.fullPath);
           const isActive = currentTopic === child.fullPath;
+          const isLastTopic = idx === sortedChildren.length - 1;
 
           return (
             <div key={child.fullPath}>
               <div
-                className={`tree-node ${isActive ? 'tree-node-active' : ''}`}
-                style={{ paddingLeft: `${depth * 1 + 0.5}rem` }}
+                className={`tree-node tree-node-topic ${isActive ? 'tree-node-active' : ''}`}
+                onClick={() => {
+                  if (isActive && isExpanded) {
+                    toggleTopic(child.fullPath);
+                  } else {
+                    if (!isExpanded) toggleTopic(child.fullPath);
+                    handleNavigate(wp(`/${child.fullPath}/`));
+                  }
+                }}
               >
-                <span
-                  className="tree-chevron"
-                  onClick={(e) => { e.stopPropagation(); toggleTopic(child.fullPath); }}
-                >
-                  {isExpanded ? '▼' : '▶'}
-                </span>
-                <span
-                  className="tree-topic-name"
-                  onClick={() => handleNavigate(wp(`/${child.fullPath}/`))}
-                >
-                  {child.name}
-                </span>
+                {parentIsLast.map((pIsLast, i) => (
+                  <span key={i} className={`tree-indent ${pIsLast ? '' : 'tree-indent-line'}`} />
+                ))}
+                <span className={`tree-branch ${isLastTopic ? 'tree-branch-last' : ''}`} />
+                <span className="tree-topic-name">{child.name}</span>
                 <span className="tree-count">{child.totalPosts}</span>
               </div>
-              {isExpanded && renderNode(child, depth + 1)}
-            </div>
-          );
-        })}
-
-        {node.posts.map((post) => {
-          const isActive = post.id === activePostId;
-          return (
-            <div
-              key={post.id}
-              className={`tree-node ${isActive ? 'tree-node-active' : ''}`}
-              style={{ paddingLeft: `${depth * 1 + 0.5}rem` }}
-              onClick={() => handleNavigate(wp(`/post/${post.id}`))}
-            >
-              <span className="tree-post-icon">📄</span>
-              <span className="tree-post-name">{post.title}</span>
+              {isExpanded && (
+                <>
+                  {renderNode(child, depth + 1, [...parentIsLast, isLastTopic])}
+                  {renderPosts(child, depth + 1, [...parentIsLast, isLastTopic])}
+                </>
+              )}
             </div>
           );
         })}
@@ -280,6 +314,7 @@ export function TopicTree({ activePostId, onNavigate }: TopicTreeProps) {
         </div>
       )}
       {renderNode(tree)}
+      {renderPosts(tree, 0, [])}
     </div>
   );
 }

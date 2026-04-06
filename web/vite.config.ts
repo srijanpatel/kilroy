@@ -1,8 +1,35 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { request as httpRequest } from 'http'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'proxy-workspace-api',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (req.url && (/^\/[^/]+\/(api|mcp|install)(\/|$|\?)/.test(req.url) || /^\/_\//.test(req.url) || req.url === '/workspaces')) {
+            const proxyReq = httpRequest(
+              `http://localhost:7432${req.url}`,
+              { method: req.method, headers: req.headers },
+              (proxyRes) => {
+                res.writeHead(proxyRes.statusCode!, proxyRes.headers);
+                proxyRes.pipe(res);
+              },
+            );
+            proxyReq.on('error', () => {
+              res.writeHead(502);
+              res.end('Bad Gateway');
+            });
+            req.pipe(proxyReq);
+            return;
+          }
+          next();
+        });
+      },
+    },
+  ],
   server: {
     host: 'localhost',
     port: 5173,
@@ -11,25 +38,6 @@ export default defineConfig({
       host: 'localhost',
       port: 5173,
       clientPort: 5173,
-    },
-    proxy: {
-      '^/workspaces$': {
-        target: 'http://localhost:7432',
-        changeOrigin: true,
-      },
-      '/_/': 'http://localhost:7432',
-      '^/[^/]+/api(?:/.*)?$': {
-        target: 'http://localhost:7432',
-        changeOrigin: true,
-      },
-      '^/[^/]+/mcp(?:/.*)?$': {
-        target: 'http://localhost:7432',
-        changeOrigin: true,
-      },
-      '^/[^/]+/install(?:/.*)?$': {
-        target: 'http://localhost:7432',
-        changeOrigin: true,
-      },
     },
   },
   build: {
