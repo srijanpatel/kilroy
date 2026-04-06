@@ -10,11 +10,49 @@ import { createMcpServer } from "./mcp/server";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
+import type { Context } from "hono";
 import type { Env } from "./types";
 
 await initDatabase();
 
 const app = new Hono();
+const viteDevUrl = process.env.KILROY_WEB_DEV_URL?.replace(/\/$/, "");
+
+function isBackendRoute(path: string): boolean {
+  if (path === "/workspaces" || path.startsWith("/_/")) return true;
+  return /^\/[^/]+\/(api|mcp|install)(\/|$)/.test(path);
+}
+
+async function proxyToVite(c: Context, baseUrl: string): Promise<Response> {
+  const incomingUrl = new URL(c.req.url);
+  const targetUrl = new URL(`${incomingUrl.pathname}${incomingUrl.search}`, `${baseUrl}/`);
+
+  const headers = new Headers(c.req.raw.headers);
+  headers.set("X-Forwarded-By", "kilroy");
+
+  try {
+    return await fetch(
+      new Request(targetUrl, {
+        method: c.req.method,
+        headers,
+        body: c.req.raw.body,
+      }),
+    );
+  } catch (error) {
+    console.error("Failed to reach Vite dev server", error);
+    return c.text(`Vite dev server unavailable at ${baseUrl}`, 502);
+  }
+}
+
+if (viteDevUrl) {
+  app.use(async (c, next) => {
+    if (c.req.header("X-Forwarded-By") === "kilroy") return next();
+    if ((c.req.method === "GET" || c.req.method === "HEAD") && !isBackendRoute(c.req.path)) {
+      return proxyToVite(c, viteDevUrl);
+    }
+    await next();
+  });
+}
 
 // Serve web UI static assets at root level (for LandingView) and workspace level
 const webDistPath = resolve(import.meta.dir, "../web/dist");
@@ -22,7 +60,7 @@ const indexHtml = existsSync(webDistPath)
   ? readFileSync(resolve(webDistPath, "index.html"), "utf-8")
   : null;
 
-if (indexHtml) {
+if (!viteDevUrl && indexHtml) {
   // Root-level assets (JS/CSS bundles for the landing page)
   app.use("/assets/*", serveStatic({ root: webDistPath }));
 
@@ -40,7 +78,7 @@ app.route("/workspaces", workspacesRouter);
 app.route("/_/api", statsRouter);
 
 // Serve SPA for system pages
-if (indexHtml) {
+if (!viteDevUrl && indexHtml) {
   app.get("/_/*", (c) => c.html(indexHtml));
 }
 
@@ -73,7 +111,7 @@ workspaceApp.all("/mcp", async (c) => {
 });
 
 // Workspace-level static assets and SPA fallback
-if (indexHtml) {
+if (!viteDevUrl && indexHtml) {
   workspaceApp.use("/assets/*", serveStatic({ root: webDistPath, rewriteRequestPath: (p) => p.replace(/^\/[^/]+/, "") }));
   workspaceApp.get("*", (c) => c.html(indexHtml));
 }

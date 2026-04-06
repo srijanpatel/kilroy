@@ -8,8 +8,8 @@
   },
   "scripts": {
     "dev": "bun run dev:server & bun run dev:web & wait",
-    "dev:server": "bun run --hot src/server.ts",
-    "dev:web": "cd web && bunx vite",
+    "dev:server": "KILROY_WEB_DEV_URL=http://localhost:5173 bun run --hot src/server.ts",
+    "dev:web": "cd web && bunx vite --host localhost --port 5173 --strictPort",
     "start": "bun run src/server.ts",
     "build:web": "cd web && bun run build",
     "build:cli": "bash packages/cli/build.sh",
