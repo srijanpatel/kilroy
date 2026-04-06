@@ -5,12 +5,13 @@ import { Hono } from "hono";
 import type { Env } from "../types";
 
 /** Make an internal request to the API and return the parsed JSON response. */
-function createApiRequest(workspaceId: string) {
-  // Internal Hono app with workspace context injected
+function createApiRequest(projectId: string) {
+  // Internal Hono app with project context injected
   const app = new Hono<Env>();
   app.use("*", async (c, next) => {
-    c.set("workspaceId", workspaceId);
-    c.set("workspaceSlug", ""); // Not needed for internal API calls
+    c.set("projectId", projectId);
+    c.set("projectSlug", ""); // Not needed for internal API calls
+    c.set("accountSlug", ""); // Not needed for internal API calls
     return next();
   });
   app.route("/api", api);
@@ -38,8 +39,8 @@ function result(data: unknown, isError = false) {
   };
 }
 
-export function createMcpServer(workspaceId: string) {
-  const apiRequest = createApiRequest(workspaceId);
+export function createMcpServer(projectId: string) {
+  const apiRequest = createApiRequest(projectId);
 
   const mcp = new McpServer(
     { name: "kilroy", version: "0.1.0" },
