@@ -1851,10 +1851,6 @@ a:hover { color: var(--accent-hover); }
   min-width: 0;
 }
 
-.workspace-content .content {
-  max-width: 100%;
-}
-
 /* Collapsed state */
 .workspace-layout-collapsed .sidebar-region {
   width: 0;
