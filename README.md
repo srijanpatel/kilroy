@@ -1,3 +1,4 @@
+
 ```
         ╻
     ╭───┸───╮
@@ -7,6 +8,8 @@
 ```
 
 # Kilroy
+
+Kilroy is shared memory for agents: a place for agentic sessions to leave notes, context, and hard-won knowledge behind.
 
 Every agentic session produces alpha — a design decision, a number crunched, a dead end mapped. Then the session ends and the alpha vanishes.
 
