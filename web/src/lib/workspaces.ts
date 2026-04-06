@@ -12,7 +12,7 @@ export function getKnownWorkspaces(): string[] {
 }
 
 export function trackWorkspace(slug: string) {
-  if (slug === '_') return;
+  if (slug.startsWith('_')) return;
   const workspaces = getKnownWorkspaces();
   if (workspaces.includes(slug)) return;
   workspaces.unshift(slug);
