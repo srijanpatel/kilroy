@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { browse, search, getWorkspaceInfo } from '../lib/api';
-import { useWorkspace, useWorkspacePath } from '../context/WorkspaceContext';
+import { browse, search, getProjectInfo } from '../lib/api';
+import { useProject, useProjectPath } from '../context/ProjectContext';
 import { KilroyMark } from './KilroyMark';
 
 interface OmnibarProps {
@@ -16,8 +16,8 @@ function getInitialTheme(): string {
 
 export function Omnibar({ currentTopic }: OmnibarProps) {
   const navigate = useNavigate();
-  const workspace = useWorkspace();
-  const tp = useWorkspacePath();
+  const { accountSlug, projectSlug } = useProject();
+  const pp = useProjectPath();
   const [active, setActive] = useState(false);
   const [theme, setTheme] = useState(getInitialTheme);
 
@@ -41,10 +41,10 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
   const inviteRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    getWorkspaceInfo(workspace)
+    getProjectInfo(accountSlug, projectSlug)
       .then((info) => setJoinLink(info?.join_link || null))
       .catch(() => {});
-  }, [workspace]);
+  }, [accountSlug, projectSlug]);
 
   useEffect(() => {
     if (!inviteOpen) return;
@@ -58,7 +58,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
   }, [inviteOpen]);
 
   useEffect(() => {
-    browse(workspace, { recursive: 'true', status: 'all', limit: '200' })
+    browse(accountSlug, projectSlug, { recursive: 'true', status: 'all', limit: '200' })
       .then((data) => {
         const paths = new Set<string>();
         for (const p of data.posts || []) {
@@ -86,7 +86,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
     setTopics(matchedTopics);
 
     const timer = setTimeout(() => {
-      search(workspace, { query: query.trim(), status: 'all', limit: '5' })
+      search(accountSlug, projectSlug, { query: query.trim(), status: 'all', limit: '5' })
         .then((data) => setPosts(data.results || []))
         .catch(() => setPosts([]));
     }, 200);
@@ -142,10 +142,10 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
 
   const handleSelect = (index: number) => {
     if (index < topics.length) {
-      navigate(tp(`/${topics[index]}/`));
+      navigate(pp(`/browse/${topics[index]}/`));
     } else {
       const post = posts[index - topics.length];
-      if (post) navigate(tp(`/_/post/${post.post_id}`));
+      if (post) navigate(pp(`/post/${post.post_id}`));
     }
     deactivate();
   };
@@ -162,7 +162,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
       if (selectedIndex >= 0) {
         handleSelect(selectedIndex);
       } else if (query.trim()) {
-        navigate(tp(`/_/search?q=${encodeURIComponent(query.trim())}`));
+        navigate(pp(`/search?q=${encodeURIComponent(query.trim())}`));
         deactivate();
       }
     }
@@ -221,11 +221,11 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
           </>
         ) : (
           <div className="omnibar-resting" onClick={activate}>
-            <Link to="/" className="omnibar-home" onClick={(e) => e.stopPropagation()} title="Kilroy — switch workspaces">
+            <Link to="/" className="omnibar-home" onClick={(e) => e.stopPropagation()} title="Kilroy — switch projects">
               <KilroyMark size={22} />
             </Link>
-            <Link to={tp('/')} className="omnibar-wordmark" onClick={(e) => e.stopPropagation()}>
-              {workspace}<span className="omnibar-sep">/</span>
+            <Link to={pp('/browse/')} className="omnibar-wordmark" onClick={(e) => e.stopPropagation()}>
+              {accountSlug}<span className="omnibar-sep">/</span>{projectSlug}<span className="omnibar-sep">/</span>
             </Link>
             {segments.length > 0 && (
               <span className="omnibar-path">
@@ -235,7 +235,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
                     <span key={path}>
                       {i > 0 && <span className="omnibar-sep">/</span>}
                       <Link
-                        to={tp(`/${path}/`)}
+                        to={pp(`/browse/${path}/`)}
                         className="omnibar-segment"
                         onClick={(e) => e.stopPropagation()}
                       >

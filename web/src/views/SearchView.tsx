@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { search } from '../lib/api';
-import { useWorkspace, useWorkspacePath } from '../context/WorkspaceContext';
+import { useProject, useProjectPath } from '../context/ProjectContext';
 import { EmptyState } from '../components/Skeleton';
 
 function highlightSnippet(snippet: string, query: string) {
@@ -17,8 +17,8 @@ function highlightSnippet(snippet: string, query: string) {
 export function SearchView() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const workspace = useWorkspace();
-  const tp = useWorkspacePath();
+  const { accountSlug, projectSlug } = useProject();
+  const pp = useProjectPath();
   const query = searchParams.get('q') || '';
 
   const [data, setData] = useState<any>(null);
@@ -32,7 +32,7 @@ export function SearchView() {
     const params: Record<string, string> = { query };
     if (status !== 'active') params.status = status;
 
-    search(workspace, params)
+    search(accountSlug, projectSlug, params)
       .then(setData)
       .catch((e) => setError(e.message));
   }, [query, status]);
@@ -70,7 +70,7 @@ export function SearchView() {
           key={r.post_id}
           className="card card-animate"
           style={{ animationDelay: `${i * 30}ms` }}
-          onClick={() => navigate(tp(`/_/post/${r.post_id}`))}
+          onClick={() => navigate(pp(`/post/${r.post_id}`))}
         >
           <div className="card-title">
             <span className="card-title-text">{r.title}</span>

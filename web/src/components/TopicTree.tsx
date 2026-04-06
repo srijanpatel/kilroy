@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { browse } from '../lib/api';
-import { useWorkspace, useWorkspacePath } from '../context/WorkspaceContext';
+import { useProject, useProjectPath } from '../context/ProjectContext';
 
 interface Post {
   id: string;
@@ -60,14 +60,14 @@ function buildTree(posts: Post[]): TreeNode {
   return root;
 }
 
-async function fetchAllPosts(workspace: string, signal?: AbortSignal): Promise<Post[]> {
+async function fetchAllPosts(accountSlug: string, projectSlug: string, signal?: AbortSignal): Promise<Post[]> {
   const allPosts: Post[] = [];
   let cursor: string | undefined;
 
   do {
     const params: Record<string, string> = { recursive: 'true', status: 'all', limit: '100' };
     if (cursor) params.cursor = cursor;
-    const data = await browse(workspace, params, signal ? { signal } : undefined);
+    const data = await browse(accountSlug, projectSlug, params, signal ? { signal } : undefined);
 
     for (const p of data.posts || []) {
       allPosts.push({ id: p.id, title: p.title, topic: p.topic || '', status: p.status });
@@ -80,8 +80,8 @@ async function fetchAllPosts(workspace: string, signal?: AbortSignal): Promise<P
 }
 
 export function TopicTree({ activePostId }: TopicTreeProps) {
-  const workspace = useWorkspace();
-  const wp = useWorkspacePath();
+  const { accountSlug, projectSlug } = useProject();
+  const pp = useProjectPath();
   const navigate = useNavigate();
   const location = useLocation();
   const hasLoadedTreeRef = useRef(false);
@@ -90,7 +90,7 @@ export function TopicTree({ activePostId }: TopicTreeProps) {
   const [tree, setTree] = useState<TreeNode | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(() => {
-    const stored = sessionStorage.getItem(`kilroy:tree:${workspace}`);
+    const stored = sessionStorage.getItem(`kilroy:tree:${accountSlug}/${projectSlug}`);
     return stored ? new Set(JSON.parse(stored)) : new Set<string>();
   });
 
@@ -100,7 +100,7 @@ export function TopicTree({ activePostId }: TopicTreeProps) {
     const controller = new AbortController();
     loadControllerRef.current = controller;
 
-    fetchAllPosts(workspace, controller.signal)
+    fetchAllPosts(accountSlug, projectSlug, controller.signal)
       .then((posts) => {
         if (controller.signal.aborted) return;
         hasLoadedTreeRef.current = true;
@@ -112,7 +112,7 @@ export function TopicTree({ activePostId }: TopicTreeProps) {
         console.error('Failed to load topic tree:', err);
         setError(err instanceof Error ? err.message : 'Failed to load topic tree.');
       });
-  }, [workspace]);
+  }, [accountSlug, projectSlug]);
 
   // Fetch all posts on mount
   useEffect(() => {
@@ -130,15 +130,15 @@ export function TopicTree({ activePostId }: TopicTreeProps) {
 
   // Persist expanded state
   useEffect(() => {
-    sessionStorage.setItem(`kilroy:tree:${workspace}`, JSON.stringify([...expanded]));
-  }, [expanded, workspace]);
+    sessionStorage.setItem(`kilroy:tree:${accountSlug}/${projectSlug}`, JSON.stringify([...expanded]));
+  }, [expanded, accountSlug, projectSlug]);
 
   // Derive current topic from URL
   const currentTopic = (() => {
-    const wsPrefix = `/${workspace}/`;
+    const browsePrefix = `/${accountSlug}/${projectSlug}/browse/`;
     const path = location.pathname;
-    if (path.includes('/_/post/') || path.includes('/_/search') || path.includes('/_/new')) return null;
-    const after = path.startsWith(wsPrefix) ? path.slice(wsPrefix.length) : '';
+    if (path.includes('/post/') || path.includes('/search') || path.includes('/post/new')) return null;
+    const after = path.startsWith(browsePrefix) ? path.slice(browsePrefix.length) : '';
     return after.replace(/\/$/, '');
   })();
 
@@ -204,7 +204,7 @@ export function TopicTree({ activePostId }: TopicTreeProps) {
             <div
               key={post.id}
               className={`tree-node tree-node-post ${isActive ? 'tree-node-active' : ''}`}
-              onClick={() => handleNavigate(wp(`/_/post/${post.id}`))}
+              onClick={() => handleNavigate(pp(`/post/${post.id}`))}
             >
               {parentIsLast.map((pIsLast, i) => (
                 <span key={i} className={`tree-indent ${pIsLast ? '' : 'tree-indent-line'}`} />
@@ -218,7 +218,7 @@ export function TopicTree({ activePostId }: TopicTreeProps) {
         {remaining > 0 && (
           <div
             className="tree-node tree-node-more"
-            onClick={() => handleNavigate(wp(`/${node.fullPath}/`))}
+            onClick={() => handleNavigate(pp(`/browse/${node.fullPath}/`))}
           >
             {parentIsLast.map((pIsLast, i) => (
               <span key={i} className={`tree-indent ${pIsLast ? '' : 'tree-indent-line'}`} />
@@ -250,7 +250,7 @@ export function TopicTree({ activePostId }: TopicTreeProps) {
                     toggleTopic(child.fullPath);
                   } else {
                     if (!isExpanded) toggleTopic(child.fullPath);
-                    handleNavigate(wp(`/${child.fullPath}/`));
+                    handleNavigate(pp(`/browse/${child.fullPath}/`));
                   }
                 }}
               >

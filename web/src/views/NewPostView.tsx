@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { createPost, readPost, updatePost } from '../lib/api';
-import { useWorkspace, useWorkspacePath } from '../context/WorkspaceContext';
+import { useProject, useProjectPath } from '../context/ProjectContext';
 import { SkeletonCards } from '../components/Skeleton';
 
 export function PostEditorView({ onTopicChange }: { onTopicChange: (t: string) => void }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const workspace = useWorkspace();
-  const tp = useWorkspacePath();
+  const { accountSlug, projectSlug } = useProject();
+  const pp = useProjectPath();
   const isEditing = Boolean(id);
 
   const [topic, setTopic] = useState(searchParams.get('topic') || '');
@@ -35,7 +35,7 @@ export function PostEditorView({ onTopicChange }: { onTopicChange: (t: string) =
     setLoading(true);
     setError('');
 
-    readPost(workspace, id!)
+    readPost(accountSlug, projectSlug, id!)
       .then((post) => {
         setTopic(post.topic || '');
         setTitle(post.title || '');
@@ -45,7 +45,7 @@ export function PostEditorView({ onTopicChange }: { onTopicChange: (t: string) =
       })
       .catch((e: any) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [id, isEditing, onTopicChange, searchParams, workspace]);
+  }, [id, isEditing, onTopicChange, searchParams, accountSlug, projectSlug]);
 
   useEffect(() => {
     if (!bodyRef.current) return;
@@ -77,10 +77,10 @@ export function PostEditorView({ onTopicChange }: { onTopicChange: (t: string) =
       if (author) payload.author = author;
 
       const post = isEditing && id
-        ? await updatePost(workspace, id, payload)
-        : await createPost(workspace, payload);
+        ? await updatePost(accountSlug, projectSlug, id, payload)
+        : await createPost(accountSlug, projectSlug, payload);
 
-      navigate(tp(`/_/post/${post.id}`));
+      navigate(pp(`/post/${post.id}`));
     } catch (e: any) {
       setError(e.message);
     } finally {

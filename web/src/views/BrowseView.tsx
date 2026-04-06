@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { browse, getWorkspaceInfo } from '../lib/api';
-import { useWorkspace, useWorkspacePath } from '../context/WorkspaceContext';
+import { browse, getProjectInfo } from '../lib/api';
+import { useProject, useProjectPath } from '../context/ProjectContext';
 import { SkeletonCards, EmptyState } from '../components/Skeleton';
 import { KilroyMark } from '../components/KilroyMark';
 import { timeAgo } from '../lib/time';
@@ -10,8 +10,8 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
   const params = useParams();
   const topic = (params['*'] || '').replace(/\/$/, '');
   const navigate = useNavigate();
-  const workspace = useWorkspace();
-  const tp = useWorkspacePath();
+  const { accountSlug, projectSlug } = useProject();
+  const pp = useProjectPath();
 
   const [data, setData] = useState<any>(null);
   const [status, setStatus] = useState('active');
@@ -42,12 +42,12 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
   useEffect(() => {
     setError('');
     setData(null);
-    const params: Record<string, string> = {};
-    if (topic) params.topic = topic;
-    if (status !== 'active') params.status = status;
-    if (sort !== 'updated_at') params.order_by = sort;
+    const queryParams: Record<string, string> = {};
+    if (topic) queryParams.topic = topic;
+    if (status !== 'active') queryParams.status = status;
+    if (sort !== 'updated_at') queryParams.order_by = sort;
 
-    browse(workspace, params)
+    browse(accountSlug, projectSlug, queryParams)
       .then(setData)
       .catch((e) => setError(e.message));
   }, [topic, status, sort]);
@@ -104,7 +104,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
         <div className="spacer" />
         <button
           className="btn btn-primary"
-          onClick={() => navigate(tp(`/_/new${topic ? `?topic=${encodeURIComponent(topic)}` : ''}`))}
+          onClick={() => navigate(pp(`/post/new${topic ? `?topic=${encodeURIComponent(topic)}` : ''}`))}
         >
           + New Post
         </button>
@@ -115,7 +115,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
           key={st.name}
           className="card folder-card card-animate"
           style={{ animationDelay: `${i * 30}ms` }}
-          onClick={() => navigate(tp(`/${topic ? topic + '/' : ''}${st.name}/`))}
+          onClick={() => navigate(pp(`/browse/${topic ? topic + '/' : ''}${st.name}/`))}
         >
           <div className="card-title">{st.name}/</div>
           <div className="card-meta">
@@ -137,7 +137,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
           key={p.id}
           className={`card card-animate${p.status !== 'active' ? ` card-${p.status}` : ''}`}
           style={{ animationDelay: `${(data.subtopics?.length || 0) * 30 + i * 30}ms` }}
-          onClick={() => navigate(tp(`/_/post/${p.id}`))}
+          onClick={() => navigate(pp(`/post/${p.id}`))}
         >
           <div className="card-title">
             <span className="card-title-text">{p.title}</span>
@@ -146,7 +146,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
                 className="text-action card-edit-action"
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(tp(`/_/post/${p.id}/edit`));
+                  navigate(pp(`/post/${p.id}/edit`));
                 }}
               >
                 edit
@@ -171,7 +171,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
           title="No one's been here yet."
           message="Be the first to leave a note."
           actionLabel="Create the first post"
-          onAction={() => navigate(tp(`/_/new?topic=${encodeURIComponent(topic)}`))}
+          onAction={() => navigate(pp(`/post/new?topic=${encodeURIComponent(topic)}`))}
         />
       )}
     </div>
@@ -179,13 +179,13 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
 }
 
 function WelcomeEmptyState() {
-  const workspace = useWorkspace();
+  const { accountSlug, projectSlug } = useProject();
   const [info, setInfo] = useState<any>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
-    getWorkspaceInfo(workspace).then(setInfo).catch(() => {});
-  }, [workspace]);
+    getProjectInfo(accountSlug, projectSlug).then(setInfo).catch(() => {});
+  }, [accountSlug, projectSlug]);
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);

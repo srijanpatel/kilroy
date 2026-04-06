@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { readPost, createComment, updateStatus, deletePost } from '../lib/api';
-import { useWorkspace, useWorkspacePath } from '../context/WorkspaceContext';
+import { useProject, useProjectPath } from '../context/ProjectContext';
 import { Markdown } from '../components/Markdown';
 import { SkeletonCards } from '../components/Skeleton';
 import { timeAgo } from '../lib/time';
@@ -52,8 +52,8 @@ function buildPostMarkdown(post: any, workspace: string) {
 export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const workspace = useWorkspace();
-  const tp = useWorkspacePath();
+  const { accountSlug, projectSlug } = useProject();
+  const pp = useProjectPath();
 
   const [post, setPost] = useState<any>(null);
   const [error, setError] = useState('');
@@ -64,7 +64,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
   const load = () => {
     if (!id) return;
     setError('');
-    readPost(workspace, id).then((data) => {
+    readPost(accountSlug, projectSlug, id).then((data) => {
       setPost(data);
       onTopicChange(data.topic);
     }).catch((e) => setError(e.message));
@@ -84,7 +84,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
     setSubmitting(true);
     try {
       const author = localStorage.getItem('kilroy_author') || undefined;
-      await createComment(workspace, id, { body: commentBody, author });
+      await createComment(accountSlug, projectSlug, id, { body: commentBody, author });
       setCommentBody('');
       if (textareaRef.current) textareaRef.current.style.height = 'auto';
       load();
@@ -98,7 +98,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
   const handleStatus = async (newStatus: string) => {
     if (!id) return;
     try {
-      await updateStatus(workspace, id, newStatus);
+      await updateStatus(accountSlug, projectSlug, id, newStatus);
       load();
     } catch (e: any) {
       setError(e.message);
@@ -108,8 +108,8 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
   const handleDelete = async () => {
     if (!id || !confirm('Permanently delete this post?')) return;
     try {
-      await deletePost(workspace, id);
-      navigate(post?.topic ? tp(`/${post.topic}/`) : tp('/'));
+      await deletePost(accountSlug, projectSlug, id);
+      navigate(post?.topic ? pp(`/browse/${post.topic}/`) : pp('/browse/'));
     } catch (e: any) {
       setError(e.message);
     }
@@ -157,7 +157,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
         )}
 
         <div className="post-actions">
-          <button className="text-action" onClick={() => navigate(tp(`/_/post/${post.id}/edit`))}>edit</button>
+          <button className="text-action" onClick={() => navigate(pp(`/post/${post.id}/edit`))}>edit</button>
           {post.status === 'active' && (
             <>
               <button className="text-action" onClick={() => handleStatus('archived')}>archive</button>

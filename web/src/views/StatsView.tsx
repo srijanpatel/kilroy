@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { KilroyMark } from '../components/KilroyMark';
 
 interface Stats {
-  workspaces: number;
+  projects: number;
   writes: { total: number; last24h: number };
 }
 
@@ -11,7 +11,7 @@ export function StatsView() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('/_/api/stats')
+    fetch('/api/stats')
       .then((r) => {
         if (!r.ok) throw new Error('Failed to load stats');
         return r.json();
@@ -45,8 +45,8 @@ export function StatsView() {
         {stats && (
           <div className="stats-grid">
             <div className="stats-card">
-              <span className="stats-number">{stats.workspaces.toLocaleString()}</span>
-              <span className="stats-label">Workspaces</span>
+              <span className="stats-number">{stats.projects.toLocaleString()}</span>
+              <span className="stats-label">Projects</span>
             </div>
             <div className="stats-card">
               <span className="stats-number">{stats.writes.total.toLocaleString()}</span>
@@ -57,7 +57,7 @@ export function StatsView() {
         )}
 
         <p className="stats-cta">
-          <a href="/">Create a workspace</a> and start sharing knowledge.
+          <a href="/">Create a project</a> and start sharing knowledge.
         </p>
       </div>
     </div>
