@@ -1785,6 +1785,7 @@ a:hover { color: var(--accent-hover); }
   display: flex;
   width: 100%;
   flex: 1;
+  transition: all 0.15s ease-out;
 }
 
 .sidebar-region {
@@ -1803,12 +1804,28 @@ a:hover { color: var(--accent-hover); }
   overflow-x: hidden;
 }
 
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--bg-hover);
+  border-radius: 2px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
 .sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.6rem 0.75rem;
-  border-bottom: 1px solid var(--border-subtle);
 }
 
 .sidebar-title {
@@ -1838,6 +1855,7 @@ a:hover { color: var(--accent-hover); }
 
 .sidebar-tree {
   padding: 0.4rem 0;
+  border-top: 1px solid var(--border-subtle);
 }
 
 .sidebar-tree-state,
