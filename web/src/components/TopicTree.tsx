@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { browse } from '../lib/api';
 import { useWorkspace, useWorkspacePath } from '../context/WorkspaceContext';
@@ -61,14 +61,14 @@ function buildTree(posts: Post[]): TreeNode {
   return root;
 }
 
-async function fetchAllPosts(workspace: string): Promise<Post[]> {
+async function fetchAllPosts(workspace: string, signal?: AbortSignal): Promise<Post[]> {
   const allPosts: Post[] = [];
   let cursor: string | undefined;
 
   do {
     const params: Record<string, string> = { recursive: 'true', status: 'all', limit: '100' };
     if (cursor) params.cursor = cursor;
-    const data = await browse(workspace, params);
+    const data = await browse(workspace, params, signal ? { signal } : undefined);
 
     for (const p of data.posts || []) {
       allPosts.push({ id: p.id, title: p.title, topic: p.topic || '', status: p.status });
@@ -85,33 +85,49 @@ export function TopicTree({ activePostId, onNavigate }: TopicTreeProps) {
   const wp = useWorkspacePath();
   const navigate = useNavigate();
   const location = useLocation();
+  const hasLoadedTreeRef = useRef(false);
+  const loadControllerRef = useRef<AbortController | null>(null);
 
   const [tree, setTree] = useState<TreeNode | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(() => {
     const stored = sessionStorage.getItem(`kilroy:tree:${workspace}`);
     return stored ? new Set(JSON.parse(stored)) : new Set<string>();
   });
 
-  const loadTree = () => {
-    fetchAllPosts(workspace)
-      .then((posts) => setTree(buildTree(posts)))
-      .catch(() => {});
-  };
+  const loadTree = useCallback(() => {
+    loadControllerRef.current?.abort();
+
+    const controller = new AbortController();
+    loadControllerRef.current = controller;
+
+    fetchAllPosts(workspace, controller.signal)
+      .then((posts) => {
+        if (controller.signal.aborted) return;
+        hasLoadedTreeRef.current = true;
+        setError(null);
+        setTree(buildTree(posts));
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        console.error('Failed to load topic tree:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load topic tree.');
+      });
+  }, [workspace]);
 
   // Fetch all posts on mount
   useEffect(() => {
     loadTree();
-  }, [workspace]);
+    return () => {
+      loadControllerRef.current?.abort();
+    };
+  }, [loadTree]);
 
-  // Re-fetch when navigating back to browse (catches create/edit/delete)
+  // Re-fetch on navigation so create/edit redirects refresh the tree.
   useEffect(() => {
-    const isBrowse = !location.pathname.includes('/post/') &&
-                     !location.pathname.includes('/search') &&
-                     !location.pathname.includes('/new');
-    if (isBrowse && tree) {
-      loadTree();
-    }
-  }, [location.pathname]);
+    if (!hasLoadedTreeRef.current) return;
+    loadTree();
+  }, [location.pathname, loadTree]);
 
   // Persist expanded state
   useEffect(() => {
@@ -127,15 +143,11 @@ export function TopicTree({ activePostId, onNavigate }: TopicTreeProps) {
     return after.replace(/\/$/, '');
   })();
 
-  // Auto-expand to current topic or active post
-  useEffect(() => {
-    if (!tree) return;
+  const visibleExpanded = useMemo(() => {
+    const next = new Set(expanded);
 
-    let targetTopic: string | null = null;
-
-    if (currentTopic) {
-      targetTopic = currentTopic;
-    } else if (activePostId) {
+    let targetTopic: string | null = currentTopic;
+    if (!targetTopic && activePostId && tree) {
       const findPost = (node: TreeNode): string | null => {
         for (const p of node.posts) {
           if (p.id === activePostId) return node.fullPath;
@@ -149,17 +161,15 @@ export function TopicTree({ activePostId, onNavigate }: TopicTreeProps) {
       targetTopic = findPost(tree);
     }
 
-    if (!targetTopic) return;
+    if (!targetTopic) return next;
 
-    const parts = targetTopic.split('/');
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      for (let i = 1; i <= parts.length; i++) {
-        next.add(parts.slice(0, i).join('/'));
-      }
-      return next;
-    });
-  }, [currentTopic, activePostId, tree]);
+    const parts = targetTopic.split('/').filter(Boolean);
+    for (let i = 1; i <= parts.length; i++) {
+      next.add(parts.slice(0, i).join('/'));
+    }
+
+    return next;
+  }, [expanded, currentTopic, activePostId, tree]);
 
   const toggleTopic = (topicPath: string) => {
     setExpanded((prev) => {
@@ -184,7 +194,7 @@ export function TopicTree({ activePostId, onNavigate }: TopicTreeProps) {
     return (
       <>
         {sortedChildren.map((child) => {
-          const isExpanded = expanded.has(child.fullPath);
+          const isExpanded = visibleExpanded.has(child.fullPath);
           const isActive = currentTopic === child.fullPath;
 
           return (
@@ -230,7 +240,46 @@ export function TopicTree({ activePostId, onNavigate }: TopicTreeProps) {
     );
   };
 
-  if (!tree) return null;
+  if (!tree) {
+    return (
+      <div className="sidebar-tree-state">
+        <div className="sidebar-tree-message">
+          {error || 'Loading topics...'}
+        </div>
+        {error && (
+          <button
+            className="sidebar-tree-retry"
+            type="button"
+            onClick={() => {
+              setError(null);
+              loadTree();
+            }}
+          >
+            Retry
+          </button>
+        )}
+      </div>
+    );
+  }
 
-  return <div>{renderNode(tree)}</div>;
+  return (
+    <div>
+      {error && (
+        <div className="sidebar-tree-notice" role="status">
+          <span className="sidebar-tree-message">{error}</span>
+          <button
+            className="sidebar-tree-retry"
+            type="button"
+            onClick={() => {
+              setError(null);
+              loadTree();
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+      {renderNode(tree)}
+    </div>
+  );
 }

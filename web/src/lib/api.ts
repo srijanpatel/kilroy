@@ -35,9 +35,9 @@ async function request(workspace: string, path: string, init?: RequestInit): Pro
   return data;
 }
 
-export function browse(workspace: string, params: Record<string, string> = {}) {
+export function browse(workspace: string, params: Record<string, string> = {}, init?: RequestInit) {
   const qs = new URLSearchParams(params).toString();
-  return request(workspace, `/browse${qs ? `?${qs}` : ''}`);
+  return request(workspace, `/browse${qs ? `?${qs}` : ''}`, init);
 }
 
 export function readPost(workspace: string, id: string) {

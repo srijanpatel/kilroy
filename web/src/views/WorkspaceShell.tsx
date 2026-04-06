@@ -46,7 +46,12 @@ export function WorkspaceShell() {
       <Routes>
         <Route path="join" element={<JoinView />} />
         <Route path="*" element={
-          <WorkspaceLayout workspace={workspace} currentTopic={currentTopic} onTopicChange={setCurrentTopic} />
+          <WorkspaceLayout
+            key={workspace}
+            workspace={workspace}
+            currentTopic={currentTopic}
+            onTopicChange={setCurrentTopic}
+          />
         } />
       </Routes>
     </WorkspaceProvider>
@@ -60,7 +65,7 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
 }) {
   const { expanded, toggle, expand } = useSidebarState(workspace);
   const [peeking, setPeeking] = useState(false);
-  const peekTimeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const peekTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
 
   // Keyboard shortcut: Cmd+\ or Ctrl+\ to toggle sidebar
@@ -74,6 +79,12 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [toggle]);
+
+  useEffect(() => {
+    return () => {
+      if (peekTimeoutRef.current) clearTimeout(peekTimeoutRef.current);
+    };
+  }, []);
 
   const postMatch = location.pathname.match(/\/post\/([^/]+)/);
   const activePostId = postMatch ? postMatch[1] : null;
