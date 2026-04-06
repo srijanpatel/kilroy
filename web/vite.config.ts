@@ -9,7 +9,7 @@ export default defineConfig({
       name: 'proxy-workspace-api',
       configureServer(server) {
         server.middlewares.use((req, res, next) => {
-          if (req.url && (/^\/[^/]+\/(api|mcp|install)(\/|$|\?)/.test(req.url) || /^\/_\//.test(req.url) || req.url === '/workspaces')) {
+          if (req.url && (/^\/[^/]+\/_\/(api|mcp|install)(\/|$|\?)/.test(req.url) || /^\/_\//.test(req.url) || req.url === '/workspaces')) {
             const proxyReq = httpRequest(
               `http://localhost:7432${req.url}`,
               { method: req.method, headers: req.headers },

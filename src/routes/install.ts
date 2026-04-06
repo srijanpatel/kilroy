@@ -3,8 +3,8 @@ import { validateKey } from "../workspaces/registry";
 import { getBaseUrl } from "../lib/url";
 
 /**
- * GET /:workspace/install?token=... — serves a shell script that fully sets up
- * Kilroy for a project in one shot. Teammate runs:
+ * GET /:workspace/install?token=... — serves a Claude Code shell script that
+ * fully sets up Kilroy for a project in one shot. Teammate runs:
  *
  *   curl -sL https://kilroy.sh/my-workspace/install?token=klry_proj_... | sh
  *
@@ -86,8 +86,8 @@ elif command -v bun >/dev/null 2>&1; then JS=bun; fi
 
 # ── 1. Install the Kilroy plugin ──
 echo "Installing Kilroy plugin..."
-claude plugin marketplace add kilroy-sh/kilroy 2>/dev/null || true
-claude plugin install kilroy@kilroy-marketplace --scope local
+claude plugin marketplace add kilroy-sh/kilroy </dev/null 2>/dev/null || true
+claude plugin install kilroy@kilroy-marketplace --scope local </dev/null
 
 # ── 2. Configure workspace connection ──
 echo "Configuring workspace ${slug}..."

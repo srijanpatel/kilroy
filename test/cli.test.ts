@@ -96,7 +96,7 @@ describe("kilroy ls", () => {
   });
 
   it("lists posts after creation", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "CLI test ls",
       topic: "cli-test",
       body: "test body",
@@ -108,11 +108,11 @@ describe("kilroy ls", () => {
     expect(data.posts.length).toBeGreaterThanOrEqual(1);
     expect(data.posts.some((p: any) => p.id === post.id)).toBe(true);
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 
   it("supports --recursive flag", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Deep post",
       topic: "cli-test/deep/nested",
       body: "nested body",
@@ -123,7 +123,7 @@ describe("kilroy ls", () => {
     const data = JSON.parse(stdout);
     expect(data.posts.some((p: any) => p.id === post.id)).toBe(true);
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 });
 
@@ -131,7 +131,7 @@ describe("kilroy ls", () => {
 
 describe("kilroy read", () => {
   it("reads a post with --json", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "CLI test read",
       topic: "cli-test",
       body: "read me",
@@ -143,11 +143,11 @@ describe("kilroy read", () => {
     expect(data.title).toBe("CLI test read");
     expect(data.body).toBe("read me");
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 
   it("shows formatted output on TTY-like invocation", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Formatted post",
       topic: "cli-test",
       body: "formatted body",
@@ -158,7 +158,7 @@ describe("kilroy read", () => {
     expect(code).toBe(0);
     expect(stdout).toContain("formatted body");
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 
   it("exits 2 for non-existent post", async () => {
@@ -172,7 +172,7 @@ describe("kilroy read", () => {
 
 describe("kilroy grep", () => {
   it("searches posts", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Searchable post",
       topic: "cli-test",
       body: "unique_searchterm_xyz for testing",
@@ -184,11 +184,11 @@ describe("kilroy grep", () => {
     expect(data.results.length).toBeGreaterThanOrEqual(1);
     expect(data.results[0].post_id).toBe(post.id);
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 
   it("filters by topic", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Topic filtered",
       topic: "grep-topic-test",
       body: "filterable_xyz content",
@@ -199,7 +199,7 @@ describe("kilroy grep", () => {
     const data = JSON.parse(stdout);
     expect(data.results.length).toBeGreaterThanOrEqual(1);
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 });
 
@@ -218,7 +218,7 @@ describe("kilroy post", () => {
     expect(data.title).toBe("Created via CLI");
     expect(data.topic).toBe("cli-test");
 
-    await apiDelete(`/api/posts/${data.id}`);
+    await apiDelete(`/_/api/posts/${data.id}`);
   });
 
   it("creates a post with tags", async () => {
@@ -234,7 +234,7 @@ describe("kilroy post", () => {
     const data = JSON.parse(stdout);
     expect(data.tags).toEqual(["alpha", "beta"]);
 
-    await apiDelete(`/api/posts/${data.id}`);
+    await apiDelete(`/_/api/posts/${data.id}`);
   });
 });
 
@@ -242,7 +242,7 @@ describe("kilroy post", () => {
 
 describe("kilroy comment", () => {
   it("adds a comment with --body", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Comment target",
       topic: "cli-test",
       body: "target",
@@ -257,7 +257,7 @@ describe("kilroy comment", () => {
     const data = JSON.parse(stdout);
     expect(data.post_id).toBe(post.id);
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 });
 
@@ -265,7 +265,7 @@ describe("kilroy comment", () => {
 
 describe("kilroy status", () => {
   it("archives a post", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Status test",
       topic: "cli-test",
       body: "body",
@@ -276,11 +276,11 @@ describe("kilroy status", () => {
     const data = JSON.parse(stdout);
     expect(data.status).toBe("archived");
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 
   it("restores an archived post", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Restore test",
       topic: "cli-test",
       body: "body",
@@ -292,11 +292,11 @@ describe("kilroy status", () => {
     const data = JSON.parse(stdout);
     expect(data.status).toBe("active");
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 
   it("changes status with status command", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Explicit status",
       topic: "cli-test",
       body: "body",
@@ -307,7 +307,7 @@ describe("kilroy status", () => {
     const data = JSON.parse(stdout);
     expect(data.status).toBe("obsolete");
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 });
 
@@ -315,7 +315,7 @@ describe("kilroy status", () => {
 
 describe("kilroy rm", () => {
   it("deletes a post", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Delete me",
       topic: "cli-test",
       body: "body",
@@ -336,7 +336,7 @@ describe("kilroy rm", () => {
 
 describe("kilroy find", () => {
   it("finds posts by author", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Find by author",
       topic: "cli-test",
       body: "findable",
@@ -348,11 +348,11 @@ describe("kilroy find", () => {
     const data = JSON.parse(stdout);
     expect(data.results.some((r: any) => r.id === post.id)).toBe(true);
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 
   it("finds posts by tag", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Find by tag",
       topic: "cli-test",
       body: "tagged",
@@ -364,7 +364,7 @@ describe("kilroy find", () => {
     const data = JSON.parse(stdout);
     expect(data.results.some((r: any) => r.id === post.id)).toBe(true);
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 
   it("requires at least one filter", async () => {
@@ -377,7 +377,7 @@ describe("kilroy find", () => {
 
 describe("kilroy edit", () => {
   it("edits a post title", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Original title",
       topic: "cli-test",
       body: "body",
@@ -394,17 +394,17 @@ describe("kilroy edit", () => {
     const data = JSON.parse(stdout);
     expect(data.title).toBe("Updated title");
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 
   it("edits a comment", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Comment edit target",
       topic: "cli-test",
       body: "body",
     });
 
-    const comment = await (await fetch(`${TEAM_API}/api/posts/${post.id}/comments`, {
+    const comment = await (await fetch(`${TEAM_API}/_/api/posts/${post.id}/comments`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -423,7 +423,7 @@ describe("kilroy edit", () => {
     const data = JSON.parse(stdout);
     expect(data.body).toBe("updated comment");
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 });
 
@@ -431,7 +431,7 @@ describe("kilroy edit", () => {
 
 describe("kilroy ls --quiet", () => {
   it("outputs only post IDs", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Quiet test",
       topic: "cli-test",
       body: "body",
@@ -443,13 +443,13 @@ describe("kilroy ls --quiet", () => {
     // Should not contain title or topic
     expect(stdout).not.toContain("Quiet test");
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 });
 
 describe("kilroy grep --quiet", () => {
   it("outputs only post IDs", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Grep quiet test",
       topic: "cli-test",
       body: "unique_quiet_grep_term",
@@ -460,7 +460,7 @@ describe("kilroy grep --quiet", () => {
     expect(stdout).toContain(post.id);
     expect(stdout).not.toContain("Grep quiet test");
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 });
 
@@ -468,7 +468,7 @@ describe("kilroy grep --quiet", () => {
 
 describe("kilroy edit (error cases)", () => {
   it("errors when no fields provided", async () => {
-    const post = await apiPost("/api/posts", {
+    const post = await apiPost("/_/api/posts", {
       title: "Edit error test",
       topic: "cli-test",
       body: "body",
@@ -477,6 +477,6 @@ describe("kilroy edit (error cases)", () => {
     const { code, stderr } = await cli("edit", post.id);
     expect(code).toBe(1);
 
-    await apiDelete(`/api/posts/${post.id}`);
+    await apiDelete(`/_/api/posts/${post.id}`);
   });
 });

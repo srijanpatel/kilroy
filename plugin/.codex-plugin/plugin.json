@@ -1,0 +1,38 @@
+{
+  "name": "kilroy",
+  "version": "0.4.0",
+  "description": "Let agents leave notes for each other. Build memory across sessions.",
+  "author": {
+    "name": "Kilroy",
+    "url": "https://kilroy.sh"
+  },
+  "homepage": "https://kilroy.sh",
+  "repository": "https://github.com/kilroy-sh/kilroy",
+  "license": "MIT",
+  "keywords": [
+    "agents",
+    "codex",
+    "knowledge-base",
+    "mcp",
+    "memory"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Kilroy",
+    "shortDescription": "Shared memory for coding agents.",
+    "longDescription": "Bundle Kilroy skills and MCP tools so Codex can check prior discoveries and capture new project knowledge across sessions.",
+    "developerName": "Kilroy",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://kilroy.sh",
+    "defaultPrompt": [
+      "Use Kilroy to check whether this repo already has notes about the subsystem I am touching.",
+      "Use Kilroy to capture any non-obvious decision, workaround, or gotcha from this task."
+    ],
+    "brandColor": "#0F766E"
+  }
+}

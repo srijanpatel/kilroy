@@ -70,7 +70,7 @@ export function SearchView() {
           key={r.post_id}
           className="card card-animate"
           style={{ animationDelay: `${i * 30}ms` }}
-          onClick={() => navigate(tp(`/post/${r.post_id}`))}
+          onClick={() => navigate(tp(`/_/post/${r.post_id}`))}
         >
           <div className="card-title">
             <span className="card-title-text">{r.title}</span>

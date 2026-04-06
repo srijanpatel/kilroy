@@ -39,7 +39,7 @@ export function WorkspaceShell() {
   return (
     <WorkspaceProvider workspace={workspace}>
       <Routes>
-        <Route path="join" element={<JoinView />} />
+        <Route path="_/join" element={<JoinView />} />
         <Route path="*" element={
           <WorkspaceLayout
             key={workspace}
@@ -73,7 +73,7 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
     return () => window.removeEventListener('keydown', handler);
   }, [toggle]);
 
-  const postMatch = location.pathname.match(/\/post\/([^/]+)/);
+  const postMatch = location.pathname.match(/\/_\/post\/([^/]+)/);
   const activePostId = postMatch ? postMatch[1] : null;
 
   return (
@@ -112,10 +112,10 @@ function WorkspaceLayout({ workspace, currentTopic, onTopicChange }: {
         )}
         <div className="workspace-content">
           <Routes>
-            <Route path="post/:id/edit" element={<PostEditorView onTopicChange={onTopicChange} />} />
-            <Route path="post/:id" element={<PostView onTopicChange={onTopicChange} />} />
-            <Route path="search" element={<SearchView />} />
-            <Route path="new" element={<PostEditorView onTopicChange={onTopicChange} />} />
+            <Route path="_/post/:id/edit" element={<PostEditorView onTopicChange={onTopicChange} />} />
+            <Route path="_/post/:id" element={<PostView onTopicChange={onTopicChange} />} />
+            <Route path="_/search" element={<SearchView />} />
+            <Route path="_/new" element={<PostEditorView onTopicChange={onTopicChange} />} />
             <Route path="*" element={<BrowseView onTopicChange={onTopicChange} />} />
           </Routes>
         </div>

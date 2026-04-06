@@ -137,7 +137,7 @@ export function TopicTree({ activePostId }: TopicTreeProps) {
   const currentTopic = (() => {
     const wsPrefix = `/${workspace}/`;
     const path = location.pathname;
-    if (path.includes('/post/') || path.includes('/search') || path.includes('/new')) return null;
+    if (path.includes('/_/post/') || path.includes('/_/search') || path.includes('/_/new')) return null;
     const after = path.startsWith(wsPrefix) ? path.slice(wsPrefix.length) : '';
     return after.replace(/\/$/, '');
   })();
@@ -204,7 +204,7 @@ export function TopicTree({ activePostId }: TopicTreeProps) {
             <div
               key={post.id}
               className={`tree-node tree-node-post ${isActive ? 'tree-node-active' : ''}`}
-              onClick={() => handleNavigate(wp(`/post/${post.id}`))}
+              onClick={() => handleNavigate(wp(`/_/post/${post.id}`))}
             >
               {parentIsLast.map((pIsLast, i) => (
                 <span key={i} className={`tree-indent ${pIsLast ? '' : 'tree-indent-line'}`} />

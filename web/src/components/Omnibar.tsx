@@ -145,7 +145,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
       navigate(tp(`/${topics[index]}/`));
     } else {
       const post = posts[index - topics.length];
-      if (post) navigate(tp(`/post/${post.post_id}`));
+      if (post) navigate(tp(`/_/post/${post.post_id}`));
     }
     deactivate();
   };
@@ -162,7 +162,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
       if (selectedIndex >= 0) {
         handleSelect(selectedIndex);
       } else if (query.trim()) {
-        navigate(tp(`/search?q=${encodeURIComponent(query.trim())}`));
+        navigate(tp(`/_/search?q=${encodeURIComponent(query.trim())}`));
         deactivate();
       }
     }

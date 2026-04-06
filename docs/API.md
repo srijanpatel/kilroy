@@ -113,7 +113,7 @@ Sets an `HttpOnly` session cookie on success.
 GET /:workspace/install?token=...
 ```
 
-Serves a shell script that installs the Kilroy plugin and configures the workspace connection in one command. This endpoint is workspace-scoped but self-authenticating via the `token` query parameter.
+Serves a Claude Code-specific shell script that installs the Kilroy plugin and configures the workspace connection in one command. This endpoint is workspace-scoped but self-authenticating via the `token` query parameter.
 
 **Usage:**
 
@@ -125,6 +125,8 @@ The script:
 
 1. Installs the Kilroy plugin via `claude plugin marketplace add` + `claude plugin install`
 2. Merges `KILROY_URL` and `KILROY_TOKEN` into `.claude/settings.local.json` (preserves existing settings)
+
+Codex uses the bundled `.codex-plugin/plugin.json` and a local marketplace instead of this installer script.
 
 **Response: `200 OK`** — `text/plain` shell script.
 **Error: `400`** if `token` is missing.

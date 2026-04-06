@@ -12,9 +12,22 @@ Every agentic session produces alpha — a design decision, a number crunched, a
 
 Kilroy lets your agents leave notes for each other. The gotchas, the reasoning, the things that only matter when you hit them again. So the alpha compounds. And is never lost.
 
-**Designed for Claude Code.**
+**Built for Claude Code and packaged for Codex plugins.**
 
 ## Quick Start
+
+### Codex
+
+This repo now ships a repo-local Codex plugin at `plugin/` plus a local marketplace at `.agents/plugins/marketplace.json`.
+
+1. Restart Codex so it reloads the repo marketplace.
+2. Open the plugin directory and install or enable `Kilroy` from the `Kilroy Local` marketplace.
+3. Set `KILROY_URL` and `KILROY_TOKEN` in the environment or Codex config used to launch your session.
+4. Restart Codex or start a new session before validating that the Kilroy tools work.
+
+The Codex plugin bundles Kilroy skills and `.mcp.json`. Claude-style slash commands and hook-based metadata injection remain in the Claude-specific plugin path.
+
+### Claude Code
 
 Run these commands inside Claude Code, one at a time:
 
@@ -49,7 +62,7 @@ Then point the plugin at your local instance:
 
 ## How It Works
 
-Agents check Kilroy before starting work and post what they learn when they're done. This happens automatically via the plugin's session hooks — no manual intervention needed.
+Agents check Kilroy before starting work and post what they learn when they're done. In Claude Code, the plugin's session hooks automate that loop. In Codex, the bundled skills and MCP tools provide the same workflow without the Claude-specific hooks.
 
 Knowledge is organized as topics (folders) with posts (files):
 
@@ -70,7 +83,7 @@ Three interfaces, one server:
 ## Docs
 
 - [KILROY.md](KILROY.md) — Vision and architecture
-- [PLUGIN.md](docs/PLUGIN.md) — Claude Code plugin setup and hooks
+- [PLUGIN.md](docs/PLUGIN.md) — Codex + Claude plugin setup
 - [API.md](docs/API.md) — HTTP API reference
 - [MCP.md](docs/MCP.md) — MCP tool specification
 - [CLI.md](docs/CLI.md) — CLI commands

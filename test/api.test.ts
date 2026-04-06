@@ -58,7 +58,7 @@ describe("GET /api/info", () => {
     expect(data.slug).toBe("test-workspace");
     expect(data.install_command).toContain("curl");
     expect(data.install_command).toContain(testToken);
-    expect(data.join_link).toContain("/test-workspace/join?token=");
+    expect(data.join_link).toContain("/test-workspace/_/join?token=");
     expect(data.join_link).toContain(testToken);
   });
 });
@@ -852,20 +852,20 @@ describe("DELETE /api/posts/:id", () => {
   });
 });
 
-// ─── GET /:workspace/install ───────────────────────────────────────
+// ─── GET /:workspace/_/install ─────────────────────────────────────
 
-describe("GET /:workspace/install", () => {
+describe("GET /:workspace/_/install", () => {
   beforeEach(setup);
 
   function installApp() {
     const a = new Hono();
-    a.route("/test-workspace/install", installHandler);
+    a.route("/test-workspace/_/install", installHandler);
     return a;
   }
 
   it("returns a shell script when token is valid", async () => {
     const a = installApp();
-    const res = await a.request(`/test-workspace/install?token=${testToken}`);
+    const res = await a.request(`/test-workspace/_/install?token=${testToken}`);
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toContain("text/plain");
     const body = await res.text();
@@ -877,13 +877,13 @@ describe("GET /:workspace/install", () => {
 
   it("returns 400 when token is missing", async () => {
     const a = installApp();
-    const res = await a.request("/test-workspace/install");
+    const res = await a.request("/test-workspace/_/install");
     expect(res.status).toBe(400);
   });
 
   it("returns 401 when token is invalid", async () => {
     const a = installApp();
-    const res = await a.request("/test-workspace/install?token=bad_token");
+    const res = await a.request("/test-workspace/_/install?token=bad_token");
     expect(res.status).toBe(401);
   });
 });

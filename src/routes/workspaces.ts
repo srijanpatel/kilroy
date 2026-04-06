@@ -29,7 +29,7 @@ workspacesRouter.post("/", async (c) => {
       {
         slug: workspace.slug,
         project_key: workspace.projectKey,
-        join_url: `${baseUrl}/${workspace.slug}/join?token=${workspace.projectKey}`,
+        join_url: `${baseUrl}/${workspace.slug}/_/join?token=${workspace.projectKey}`,
         workspace_url: `${baseUrl}/${workspace.slug}`,
       },
       201
@@ -45,12 +45,12 @@ workspacesRouter.post("/", async (c) => {
   }
 });
 
-// GET /api/join — Validate token, set session cookie, return setup info
+// GET /_/api/join — Validate token, set session cookie, return setup info
 // Mounted before auth middleware so the token itself is the auth.
 export const joinApiHandler = new Hono<Env>();
 
 joinApiHandler.get("/", async (c) => {
-  // Extract workspace slug from URL path — this handler is mounted at /:workspace/api/join
+  // Extract workspace slug from URL path — this handler is mounted at /:workspace/_/api/join
   // but Hono child routers don't inherit parent route params, and auth middleware
   // (which sets workspaceSlug) is intentionally bypassed for this endpoint.
   const url = new URL(c.req.url);
@@ -88,6 +88,6 @@ joinApiHandler.get("/", async (c) => {
   return c.json({
     workspace: slug,
     workspace_url: workspaceUrl,
-    install_command: `curl -sL "${workspaceUrl}/install?token=${token}" | sh`,
+    install_command: `curl -sL "${workspaceUrl}/_/install?token=${token}" | sh`,
   });
 });
