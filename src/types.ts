@@ -1,6 +1,8 @@
 export type Env = {
   Variables: {
-    workspaceId: string;
-    workspaceSlug: string;
+    projectId: string;
+    projectSlug: string;
+    accountSlug: string;
+    accountId?: string;
   };
 };
