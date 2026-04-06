@@ -17,7 +17,7 @@ export default defineConfig({
         target: 'http://localhost:7432',
         changeOrigin: true,
       },
-      '/_/api': 'http://localhost:7432',
+      '/_/': 'http://localhost:7432',
       '^/[^/]+/api(?:/.*)?$': {
         target: 'http://localhost:7432',
         changeOrigin: true,

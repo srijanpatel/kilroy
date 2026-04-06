@@ -19,7 +19,7 @@ const app = new Hono();
 const viteDevUrl = process.env.KILROY_WEB_DEV_URL?.replace(/\/$/, "");
 
 function isBackendRoute(path: string): boolean {
-  if (path === "/workspaces" || path.startsWith("/_/api")) return true;
+  if (path === "/workspaces" || path.startsWith("/_/")) return true;
   return /^\/[^/]+\/(api|mcp|install)(\/|$)/.test(path);
 }
 
@@ -27,11 +27,15 @@ async function proxyToVite(c: Context, baseUrl: string): Promise<Response> {
   const incomingUrl = new URL(c.req.url);
   const targetUrl = new URL(`${incomingUrl.pathname}${incomingUrl.search}`, `${baseUrl}/`);
 
+  const headers = new Headers(c.req.raw.headers);
+  headers.set("X-Forwarded-By", "kilroy");
+
   try {
     return await fetch(
       new Request(targetUrl, {
         method: c.req.method,
-        headers: c.req.raw.headers,
+        headers,
+        body: c.req.raw.body,
       }),
     );
   } catch (error) {
@@ -42,6 +46,7 @@ async function proxyToVite(c: Context, baseUrl: string): Promise<Response> {
 
 if (viteDevUrl) {
   app.use(async (c, next) => {
+    if (c.req.header("X-Forwarded-By") === "kilroy") return next();
     if ((c.req.method === "GET" || c.req.method === "HEAD") && !isBackendRoute(c.req.path)) {
       return proxyToVite(c, viteDevUrl);
     }
