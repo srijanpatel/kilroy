@@ -1,18 +1,15 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach, setDefaultTimeout } from "bun:test";
+import { describe, it, expect, beforeAll, afterAll, setDefaultTimeout } from "bun:test";
 import { spawn } from "child_process";
-
-// Skip entire CLI integration test suite — the server no longer exposes /workspaces.
-// CLI tests need to be rewritten against the new /:account/:project routing with project auth.
-// All tests are wrapped in describe.skip to prevent beforeAll from spawning a server.
 
 setDefaultTimeout(30_000);
 
-describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
+describe("CLI integration tests", () => {
   const PORT = 7433;
   const SERVER_URL = `http://localhost:${PORT}`;
-  const TEAM_SLUG = `cli-test-${Date.now()}`;
-  const TEAM_API = `${SERVER_URL}/${TEAM_SLUG}`;
-  const CLI = ["bun", "run", "src/cli/index.ts", "--server", TEAM_API];
+  const TEST_ACCOUNT_SLUG = "cli-test";
+  const TEST_PROJECT_SLUG = "cli-project";
+  const PROJECT_API = `${SERVER_URL}/${TEST_ACCOUNT_SLUG}/${TEST_PROJECT_SLUG}`;
+  const CLI = ["bun", "run", "src/cli/index.ts", "--server", PROJECT_API];
 
   let serverProc: ReturnType<typeof spawn>;
   let workspaceToken: string;
@@ -31,7 +28,7 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
   }
 
   async function apiPost(path: string, body: any): Promise<any> {
-    const res = await fetch(`${TEAM_API}${path}`, {
+    const res = await fetch(`${PROJECT_API}/api${path}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -43,7 +40,7 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
   }
 
   async function apiDelete(path: string): Promise<void> {
-    await fetch(`${TEAM_API}${path}`, {
+    await fetch(`${PROJECT_API}/api${path}`, {
       method: "DELETE",
       headers: { "Authorization": `Bearer ${workspaceToken}` },
     });
@@ -53,10 +50,8 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
     const start = Date.now();
     while (Date.now() - start < maxMs) {
       try {
-        const res = await fetch(`${url}/workspaces`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: "healthcheck" }) });
-        if (res.status === 201 || res.status === 409) {
-          return;
-        }
+        const res = await fetch(`${url}/api/stats`);
+        if (res.ok) return;
       } catch {
         await new Promise((r) => setTimeout(r, 100));
       }
@@ -69,22 +64,73 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       env: { ...process.env, KILROY_PORT: String(PORT), DATABASE_URL: process.env.DATABASE_URL },
       stdio: "pipe",
     });
+
+    // Wait for server to be ready (it runs initDatabase on startup)
     await waitForServer(SERVER_URL);
 
-    const res = await fetch(`${SERVER_URL}/workspaces`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug: TEAM_SLUG }),
-    });
-    const data = await res.json();
-    workspaceToken = data.project_key;
+    // Use the DB directly to create test account + project + membership
+    const { client } = await import("../src/db");
+    const { uuidv7 } = await import("../src/lib/uuid");
+
+    // Create test account
+    const accountId = uuidv7();
+    await client.unsafe(`
+      INSERT INTO accounts (id, slug, display_name, auth_user_id)
+      VALUES ('${accountId}', '${TEST_ACCOUNT_SLUG}', 'CLI Test', 'cli-test-user')
+      ON CONFLICT (slug) DO UPDATE SET slug = '${TEST_ACCOUNT_SLUG}'
+    `);
+
+    // Get the actual account ID (in case ON CONFLICT hit)
+    const [acctRow] = await client.unsafe(`SELECT id FROM accounts WHERE slug = '${TEST_ACCOUNT_SLUG}'`);
+    const finalAccountId = acctRow.id;
+
+    // Create test project
+    const projectId = uuidv7();
+    const inviteToken = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    await client.unsafe(`
+      INSERT INTO projects (id, slug, account_id, invite_token)
+      VALUES ('${projectId}', '${TEST_PROJECT_SLUG}', '${finalAccountId}', '${inviteToken}')
+      ON CONFLICT (account_id, slug) DO NOTHING
+    `);
+
+    // Get the actual project ID (in case ON CONFLICT hit)
+    const [projRow] = await client.unsafe(`
+      SELECT id FROM projects WHERE slug = '${TEST_PROJECT_SLUG}' AND account_id = '${finalAccountId}'
+    `);
+    const finalProjectId = projRow.id;
+
+    // Create owner membership with a member_key
+    const memberKeyHex = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    const memberKey = `klry_proj_${memberKeyHex}`;
+    const memberId = uuidv7();
+    await client.unsafe(`
+      INSERT INTO project_members (id, project_id, account_id, member_key, role)
+      VALUES ('${memberId}', '${finalProjectId}', '${finalAccountId}', '${memberKey}', 'owner')
+      ON CONFLICT (project_id, account_id) DO UPDATE SET member_key = '${memberKey}'
+    `);
+
+    // Get the actual member key (in case ON CONFLICT updated it)
+    const [memberRow] = await client.unsafe(`
+      SELECT member_key FROM project_members WHERE project_id = '${finalProjectId}' AND account_id = '${finalAccountId}'
+    `);
+    workspaceToken = memberRow.member_key;
   });
 
-  afterAll(() => {
+  afterAll(async () => {
     serverProc?.kill();
+    try {
+      const { client } = await import("../src/db");
+      await client.unsafe(`DELETE FROM comments WHERE project_id IN (SELECT id FROM projects WHERE account_id IN (SELECT id FROM accounts WHERE slug = '${TEST_ACCOUNT_SLUG}'))`);
+      await client.unsafe(`DELETE FROM posts WHERE project_id IN (SELECT id FROM projects WHERE account_id IN (SELECT id FROM accounts WHERE slug = '${TEST_ACCOUNT_SLUG}'))`);
+      await client.unsafe(`DELETE FROM project_members WHERE account_id IN (SELECT id FROM accounts WHERE slug = '${TEST_ACCOUNT_SLUG}')`);
+      await client.unsafe(`DELETE FROM projects WHERE account_id IN (SELECT id FROM accounts WHERE slug = '${TEST_ACCOUNT_SLUG}')`);
+      await client.unsafe(`DELETE FROM accounts WHERE slug = '${TEST_ACCOUNT_SLUG}'`);
+    } catch {}
   });
-
-  it("placeholder", () => {});
 
   describe("kilroy ls", () => {
     it("lists empty root", async () => {
@@ -95,7 +141,7 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
     });
 
     it("lists posts after creation", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "CLI test ls",
         topic: "cli-test",
         body: "test body",
@@ -107,11 +153,11 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       expect(data.posts.length).toBeGreaterThanOrEqual(1);
       expect(data.posts.some((p: any) => p.id === post.id)).toBe(true);
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
 
     it("supports --recursive flag", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "Deep post",
         topic: "cli-test/deep/nested",
         body: "nested body",
@@ -122,13 +168,13 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       const data = JSON.parse(stdout);
       expect(data.posts.some((p: any) => p.id === post.id)).toBe(true);
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
   });
 
   describe("kilroy read", () => {
     it("reads a post with --json", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "CLI test read",
         topic: "cli-test",
         body: "read me",
@@ -140,11 +186,11 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       expect(data.title).toBe("CLI test read");
       expect(data.body).toBe("read me");
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
 
     it("shows formatted output on TTY-like invocation", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "Formatted post",
         topic: "cli-test",
         body: "formatted body",
@@ -154,7 +200,7 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       expect(code).toBe(0);
       expect(stdout).toContain("formatted body");
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
 
     it("exits 2 for non-existent post", async () => {
@@ -166,7 +212,7 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
 
   describe("kilroy grep", () => {
     it("searches posts", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "Searchable post",
         topic: "cli-test",
         body: "unique_searchterm_xyz for testing",
@@ -178,11 +224,11 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       expect(data.results.length).toBeGreaterThanOrEqual(1);
       expect(data.results[0].post_id).toBe(post.id);
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
 
     it("filters by topic", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "Topic filtered",
         topic: "grep-topic-test",
         body: "filterable_xyz content",
@@ -193,7 +239,7 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       const data = JSON.parse(stdout);
       expect(data.results.length).toBeGreaterThanOrEqual(1);
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
   });
 
@@ -210,7 +256,7 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       expect(data.title).toBe("Created via CLI");
       expect(data.topic).toBe("cli-test");
 
-      await apiDelete(`/_/api/posts/${data.id}`);
+      await apiDelete(`/posts/${data.id}`);
     });
 
     it("creates a post with tags", async () => {
@@ -226,13 +272,13 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       const data = JSON.parse(stdout);
       expect(data.tags).toEqual(["alpha", "beta"]);
 
-      await apiDelete(`/_/api/posts/${data.id}`);
+      await apiDelete(`/posts/${data.id}`);
     });
   });
 
   describe("kilroy comment", () => {
     it("adds a comment with --body", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "Comment target",
         topic: "cli-test",
         body: "target",
@@ -247,13 +293,13 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       const data = JSON.parse(stdout);
       expect(data.post_id).toBe(post.id);
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
   });
 
   describe("kilroy status", () => {
     it("archives a post", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "Status test",
         topic: "cli-test",
         body: "body",
@@ -264,11 +310,11 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       const data = JSON.parse(stdout);
       expect(data.status).toBe("archived");
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
 
     it("restores an archived post", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "Restore test",
         topic: "cli-test",
         body: "body",
@@ -280,11 +326,11 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       const data = JSON.parse(stdout);
       expect(data.status).toBe("active");
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
 
     it("changes status with status command", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "Explicit status",
         topic: "cli-test",
         body: "body",
@@ -295,13 +341,13 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       const data = JSON.parse(stdout);
       expect(data.status).toBe("obsolete");
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
   });
 
   describe("kilroy rm", () => {
     it("deletes a post", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "Delete me",
         topic: "cli-test",
         body: "body",
@@ -319,7 +365,7 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
 
   describe("kilroy find", () => {
     it("finds posts by tag", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "Find by tag",
         topic: "cli-test",
         body: "tagged",
@@ -331,7 +377,7 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       const data = JSON.parse(stdout);
       expect(data.results.some((r: any) => r.id === post.id)).toBe(true);
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
 
     it("requires at least one filter", async () => {
@@ -342,7 +388,7 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
 
   describe("kilroy edit", () => {
     it("edits a post title", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "Original title",
         topic: "cli-test",
         body: "body",
@@ -357,17 +403,17 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       const data = JSON.parse(stdout);
       expect(data.title).toBe("Updated title");
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
 
     it("edits a comment", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "Comment edit target",
         topic: "cli-test",
         body: "body",
       });
 
-      const comment = await (await fetch(`${TEAM_API}/_/api/posts/${post.id}/comments`, {
+      const comment = await (await fetch(`${PROJECT_API}/api/posts/${post.id}/comments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -385,13 +431,13 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       const data = JSON.parse(stdout);
       expect(data.body).toBe("updated comment");
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
   });
 
   describe("kilroy ls --quiet", () => {
     it("outputs only post IDs", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "Quiet test",
         topic: "cli-test",
         body: "body",
@@ -402,13 +448,13 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       expect(stdout).toContain(post.id);
       expect(stdout).not.toContain("Quiet test");
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
   });
 
   describe("kilroy grep --quiet", () => {
     it("outputs only post IDs", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "Grep quiet test",
         topic: "cli-test",
         body: "unique_quiet_grep_term",
@@ -419,13 +465,13 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       expect(stdout).toContain(post.id);
       expect(stdout).not.toContain("Grep quiet test");
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
   });
 
   describe("kilroy edit (error cases)", () => {
     it("errors when no fields provided", async () => {
-      const post = await apiPost("/_/api/posts", {
+      const post = await apiPost("/posts", {
         title: "Edit error test",
         topic: "cli-test",
         body: "body",
@@ -434,7 +480,7 @@ describe.skip("CLI integration tests (needs rewrite for sharing model)", () => {
       const { code, stderr } = await cli("edit", post.id);
       expect(code).toBe(1);
 
-      await apiDelete(`/_/api/posts/${post.id}`);
+      await apiDelete(`/posts/${post.id}`);
     });
   });
 });
