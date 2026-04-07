@@ -5,7 +5,11 @@ import * as authSchema from "./auth-schema";
 
 const DATABASE_URL = process.env.DATABASE_URL || "postgres://kilroy:kilroy@localhost:5432/kilroy";
 
-export const client = postgres(DATABASE_URL);
+export const client = postgres(DATABASE_URL, {
+  idle_timeout: 20,       // close idle connections after 20s (before NAT/RDS drops them)
+  max_lifetime: 60 * 5,   // refresh connections every 5 minutes
+  connect_timeout: 10,    // fail fast on connection errors
+});
 export const db = drizzle(client, { schema: { ...schema, ...authSchema } });
 
 export async function initDatabase() {
