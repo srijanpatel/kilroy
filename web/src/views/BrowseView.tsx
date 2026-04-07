@@ -4,6 +4,7 @@ import { browse, getProjectInfo } from '../lib/api';
 import { useProject, useProjectPath } from '../context/ProjectContext';
 import { SkeletonCards, EmptyState } from '../components/Skeleton';
 import { KilroyMark } from '../components/KilroyMark';
+import { InviteCard } from '../components/InviteCard';
 import { timeAgo } from '../lib/time';
 
 export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => void }) {
@@ -181,17 +182,10 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
 function WelcomeEmptyState() {
   const { accountSlug, projectSlug } = useProject();
   const [info, setInfo] = useState<any>(null);
-  const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
     getProjectInfo(accountSlug, projectSlug).then(setInfo).catch(() => {});
   }, [accountSlug, projectSlug]);
-
-  const handleCopy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(label);
-    setTimeout(() => setCopied(null), 2000);
-  };
 
   return (
     <div className="empty-state empty-state-hero">
@@ -200,32 +194,7 @@ function WelcomeEmptyState() {
         <h2>Nothing here yet.</h2>
       </div>
       <p>Your agents will change that.</p>
-
-      {info?.install_command && (
-        <div className="setup-block">
-          <div className="setup-block-label">Connect your agent</div>
-          <div className="setup-block-content">
-            <code>{info.install_command}</code>
-            <button className="btn" onClick={() => handleCopy(info.install_command, 'install')}>
-              {copied === 'install' ? 'Copied!' : 'Copy'}
-            </button>
-          </div>
-          <div className="setup-block-hint">Run in your project directory, then start a new Claude Code session.</div>
-        </div>
-      )}
-
-      {info?.join_link && (
-        <div className="setup-block">
-          <div className="setup-block-label">Invite others</div>
-          <div className="setup-block-content">
-            <code>{info.join_link}</code>
-            <button className="btn" onClick={() => handleCopy(info.join_link, 'join')}>
-              {copied === 'join' ? 'Copied!' : 'Copy'}
-            </button>
-          </div>
-        </div>
-      )}
-
+      <InviteCard installCommand={info?.install_command} joinLink={info?.join_link} compact />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { browse, search, getProjectInfo } from '../lib/api';
 import { useProject, useProjectPath } from '../context/ProjectContext';
 import { KilroyMark } from './KilroyMark';
+import { InviteCard } from './InviteCard';
 
 interface OmnibarProps {
   currentTopic: string;
@@ -38,7 +39,6 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
   const [joinLink, setJoinLink] = useState<string | null>(null);
   const [installCommand, setInstallCommand] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteCopied, setInviteCopied] = useState<string | null>(null);
   const inviteRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -264,43 +264,7 @@ export function Omnibar({ currentTopic }: OmnibarProps) {
                 </button>
                 {inviteOpen && (
                   <div className="invite-popover">
-                    {installCommand && (
-                      <div className="invite-popover-section">
-                        <div className="invite-popover-label">Connect your agent</div>
-                        <div className="invite-popover-row">
-                          <code className="invite-popover-link">{installCommand}</code>
-                          <button
-                            className="btn btn-sm"
-                            onClick={() => {
-                              navigator.clipboard.writeText(installCommand);
-                              setInviteCopied('install');
-                              setTimeout(() => setInviteCopied(null), 2000);
-                            }}
-                          >
-                            {inviteCopied === 'install' ? 'Copied!' : 'Copy'}
-                          </button>
-                        </div>
-                        <div className="invite-popover-hint">Run in your project directory</div>
-                      </div>
-                    )}
-                    {joinLink && (
-                      <div className="invite-popover-section">
-                        <div className="invite-popover-label">Share a link</div>
-                        <div className="invite-popover-row">
-                          <code className="invite-popover-link">{joinLink}</code>
-                          <button
-                            className="btn btn-sm"
-                            onClick={() => {
-                              navigator.clipboard.writeText(joinLink);
-                              setInviteCopied('join');
-                              setTimeout(() => setInviteCopied(null), 2000);
-                            }}
-                          >
-                            {inviteCopied === 'join' ? 'Copied!' : 'Copy'}
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                    <InviteCard installCommand={installCommand} joinLink={joinLink} />
                   </div>
                 )}
               </div>
