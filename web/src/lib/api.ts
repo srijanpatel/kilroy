@@ -90,3 +90,47 @@ export function deletePost(accountSlug: string, projectSlug: string, postId: str
 export function getProjectInfo(accountSlug: string, projectSlug: string) {
   return request(accountSlug, projectSlug, '/info');
 }
+
+export async function listMembers(projectId: string) {
+  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/members`, {
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Failed to load members');
+  return res.json();
+}
+
+export async function removeMemberApi(projectId: string, accountId: string) {
+  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/members/${encodeURIComponent(accountId)}`, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Failed to remove member');
+  return res.json();
+}
+
+export async function leaveProject(projectId: string) {
+  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/leave`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Failed to leave project');
+  return res.json();
+}
+
+export async function regenerateInviteLinkApi(projectId: string) {
+  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/regenerate-invite`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Failed to regenerate invite link');
+  return res.json();
+}
+
+export async function regenerateKeyApi(projectId: string) {
+  const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/regenerate-key`, {
+    method: 'POST',
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('Failed to regenerate key');
+  return res.json();
+}
