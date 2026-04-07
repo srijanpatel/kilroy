@@ -1991,58 +1991,42 @@ a:hover { color: var(--accent-hover); }
   color: var(--text-dim);
 }
 
-/* Setup command blocks (ProjectSettingsView) */
-.setup-block {
-  margin: 0.75rem auto;
-  max-width: 520px;
-  text-align: left;
-}
-
-.setup-block-label {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-dim);
-  margin-bottom: 0.3rem;
-}
-
-.setup-block-content {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: var(--bg-inset);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.5rem 0.75rem;
-}
-
-.setup-block-content code {
-  flex: 1;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: var(--text);
-  overflow-x: auto;
-  white-space: nowrap;
-}
-
-.setup-block-content .btn {
-  flex-shrink: 0;
-  font-size: 0.72rem;
-  padding: 0.2rem 0.5rem;
-}
-
-.setup-block-hint {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  margin-top: 0.4rem;
-}
-
 /* InviteCard compact variant (empty state) */
 .invite-card-compact {
   margin: 1.25rem auto 0;
-  max-width: 480px;
   text-align: left;
+}
+
+/* Settings members list */
+.settings-members {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-member {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.settings-member:last-child {
+  border-bottom: none;
+}
+
+.settings-member-name {
+  flex: 1;
+  font-size: 0.85rem;
+}
+
+.settings-member-slug {
+  opacity: 0.5;
+}
+
+.settings-member-role {
+  font-size: 0.8rem;
+  opacity: 0.5;
 }
 
 .invite-card-compact .invite-card-section + .invite-card-section {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProjectInfo, listMembers, removeMemberApi, regenerateInviteLinkApi, regenerateKeyApi } from '../lib/api';
+import { getProjectInfo, listMembers, removeMemberApi, regenerateInviteLinkApi } from '../lib/api';
 import { useProject } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
 import { InviteCard } from '../components/InviteCard';
@@ -20,8 +20,6 @@ export function ProjectSettingsView() {
   const [info, setInfo] = useState<any>(null);
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [error, setError] = useState('');
-  const [keyRevealed, setKeyRevealed] = useState(false);
-  const [copied, setCopied] = useState<string | null>(null);
 
   const isOwner = account?.slug === accountSlug;
 
@@ -29,7 +27,6 @@ export function ProjectSettingsView() {
     getProjectInfo(accountSlug, projectSlug)
       .then((data) => {
         setInfo(data);
-        // Load members if we have the project_id
         if (data.project_id) {
           listMembers(data.project_id)
             .then((d) => setMembers(d.members || []))
@@ -38,12 +35,6 @@ export function ProjectSettingsView() {
       })
       .catch((e) => setError(e.message));
   }, [accountSlug, projectSlug]);
-
-  const handleCopy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(label);
-    setTimeout(() => setCopied(null), 2000);
-  };
 
   const handleRemoveMember = async (targetAccountId: string) => {
     if (!info?.project_id) return;
@@ -59,28 +50,11 @@ export function ProjectSettingsView() {
     if (!info?.project_id) return;
     try {
       const result = await regenerateInviteLinkApi(info.project_id);
-      // Rebuild invite link from returned token
       const projectUrl = `${window.location.origin}/${accountSlug}/${projectSlug}`;
       setInfo((prev: any) => ({
         ...prev,
         invite_link: `${projectUrl}/join?token=${result.invite_token}`,
       }));
-    } catch (e: any) {
-      setError(e.message);
-    }
-  };
-
-  const handleRegenerateKey = async () => {
-    if (!info?.project_id) return;
-    try {
-      const result = await regenerateKeyApi(info.project_id);
-      const projectUrl = `${window.location.origin}/${accountSlug}/${projectSlug}`;
-      setInfo((prev: any) => ({
-        ...prev,
-        member_key: result.member_key,
-        install_command: `curl -sL "${projectUrl}/install?key=${result.member_key}" | sh`,
-      }));
-      setKeyRevealed(true);
     } catch (e: any) {
       setError(e.message);
     }
@@ -97,31 +71,6 @@ export function ProjectSettingsView() {
 
       {info && (
         <>
-          {info.member_key && (
-            <div className="setup-block">
-              <div className="setup-block-label">Your Project Key</div>
-              <div className="setup-block-content">
-                <code>
-                  {keyRevealed ? info.member_key : info.member_key.slice(0, 12) + '••••••••••••••••••••'}
-                </code>
-                <button className="btn" onClick={() => setKeyRevealed((r) => !r)}>
-                  {keyRevealed ? 'Hide' : 'Reveal'}
-                </button>
-                {keyRevealed && (
-                  <>
-                    <button className="btn" onClick={() => handleCopy(info.member_key, 'key')}>
-                      {copied === 'key' ? 'Copied!' : 'Copy'}
-                    </button>
-                    <button className="btn" onClick={handleRegenerateKey}>
-                      Regenerate
-                    </button>
-                  </>
-                )}
-              </div>
-              <div className="setup-block-hint">Your personal key for agent access. Regenerating invalidates the old one.</div>
-            </div>
-          )}
-
           <InviteCard
             installCommand={info.install_command}
             joinLink={isOwner ? info.invite_link : null}
@@ -129,17 +78,17 @@ export function ProjectSettingsView() {
           />
 
           {members.length > 0 && (
-            <div className="setup-block">
-              <div className="setup-block-label">Members ({members.length})</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div className="invite-card-section" style={{ marginTop: '1rem' }}>
+              <div className="invite-card-label">Members ({members.length})</div>
+              <div className="settings-members">
                 {members.map((m) => (
-                  <div key={m.account_id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0', borderBottom: '1px solid var(--warm-gray, #8C7E72)22' }}>
-                    <span style={{ flex: 1 }}>
-                      <strong>{m.display_name}</strong> <span style={{ opacity: 0.6 }}>({m.slug})</span>
+                  <div key={m.account_id} className="settings-member">
+                    <span className="settings-member-name">
+                      <strong>{m.display_name}</strong> <span className="settings-member-slug">{m.slug}</span>
                     </span>
-                    <span style={{ fontSize: '0.85em', opacity: 0.6 }}>{m.role}</span>
+                    <span className="settings-member-role">{m.role}</span>
                     {isOwner && m.role !== 'owner' && (
-                      <button className="btn" style={{ fontSize: '0.85em' }} onClick={() => handleRemoveMember(m.account_id)}>
+                      <button className="btn btn-sm" onClick={() => handleRemoveMember(m.account_id)}>
                         Remove
                       </button>
                     )}
