@@ -108,7 +108,9 @@ projectApp.route("/api", api);
 // MCP endpoint — stateless streamable HTTP transport
 projectApp.all("/mcp", async (c) => {
   const projectId = c.get("projectId");
-  const mcp = createMcpServer(projectId);
+  const memberAccountId = c.get("memberAccountId");
+  const authorType = c.get("authorType");
+  const mcp = createMcpServer(projectId, memberAccountId, authorType);
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
   });

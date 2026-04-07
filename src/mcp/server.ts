@@ -5,13 +5,15 @@ import { Hono } from "hono";
 import type { Env } from "../types";
 
 /** Make an internal request to the API and return the parsed JSON response. */
-function createApiRequest(projectId: string) {
+function createApiRequest(projectId: string, memberAccountId: string, authorType: "human" | "agent") {
   // Internal Hono app with project context injected
   const app = new Hono<Env>();
   app.use("*", async (c, next) => {
     c.set("projectId", projectId);
     c.set("projectSlug", ""); // Not needed for internal API calls
     c.set("accountSlug", ""); // Not needed for internal API calls
+    c.set("memberAccountId", memberAccountId);
+    c.set("authorType", authorType);
     return next();
   });
   app.route("/api", api);
@@ -39,8 +41,8 @@ function result(data: unknown, isError = false) {
   };
 }
 
-export function createMcpServer(projectId: string) {
-  const apiRequest = createApiRequest(projectId);
+export function createMcpServer(projectId: string, memberAccountId: string, authorType: "human" | "agent") {
+  const apiRequest = createApiRequest(projectId, memberAccountId, authorType);
 
   const mcp = new McpServer(
     { name: "kilroy", version: "0.1.0" },
@@ -129,7 +131,7 @@ export function createMcpServer(projectId: string) {
       topic: z.string().describe("Hierarchical topic path (e.g. deployments/staging)."),
       body: z.string().describe("Content of the post. Markdown supported."),
       tags: z.array(z.string()).optional().describe("Tags for cross-cutting concerns."),
-      author: z.string().optional().describe("Optional author identity. Claude Code injects this automatically; other clients can provide it explicitly."),
+      author_metadata: z.record(z.string(), z.unknown()).optional().describe("Agent runtime metadata (git_user, os_user, session_id, agent). Injected automatically by Claude Code plugin."),
     },
     async (args) => {
       const { status, data } = await apiRequest("POST", "/api/posts", {
@@ -137,7 +139,7 @@ export function createMcpServer(projectId: string) {
         topic: args.topic,
         body: args.body,
         tags: args.tags,
-        author: args.author,
+        author_metadata: args.author_metadata,
       });
       return result(data, status >= 400);
     }
@@ -150,12 +152,12 @@ export function createMcpServer(projectId: string) {
     {
       post_id: z.string().describe("The post to comment on."),
       body: z.string().describe("Content of the comment. Markdown supported."),
-      author: z.string().optional().describe("Optional author identity. Claude Code injects this automatically; other clients can provide it explicitly."),
+      author_metadata: z.record(z.string(), z.unknown()).optional().describe("Agent runtime metadata (git_user, os_user, session_id, agent). Injected automatically by Claude Code plugin."),
     },
     async (args) => {
       const { status, data } = await apiRequest("POST", `/api/posts/${args.post_id}/comments`, {
         body: args.body,
-        author: args.author,
+        author_metadata: args.author_metadata,
       });
       return result(data, status >= 400);
     }
@@ -200,7 +202,6 @@ export function createMcpServer(projectId: string) {
       topic: z.string().optional().describe("New topic path."),
       body: z.string().optional().describe("New body content. Markdown supported."),
       tags: z.array(z.string()).optional().describe("New tags. Empty array clears all tags."),
-      author: z.string().optional().describe("Optional author identity. Provide a stable value if you want ownership checks to persist across edits."),
     },
     async (args) => {
       const payload: Record<string, unknown> = {};
@@ -208,7 +209,6 @@ export function createMcpServer(projectId: string) {
       if (args.topic !== undefined) payload.topic = args.topic;
       if (args.body !== undefined) payload.body = args.body;
       if (args.tags !== undefined) payload.tags = args.tags;
-      if (args.author !== undefined) payload.author = args.author;
 
       const { status, data } = await apiRequest("PATCH", `/api/posts/${args.post_id}`, payload);
       return result(data, status >= 400);
@@ -223,13 +223,12 @@ export function createMcpServer(projectId: string) {
       post_id: z.string().describe("The post the comment belongs to."),
       comment_id: z.string().describe("The comment to update."),
       body: z.string().describe("New comment body. Markdown supported."),
-      author: z.string().optional().describe("Optional author identity. Provide a stable value if you want ownership checks to persist across edits."),
     },
     async (args) => {
       const { status, data } = await apiRequest(
         "PATCH",
         `/api/posts/${args.post_id}/comments/${args.comment_id}`,
-        { body: args.body, author: args.author }
+        { body: args.body }
       );
       return result(data, status >= 400);
     }
