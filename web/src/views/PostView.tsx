@@ -83,8 +83,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
     if (!commentBody.trim() || !id) return;
     setSubmitting(true);
     try {
-      const author = localStorage.getItem('kilroy_author') || undefined;
-      await createComment(accountSlug, projectSlug, id, { body: commentBody, author });
+      await createComment(accountSlug, projectSlug, id, { body: commentBody });
       setCommentBody('');
       if (textareaRef.current) textareaRef.current.style.height = 'auto';
       load();
