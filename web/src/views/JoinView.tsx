@@ -25,7 +25,7 @@ export function JoinView() {
       return;
     }
 
-    fetch(`/${accountSlug}/${projectSlug}/join?token=${encodeURIComponent(token)}`, {
+    fetch(`/${accountSlug}/${projectSlug}/api/join?token=${encodeURIComponent(token)}`, {
       credentials: 'include',
     })
       .then(async (res) => {

@@ -94,11 +94,13 @@ if (!viteDevUrl && indexHtml) {
 // Project-scoped routes
 const projectApp = new Hono<Env>();
 
-// Join and install bypass projectAuth — token in query IS the auth
-projectApp.route("/join", joinHandler);
+// Install bypasses projectAuth — token in query IS the auth
 projectApp.route("/install", installHandler);
 
-// projectAuth middleware for API and MCP
+// Join API bypasses projectAuth — invite token IS the auth
+projectApp.route("/api/join", joinHandler);
+
+// projectAuth middleware for remaining API and MCP
 projectApp.use("/api/*", projectAuth);
 projectApp.use("/mcp", projectAuth);
 
