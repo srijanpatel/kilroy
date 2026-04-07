@@ -156,7 +156,7 @@ async function getSubtopics(
     SELECT
       subtopic,
       count(*)::int as post_count,
-      count(DISTINCT author)::int as contributor_count,
+      count(DISTINCT author_account_id)::int as contributor_count,
       max(updated_at)::text as updated_at,
       string_agg(DISTINCT tags, ',') as all_tags
     FROM immediate_children

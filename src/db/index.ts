@@ -115,6 +115,9 @@ export async function initDatabase() {
       tags TEXT,
       body TEXT NOT NULL,
       author TEXT,
+      author_account_id TEXT REFERENCES accounts(id),
+      author_type TEXT NOT NULL DEFAULT 'agent',
+      author_metadata TEXT,
       search_vector TSVECTOR,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -129,10 +132,24 @@ export async function initDatabase() {
       post_id TEXT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
       body TEXT NOT NULL,
       author TEXT,
+      author_account_id TEXT REFERENCES accounts(id),
+      author_type TEXT NOT NULL DEFAULT 'agent',
+      author_metadata TEXT,
       search_vector TSVECTOR,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+  `);
+
+  // Migration: add new author columns
+  await client.unsafe(`
+    ALTER TABLE posts ADD COLUMN IF NOT EXISTS author_account_id TEXT REFERENCES accounts(id);
+    ALTER TABLE posts ADD COLUMN IF NOT EXISTS author_type TEXT NOT NULL DEFAULT 'agent';
+    ALTER TABLE posts ADD COLUMN IF NOT EXISTS author_metadata TEXT;
+
+    ALTER TABLE comments ADD COLUMN IF NOT EXISTS author_account_id TEXT REFERENCES accounts(id);
+    ALTER TABLE comments ADD COLUMN IF NOT EXISTS author_type TEXT NOT NULL DEFAULT 'agent';
+    ALTER TABLE comments ADD COLUMN IF NOT EXISTS author_metadata TEXT;
   `);
 
   // Indexes

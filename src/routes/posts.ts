@@ -1,12 +1,18 @@
 import { Hono } from "hono";
 import { eq, and, asc } from "drizzle-orm";
 import { db } from "../db";
-import { posts, comments } from "../db/schema";
+import { posts, comments, accounts } from "../db/schema";
 import { uuidv7 } from "../lib/uuid";
-import { formatPost } from "../lib/format";
+import { formatPost, formatComment } from "../lib/format";
 import type { Env } from "../types";
 
 export const postsRouter = new Hono<Env>();
+
+async function getAccountDisplay(accountId: string | null) {
+  if (!accountId) return null;
+  const [row] = await db.select({ slug: accounts.slug, displayName: accounts.displayName }).from(accounts).where(eq(accounts.id, accountId));
+  return row || null;
+}
 
 // GET /posts/:id — Read a post with all comments
 postsRouter.get("/:id", async (c) => {
@@ -24,24 +30,35 @@ postsRouter.get("/:id", async (c) => {
     .where(eq(comments.postId, postId))
     .orderBy(asc(comments.createdAt));
 
-  // Compute contributors
-  const contributorSet = new Set<string>();
-  if (post.author) contributorSet.add(post.author);
+  // Compute contributors (account-based)
+  const accountIds = new Set<string>();
+  if (post.authorAccountId) accountIds.add(post.authorAccountId);
   for (const comment of postComments) {
-    if (comment.author) contributorSet.add(comment.author);
+    if (comment.authorAccountId) accountIds.add(comment.authorAccountId);
   }
 
+  const displayMap = new Map<string, { slug: string; displayName: string }>();
+  for (const id of accountIds) {
+    const display = await getAccountDisplay(id);
+    if (display) displayMap.set(id, display);
+  }
+
+  const contributors = Array.from(accountIds).map((id) => ({
+    account_id: id,
+    slug: displayMap.get(id)?.slug,
+    display_name: displayMap.get(id)?.displayName,
+  }));
+
+  const postDisplay = post.authorAccountId ? displayMap.get(post.authorAccountId) || null : null;
+
   return c.json({
-    ...formatPost(post),
+    ...formatPost(post, postDisplay),
     body: post.body,
-    contributors: Array.from(contributorSet),
-    comments: postComments.map((comment) => ({
-      id: comment.id,
-      author: comment.author,
-      body: comment.body,
-      created_at: comment.createdAt.toISOString(),
-      updated_at: comment.updatedAt.toISOString(),
-    })),
+    contributors,
+    comments: postComments.map((comment) => {
+      const commentDisplay = comment.authorAccountId ? displayMap.get(comment.authorAccountId) || null : null;
+      return formatComment(comment, commentDisplay);
+    }),
   });
 });
 
@@ -57,6 +74,8 @@ postsRouter.post("/", async (c) => {
   }
 
   const projectId = c.get("projectId");
+  const memberAccountId = c.get("memberAccountId");
+  const authorType = c.get("authorType");
   const now = new Date();
   const id = uuidv7();
 
@@ -68,7 +87,9 @@ postsRouter.post("/", async (c) => {
     status: "active" as const,
     tags: body.tags ? JSON.stringify(body.tags) : null,
     body: body.body,
-    author: body.author || null,
+    authorAccountId: memberAccountId,
+    authorType: authorType,
+    authorMetadata: body.author_metadata ? JSON.stringify(body.author_metadata) : null,
     createdAt: now,
     updatedAt: now,
   };
@@ -77,16 +98,11 @@ postsRouter.post("/", async (c) => {
 
   // FTS search_vector is updated automatically by database trigger
 
+  const display = await getAccountDisplay(memberAccountId);
+
   return c.json(
     {
-      id: post.id,
-      title: post.title,
-      topic: post.topic,
-      status: post.status,
-      tags: body.tags || [],
-      author: post.author,
-      created_at: post.createdAt.toISOString(),
-      updated_at: post.updatedAt.toISOString(),
+      ...formatPost(post, display),
     },
     201
   );
@@ -105,6 +121,8 @@ postsRouter.post("/:id/comments", async (c) => {
   }
 
   const projectId = c.get("projectId");
+  const memberAccountId = c.get("memberAccountId");
+  const authorType = c.get("authorType");
 
   // Check post exists and belongs to this project
   const [post] = await db.select().from(posts).where(and(eq(posts.id, postId), eq(posts.projectId, projectId)));
@@ -120,7 +138,9 @@ postsRouter.post("/:id/comments", async (c) => {
     projectId,
     postId,
     body: body.body,
-    author: body.author || null,
+    authorAccountId: memberAccountId,
+    authorType: authorType,
+    authorMetadata: body.author_metadata ? JSON.stringify(body.author_metadata) : null,
     createdAt: now,
     updatedAt: now,
   };
@@ -132,14 +152,10 @@ postsRouter.post("/:id/comments", async (c) => {
 
   // FTS search_vector is updated automatically by database trigger
 
+  const display = await getAccountDisplay(memberAccountId);
+
   return c.json(
-    {
-      id: comment.id,
-      post_id: comment.postId,
-      author: comment.author,
-      created_at: comment.createdAt.toISOString(),
-      updated_at: comment.updatedAt.toISOString(),
-    },
+    formatComment(comment, display),
     201
   );
 });
@@ -158,6 +174,7 @@ postsRouter.patch("/:id/comments/:commentId", async (c) => {
   }
 
   const projectId = c.get("projectId");
+  const memberAccountId = c.get("memberAccountId");
 
   // Find the comment and verify it belongs to this post and project
   const [comment] = await db.select().from(comments)
@@ -167,8 +184,8 @@ postsRouter.patch("/:id/comments/:commentId", async (c) => {
     return c.json({ error: "Comment not found", code: "NOT_FOUND" }, 404);
   }
 
-  // Author matching
-  if (body.author && body.author !== comment.author) {
+  // Author matching: member can only edit their own comments
+  if (comment.authorAccountId && comment.authorAccountId !== memberAccountId) {
     return c.json(
       { error: "You can only edit your own comments", code: "AUTHOR_MISMATCH" },
       403
@@ -185,14 +202,13 @@ postsRouter.patch("/:id/comments/:commentId", async (c) => {
   // Update parent post's updated_at
   await db.update(posts).set({ updatedAt: now }).where(eq(posts.id, postId));
 
-  return c.json({
-    id: commentId,
-    post_id: postId,
+  const display = await getAccountDisplay(comment.authorAccountId);
+
+  return c.json(formatComment({
+    ...comment,
     body: body.body,
-    author: comment.author,
-    created_at: comment.createdAt.toISOString(),
-    updated_at: now.toISOString(),
-  });
+    updatedAt: now,
+  }, display));
 });
 
 // PATCH /posts/:id — Update post content and/or status
@@ -231,13 +247,15 @@ postsRouter.patch("/:id", async (c) => {
   }
 
   const projectId = c.get("projectId");
+  const memberAccountId = c.get("memberAccountId");
+
   const [post] = await db.select().from(posts).where(and(eq(posts.id, postId), eq(posts.projectId, projectId)));
   if (!post) {
     return c.json({ error: "Post not found", code: "NOT_FOUND" }, 404);
   }
 
-  // Author matching: if author provided, must match stored author
-  if (body.author && body.author !== post.author) {
+  // Author matching: member can only edit their own posts
+  if (post.authorAccountId && post.authorAccountId !== memberAccountId) {
     return c.json(
       { error: "You can only edit your own posts", code: "AUTHOR_MISMATCH" },
       403
@@ -275,7 +293,8 @@ postsRouter.patch("/:id", async (c) => {
 
   // Read back the full post for response
   const [updated] = await db.select().from(posts).where(eq(posts.id, postId));
-  return c.json(formatPost(updated));
+  const display = await getAccountDisplay(updated.authorAccountId);
+  return c.json(formatPost(updated, display));
 });
 
 // DELETE /posts/:id — Permanently delete a post and all comments

@@ -60,7 +60,11 @@ export const posts = pgTable(
       .default("active"),
     tags: text("tags"),
     body: text("body").notNull(),
-    author: text("author"),
+    authorAccountId: text("author_account_id").references(() => accounts.id),
+    authorType: text("author_type", { enum: ["human", "agent"] })
+      .notNull()
+      .default("agent"),
+    authorMetadata: text("author_metadata"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -83,7 +87,11 @@ export const comments = pgTable(
       .notNull()
       .references(() => posts.id, { onDelete: "cascade" }),
     body: text("body").notNull(),
-    author: text("author"),
+    authorAccountId: text("author_account_id").references(() => accounts.id),
+    authorType: text("author_type", { enum: ["human", "agent"] })
+      .notNull()
+      .default("agent"),
+    authorMetadata: text("author_metadata"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

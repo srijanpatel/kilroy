@@ -33,7 +33,7 @@ findRouter.get("/", async (c) => {
   let paramIdx = 2;
 
   if (author) {
-    conditions.push(`author = $${paramIdx++}`);
+    conditions.push(`author_account_id = $${paramIdx++}`);
     params.push(author);
   }
 
@@ -90,7 +90,11 @@ findRouter.get("/", async (c) => {
     topic: row.topic,
     status: row.status,
     tags: row.tags ? JSON.parse(row.tags) : [],
-    author: row.author,
+    author: {
+      account_id: row.author_account_id,
+      type: row.author_type,
+      metadata: row.author_metadata ? JSON.parse(row.author_metadata) : null,
+    },
     created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
     updated_at: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at,
   }));
