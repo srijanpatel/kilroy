@@ -20,8 +20,7 @@
   --font-display: 'Space Mono', monospace;
   --font-serif: 'Fraunces', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
-  --content-width: 960px;
-  --reading-width: 720px;
+  --content-width: 720px;
   --omnibar-height: 56px;
 }
 
@@ -53,9 +52,6 @@ a:hover { color: var(--accent-hover); }
   animation: fadeUp 0.15s ease;
 }
 
-.content.reading {
-  max-width: var(--reading-width);
-}
 
 /* Omnibar */
 .omnibar-row {
@@ -567,6 +563,8 @@ a:hover { color: var(--accent-hover); }
 }
 
 .prose table {
+  display: block;
+  overflow-x: auto;
   width: 100%;
   border-collapse: collapse;
   margin: 1.25em 0;
