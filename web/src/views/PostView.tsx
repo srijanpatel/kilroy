@@ -18,11 +18,11 @@ function sanitizeFilenamePart(value: string) {
     .slice(0, 80) || 'post';
 }
 
-function buildPostMarkdown(post: any, workspace: string) {
+function buildPostMarkdown(post: any, project: string) {
   const metadata = [
     `# ${post.title}`,
     '',
-    `- Workspace: \`${workspace}\``,
+    `- Project: \`${project}\``,
     `- Topic: \`${post.topic}\``,
     `- Status: \`${post.status}\``,
     `- Author: ${post.author || 'anonymous'}`,
@@ -117,7 +117,7 @@ export function PostView({ onTopicChange }: { onTopicChange: (t: string) => void
 
   const handleDownloadMarkdown = () => {
     if (!post) return;
-    const markdown = buildPostMarkdown(post, workspace);
+    const markdown = buildPostMarkdown(post, `${accountSlug}/${projectSlug}`);
     const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
