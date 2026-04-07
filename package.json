@@ -22,6 +22,7 @@
     "better-auth": "^1.6.0",
     "commander": "^14.0.3",
     "drizzle-orm": "^0.39.0",
+    "fflate": "^0.8.2",
     "hono": "^4.7.0",
     "postgres": "^3.4.5"
   },

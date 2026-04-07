@@ -2040,6 +2040,12 @@ a:hover { color: var(--accent-hover); }
   opacity: 0.5;
 }
 
+.settings-export-desc {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin: 0.25rem 0 0.75rem;
+}
+
 .invite-card-compact .invite-card-section + .invite-card-section {
   margin-top: 1rem;
   padding-top: 0;

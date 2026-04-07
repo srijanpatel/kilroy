@@ -126,6 +126,27 @@ export async function regenerateInviteLinkApi(projectId: string) {
   return res.json();
 }
 
+export async function exportProject(accountSlug: string, projectSlug: string) {
+  const res = await fetch(`${getBase(accountSlug, projectSlug)}/export`, {
+    credentials: 'include',
+  });
+  if (res.status === 401) {
+    window.location.href = '/login';
+    throw new Error('Redirecting to login…');
+  }
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    throw new Error(data?.error || `Export failed: ${res.status}`);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'kilroy-export.zip';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export async function regenerateKeyApi(projectId: string) {
   const res = await fetch(`/api/projects/${encodeURIComponent(projectId)}/regenerate-key`, {
     method: 'POST',

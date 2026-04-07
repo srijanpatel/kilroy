@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProjectInfo, listMembers, removeMemberApi, regenerateInviteLinkApi } from '../lib/api';
+import { getProjectInfo, listMembers, removeMemberApi, regenerateInviteLinkApi, exportProject } from '../lib/api';
 import { useProject } from '../context/ProjectContext';
 import { useAuth } from '../context/AuthContext';
 import { InviteCard } from '../components/InviteCard';
@@ -20,6 +20,7 @@ export function ProjectSettingsView() {
   const [info, setInfo] = useState<any>(null);
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [error, setError] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   const isOwner = account?.slug === accountSlug;
 
@@ -97,6 +98,28 @@ export function ProjectSettingsView() {
               </div>
             </div>
           )}
+
+          <div className="invite-card-section" style={{ marginTop: '1rem' }}>
+            <div className="invite-card-label">Export</div>
+            <p className="settings-export-desc">Download all posts and comments as a zip of markdown files, organized by topic.</p>
+            <button
+              className="btn"
+              disabled={exporting}
+              onClick={async () => {
+                setExporting(true);
+                setError('');
+                try {
+                  await exportProject(accountSlug, projectSlug);
+                } catch (e: any) {
+                  setError(e.message);
+                } finally {
+                  setExporting(false);
+                }
+              }}
+            >
+              {exporting ? 'Exporting…' : 'Export Project'}
+            </button>
+          </div>
         </>
       )}
 
