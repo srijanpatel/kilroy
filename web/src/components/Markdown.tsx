@@ -5,7 +5,7 @@ import { Marked, type RendererExtensionFunction, type TokenizerExtensionFunction
 type MathToken = {
   type: 'mathInline' | 'mathBlock';
   raw: string;
-  math: string;
+  body: string;
 };
 
 function escapeHtml(value: string) {
@@ -35,7 +35,7 @@ function readDollarMathInline(src: string) {
 
     return {
       raw: src.slice(0, index + 1),
-      math: src.slice(0, index + 1),
+      body: inner,
     };
   }
 
@@ -54,7 +54,7 @@ function readParenMathInline(src: string) {
 
     return {
       raw: src.slice(0, index + 2),
-      math: src.slice(0, index + 2),
+      body: inner,
     };
   }
 
@@ -81,7 +81,7 @@ function readMathBlock(src: string, open: string, close: string) {
 
     return {
       raw: src.slice(0, tail),
-      math: src.slice(0, index + close.length),
+      body: src.slice(open.length, index),
     };
   }
 
@@ -91,10 +91,10 @@ function readMathBlock(src: string, open: string, close: string) {
 const renderMath: RendererExtensionFunction = (token) => {
   const mathToken = token as MathToken;
   if (mathToken.type === 'mathBlock') {
-    return `<div class="math-block">${escapeHtml(mathToken.math)}</div>`;
+    return `<div class="math-block">${escapeHtml(`\\[${mathToken.body}\\]`)}</div>`;
   }
 
-  return `<span class="math-inline">${escapeHtml(mathToken.math)}</span>`;
+  return `<span class="math-inline">${escapeHtml(`\\(${mathToken.body}\\)`)}</span>`;
 };
 
 const mathInlineTokenizer: TokenizerExtensionFunction = function (src) {
@@ -104,7 +104,7 @@ const mathInlineTokenizer: TokenizerExtensionFunction = function (src) {
   return {
     type: 'mathInline',
     raw: token.raw,
-    math: token.math,
+    body: token.body,
   };
 };
 
@@ -115,7 +115,7 @@ const mathBlockTokenizer: TokenizerExtensionFunction = function (src) {
   return {
     type: 'mathBlock',
     raw: token.raw,
-    math: token.math,
+    body: token.body,
   };
 };
 

@@ -5,8 +5,8 @@ export const mathJaxBundleUrl = mathJaxSrc;
 
 export const mathJaxConfig: MathJax3Config = {
   tex: {
-    inlineMath: [['$', '$'], ['\\(', '\\)']],
-    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    inlineMath: [['\\(', '\\)']],
+    displayMath: [['\\[', '\\]']],
     processEscapes: true,
     processEnvironments: true,
   },
