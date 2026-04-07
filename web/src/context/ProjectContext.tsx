@@ -5,7 +5,7 @@ interface ProjectContextValue {
   projectSlug: string;
 }
 
-const ProjectContext = createContext<ProjectContextValue | null>(null);
+export const ProjectContext = createContext<ProjectContextValue | null>(null);
 
 export function ProjectProvider({ accountSlug, projectSlug, children }: {
   accountSlug: string;

@@ -1,11 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useProjectPath } from '../context/ProjectContext';
+import { ProjectContext } from '../context/ProjectContext';
 
 export function AccountMenu() {
   const { user, account: kilroyAccount, signOut } = useAuth();
-  const pp = useProjectPath();
+  const projectCtx = useContext(ProjectContext);
+  const projectSettingsPath = projectCtx
+    ? `/${projectCtx.accountSlug}/${projectCtx.projectSlug}/settings`
+    : null;
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -51,13 +54,15 @@ export function AccountMenu() {
           >
             My Projects
           </Link>
-          <Link
-            className="account-menu-item"
-            to={pp('/settings')}
-            onClick={() => setOpen(false)}
-          >
-            Project Settings
-          </Link>
+          {projectSettingsPath && (
+            <Link
+              className="account-menu-item"
+              to={projectSettingsPath}
+              onClick={() => setOpen(false)}
+            >
+              Project Settings
+            </Link>
+          )}
           <div className="account-menu-divider" />
           <button
             className="account-menu-item account-menu-item-danger"

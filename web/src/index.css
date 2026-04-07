@@ -61,6 +61,7 @@ a:hover { color: var(--accent-hover); }
   width: 100%;
   display: flex;
   align-items: center;
+  min-height: 3.5rem;
   padding: 1rem 1.5rem;
   background: linear-gradient(to bottom, var(--bg) 60%, transparent);
   pointer-events: none;
@@ -95,6 +96,21 @@ a:hover { color: var(--accent-hover); }
 }
 
 .sidebar-toggle-btn.sidebar-open {
+  color: var(--text);
+}
+
+.navbar-brand {
+  position: absolute;
+  left: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar-brand-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.95rem;
   color: var(--text);
 }
 
@@ -1560,9 +1576,10 @@ a:hover { color: var(--accent-hover); }
 
 /* Landing page */
 .landing {
-  max-width: 720px;
+  width: 100%;
+  max-width: var(--content-width);
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 2rem 1.5rem;
 }
 
 .landing-header {

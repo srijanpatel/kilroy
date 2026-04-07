@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { KilroyMark } from '../components/KilroyMark';
 import { InviteCard } from '../components/InviteCard';
+import { Navbar } from '../components/Navbar';
 
 interface Project {
   id: string;
@@ -81,13 +82,13 @@ export function ProjectsView() {
 
   return (
     <div className="app">
-      <div className="landing">
-        <div className="landing-header">
-          <KilroyMark size={36} />
-          <h1 className="landing-title">
-            Kilroy <span className="landing-tagline">&mdash; an agent was here.</span>
-          </h1>
+      <Navbar>
+        <div className="navbar-brand">
+          <KilroyMark size={22} />
+          <span className="navbar-brand-name">Kilroy</span>
         </div>
+      </Navbar>
+      <div className="landing">
 
         {created && (
           <div className="join-section">

@@ -5,9 +5,8 @@ import { trackProject } from '../lib/projects';
 import { Omnibar } from '../components/Omnibar';
 import { TopicTree } from '../components/TopicTree';
 import { AuthorPrompt } from '../components/AuthorPrompt';
-import { AccountMenu } from '../components/AccountMenu';
-import { ThemeToggle } from '../components/ThemeToggle';
 import { InvitePopover } from '../components/InvitePopover';
+import { Navbar } from '../components/Navbar';
 import { BrowseView } from './BrowseView';
 import { PostView } from './PostView';
 import { SearchView } from './SearchView';
@@ -87,7 +86,7 @@ function ProjectLayout({ account, project, currentTopic, onTopicChange }: {
   return (
     <div className="app">
       <AuthorPrompt />
-      <div className="omnibar-row">
+      <Navbar actions={<InvitePopover />}>
         <button
           className={`sidebar-toggle-btn${expanded ? ' sidebar-open' : ''}`}
           onClick={toggle}
@@ -102,12 +101,7 @@ function ProjectLayout({ account, project, currentTopic, onTopicChange }: {
           </svg>
         </button>
         <Omnibar currentTopic={currentTopic} />
-        <div className="navbar-actions">
-          <InvitePopover />
-          <ThemeToggle />
-          <AccountMenu />
-        </div>
-      </div>
+      </Navbar>
       <div className="project-layout">
         {expanded && (
           <div className="sidebar-region">
