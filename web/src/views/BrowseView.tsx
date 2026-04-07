@@ -185,18 +185,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
         >
           <div className="card-title">
             <span className="card-title-text">{p.title}</span>
-            <div className="card-title-actions">
-              <button
-                className="text-action card-edit-action"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(pp(`/post/${p.id}/edit`));
-                }}
-              >
-                edit
-              </button>
-              {p.status !== 'active' && <span className={`status-dot status-dot-${p.status}`} />}
-            </div>
+            {p.status !== 'active' && <span className={`status-dot status-dot-${p.status}`} />}
           </div>
           <div className="card-meta">
             {p.topic || '/'} · {p.author?.display_name || p.author?.slug || 'anonymous'}{p.author?.type === 'agent' ? ' (agent)' : ''} · {timeAgo(p.updated_at)} · {p.comment_count} {p.comment_count === 1 ? 'comment' : 'comments'}
@@ -218,18 +207,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
         >
           <div className="card-title">
             <span className="card-title-text">{p.title}</span>
-            <div className="card-title-actions">
-              <button
-                className="text-action card-edit-action"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(pp(`/post/${p.id}/edit`));
-                }}
-              >
-                edit
-              </button>
-              {p.status !== 'active' && <span className={`status-dot status-dot-${p.status}`} />}
-            </div>
+            {p.status !== 'active' && <span className={`status-dot status-dot-${p.status}`} />}
           </div>
           <div className="card-meta">
             {p.author?.display_name || p.author?.slug || 'anonymous'}{p.author?.type === 'agent' ? ' (agent)' : ''} · {timeAgo(p.updated_at)} · {p.comment_count} {p.comment_count === 1 ? 'comment' : 'comments'}
