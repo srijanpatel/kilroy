@@ -133,6 +133,7 @@ export function PostEditorView({ onTopicChange }: { onTopicChange: (t: string) =
             onChange={handleBodyChange}
             rows={8}
           />
+          <div className="form-hint">Markdown supported. Use <code>$...$</code> or <code>$$...$$</code> for math.</div>
         </div>
 
         <div className="form-group">

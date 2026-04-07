@@ -1,20 +1,10 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { marked } from 'marked';
 import { readPost, createComment, updateStatus, deletePost } from '../lib/api';
 import { useWorkspace, useWorkspacePath } from '../context/WorkspaceContext';
+import { Markdown } from '../components/Markdown';
 import { SkeletonCards } from '../components/Skeleton';
 import { timeAgo } from '../lib/time';
-
-marked.setOptions({
-  breaks: true,
-  gfm: true,
-});
-
-function Markdown({ content, className }: { content: string; className?: string }) {
-  const html = useMemo(() => marked.parse(content || '') as string, [content]);
-  return <div className={className} dangerouslySetInnerHTML={{ __html: html }} />;
-}
 
 function formatTimestamp(iso?: string) {
   return iso ? new Date(iso).toISOString() : 'unknown';
