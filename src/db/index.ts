@@ -235,6 +235,9 @@ export async function initDatabase() {
       FOR EACH ROW EXECUTE FUNCTION comments_search_vector_update();
   `);
 
+  // Backfill: recompute search_vector for all existing posts using new trigger
+  await client.unsafe(`UPDATE posts SET updated_at = updated_at`);
+
   // Run sharing model migration (idempotent)
   const { migrateSharingModel } = await import("./migrate-sharing");
   await migrateSharingModel();
