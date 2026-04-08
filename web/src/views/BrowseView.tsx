@@ -93,7 +93,8 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
   if (!data) return <div className="content"><SkeletonCards count={5} /></div>;
 
   const hasContent = (data.subtopics?.length || 0) + (data.posts?.length || 0) > 0;
-  const showNestedPosts = (nestedPosts?.length || 0) > 0;
+  const nestedPostCount = nestedPosts?.length || 0;
+  const showNestedPosts = nestedPostCount > 0;
 
   const statusFilters = [
     { value: 'active', label: 'Active' },
@@ -123,7 +124,7 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
           >
             <span className="sort-label">Sort</span>
             {sortOptions.find((o) => o.value === sort)?.label}
-            <span className={`sort-chevron ${sortOpen ? 'sort-chevron-open' : ''}`}>&#x25BE;</span>
+            <span className="sort-chevron">&#x25BE;</span>
           </button>
           {sortOpen && (
             <div className="sort-menu">
@@ -148,39 +149,16 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
         </button>
       </div>
 
-      {data.subtopics?.map((st: any, i: number) => (
-        <div
-          key={st.name}
-          className="card folder-card card-animate"
-          style={{ animationDelay: `${i * 30}ms` }}
-          onClick={() => navigate(pp(`/browse/${topic ? topic + '/' : ''}${st.name}/`))}
-        >
-          <div className="card-title">{st.name}/</div>
-          <div className="card-meta">
-            {st.post_count} {st.post_count === 1 ? 'post' : 'posts'}
-            {' · '}
-            {st.contributor_count} {st.contributor_count === 1 ? 'contributor' : 'contributors'}
-            {st.updated_at && <> · {timeAgo(st.updated_at)}</>}
-          </div>
-          {st.tags?.length > 0 && (
-            <div className="card-tags">
-              {st.tags.map((t: string) => <span key={t} className="tag">{t}</span>)}
-            </div>
-          )}
-        </div>
-      ))}
-
       {showNestedPosts && (
         <div className="browse-section-heading">
           Recent posts
         </div>
       )}
 
-      {showNestedPosts && nestedPosts?.map((p: any, i: number) => (
+      {showNestedPosts && nestedPosts?.map((p: any) => (
         <div
           key={p.id}
-          className={`card card-animate${p.status !== 'active' ? ` card-${p.status}` : ''}`}
-          style={{ animationDelay: `${(data.subtopics?.length || 0) * 30 + i * 30}ms` }}
+          className={`card${p.status !== 'active' ? ` card-${p.status}` : ''}`}
           onClick={() => navigate(pp(`/post/${p.id}`))}
         >
           <div className="card-title">
@@ -198,11 +176,10 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
         </div>
       ))}
 
-      {data.posts?.map((p: any, i: number) => (
+      {data.posts?.map((p: any) => (
         <div
           key={p.id}
-          className={`card card-animate${p.status !== 'active' ? ` card-${p.status}` : ''}`}
-          style={{ animationDelay: `${(data.subtopics?.length || 0) * 30 + i * 30}ms` }}
+          className={`card${p.status !== 'active' ? ` card-${p.status}` : ''}`}
           onClick={() => navigate(pp(`/post/${p.id}`))}
         >
           <div className="card-title">
@@ -215,6 +192,33 @@ export function BrowseView({ onTopicChange }: { onTopicChange: (t: string) => vo
           {p.tags?.length > 0 && (
             <div className="card-tags">
               {p.tags.map((t: string) => <span key={t} className="tag">{t}</span>)}
+            </div>
+          )}
+        </div>
+      ))}
+
+      {(data.subtopics?.length || 0) > 0 && (
+        <div className="browse-section-heading">
+          Topics
+        </div>
+      )}
+
+      {data.subtopics?.map((st: any) => (
+        <div
+          key={st.name}
+          className="card folder-card"
+          onClick={() => navigate(pp(`/browse/${topic ? topic + '/' : ''}${st.name}/`))}
+        >
+          <div className="card-title">{st.name}/</div>
+          <div className="card-meta">
+            {st.post_count} {st.post_count === 1 ? 'post' : 'posts'}
+            {' · '}
+            {st.contributor_count} {st.contributor_count === 1 ? 'contributor' : 'contributors'}
+            {st.updated_at && <> · {timeAgo(st.updated_at)}</>}
+          </div>
+          {st.tags?.length > 0 && (
+            <div className="card-tags">
+              {st.tags.map((t: string) => <span key={t} className="tag">{t}</span>)}
             </div>
           )}
         </div>
