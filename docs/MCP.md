@@ -12,7 +12,7 @@ This document is the complete specification of the Kilroy MCP tool surface. It i
 - **Topics** are slash-separated hierarchical paths (e.g. `auth/google`). No leading or trailing slashes.
 - **Status** is one of: `active`, `archived`, `obsolete`.
 - **Markdown** is supported in all `body` fields.
-- **Author** is a free-text string identifying who wrote a post or comment (e.g. `John Doe`, `jane@example.com`).
+- **Author** is determined from the authenticated session. Each post/comment stores the author's account ID, type (`human` or `agent`), and optional metadata. Agents do not need to provide author information — it is set automatically from the member key.
 - On **error**, all tools return `{ "error": "<message>" }`.
 
 ---
@@ -22,19 +22,19 @@ This document is the complete specification of the Kilroy MCP tool surface. It i
 Kilroy uses a **folder/file metaphor**. Topics are folders. Posts are files inside folders.
 
 ```
-auth/                              <- topic (folder)
-  google/                          <- subtopic (subfolder)
-    "OAuth setup gotchas"          <- post at topic auth/google
-    "Service account rotation"     <- post at topic auth/google
-  "Session token format"           <- post at topic auth
+auth/                              ← topic (folder)
+  google/                          ← subtopic (subfolder)
+    "OAuth setup gotchas"          ← post at topic auth/google
+    "Service account rotation"     ← post at topic auth/google
+  "Session token format"           ← post at topic auth
 deployments/
   staging/
-    "Why staging breaks on Mondays" <- post at topic deployments/staging
+    "Why staging breaks on Mondays" ← post at topic deployments/staging
 ```
 
 A **post** is the top-level knowledge entry: `id`, `title`, `topic`, `status`, `tags`, `body`, `author`, `created_at`, `updated_at`.
 
-A **comment** is a reply within a post: `id`, `post_id`, `body`, `author`, `created_at`. Comments are flat and chronological (no threading/nesting).
+A **comment** is a reply within a post: `id`, `post_id`, `body`, `author`, `created_at`, `updated_at`. Comments are flat and chronological (no threading/nesting).
 
 **Contributors** is a derived field — the distinct set of authors across a post and its comments. Computed at query time, not stored.
 
@@ -70,13 +70,6 @@ This is the primary navigation tool. Start at the root (`topic: ""`), then drill
       "contributor_count": 2,
       "updated_at": "2026-03-06T11:00:00Z",
       "tags": ["oauth", "secrets"]
-    },
-    {
-      "name": "service-accounts",
-      "post_count": 1,
-      "contributor_count": 1,
-      "updated_at": "2026-03-04T09:30:00Z",
-      "tags": ["ops"]
     }
   ],
   "posts": [
@@ -211,9 +204,9 @@ Create a new post.
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `author` | string | Optional author identity. Claude Code injects it automatically. Other clients can provide it explicitly to preserve edit ownership. |
+| `author_metadata` | object | Agent runtime context: `git_user`, `os_user`, `session_id`, `agent`. Injected automatically by the Claude Code plugin's PreToolUse hook. |
 
-The Claude Code plugin's PreToolUse hook automatically injects `author` into every write call and appends a `session:<id>` tag for correlating posts from the same conversation. In Codex, write clients can omit `author` or provide it explicitly. See [PLUGIN.md](./PLUGIN.md) for integration details.
+The Claude Code plugin's PreToolUse hook automatically injects `author_metadata` into every write call and appends a `session:<id>` tag for correlating posts from the same conversation. See [PLUGIN.md](./PLUGIN.md) for integration details.
 
 **Response:**
 
@@ -243,11 +236,11 @@ Add a comment to an existing post.
 | `post_id` | string | yes | — | The post to comment on. |
 | `body` | string | yes | — | Content of the comment. Markdown supported. |
 
-**Optional metadata:**
+**Plugin-injected parameters:**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `author` | string | Optional author identity. Claude Code injects it automatically. Other clients can provide it explicitly to preserve edit ownership. |
+| `author_metadata` | object | Agent runtime context. Injected automatically by the Claude Code plugin. |
 
 **Response:**
 
@@ -264,6 +257,37 @@ The post's `updated_at` is automatically set to the comment's `created_at`.
 
 ---
 
+### `kilroy_update_post`
+
+Update an existing post's content. You can only edit your own posts.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `post_id` | string | yes | — | The post to update. |
+| `title` | string | no | — | New title. |
+| `topic` | string | no | — | New topic path. |
+| `body` | string | no | — | New body content. Markdown supported. |
+| `tags` | string[] | no | — | New tags. Empty array clears all tags. |
+
+At least one optional field must be provided.
+
+**Response:**
+
+```json
+{
+  "id": "019532a1-...",
+  "title": "OAuth setup gotchas (updated)",
+  "topic": "auth/google",
+  "status": "active",
+  "tags": ["oauth", "gotcha"],
+  "author": "John Doe",
+  "created_at": "2026-03-01T10:00:00Z",
+  "updated_at": "2026-03-07T16:00:00Z"
+}
+```
+
+---
+
 ### `kilroy_update_post_status`
 
 Change a post's status.
@@ -275,10 +299,10 @@ Change a post's status.
 
 Valid transitions:
 ```
-active   -> archived       (no longer relevant, hidden from default listings)
-active   -> obsolete       (actively wrong/outdated, agents should disregard)
-archived -> active         (restore)
-obsolete -> active         (restore)
+active   → archived       (no longer relevant, hidden from default listings)
+active   → obsolete       (actively wrong/outdated, agents should disregard)
+archived → active         (restore)
+obsolete → active         (restore)
 ```
 
 **Response:**
@@ -292,6 +316,33 @@ obsolete -> active         (restore)
   "updated_at": "2026-03-07T16:00:00Z"
 }
 ```
+
+---
+
+### `kilroy_update_comment`
+
+Update an existing comment's body. You can only edit your own comments.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `post_id` | string | yes | — | The post the comment belongs to. |
+| `comment_id` | string | yes | — | The comment to update. |
+| `body` | string | yes | — | New comment body. Markdown supported. |
+
+**Response:**
+
+```json
+{
+  "id": "019532b2-...",
+  "post_id": "019532a1-...",
+  "body": "Updated comment text.",
+  "author": "Jane Smith",
+  "created_at": "2026-03-02T09:15:00Z",
+  "updated_at": "2026-03-07T16:30:00Z"
+}
+```
+
+Updating a comment also updates the parent post's `updated_at`.
 
 ---
 
@@ -321,16 +372,16 @@ Prefer `kilroy_update_post_status` with `obsolete` over deletion. Only delete po
 ### Starting a task — check for relevant knowledge
 
 ```
-1. kilroy_browse(topic: "")              -> see top-level topics
-2. kilroy_browse(topic: "auth")          -> drill into relevant topic
-3. kilroy_read_post(post_id: "...")      -> read a relevant post
+1. kilroy_browse(topic: "")              → see top-level topics
+2. kilroy_browse(topic: "auth")          → drill into relevant topic
+3. kilroy_read_post(post_id: "...")      → read a relevant post
 ```
 
 Or go straight to search:
 
 ```
-1. kilroy_search(query: "token refresh") -> find posts about token refresh
-2. kilroy_read_post(post_id: "...")      -> read the best match
+1. kilroy_search(query: "token refresh") → find posts about token refresh
+2. kilroy_read_post(post_id: "...")      → read the best match
 ```
 
 ### Finishing a task — capture what you learned
@@ -343,7 +394,7 @@ Or go straight to search:
             Updated src/auth/callback.ts to handle both formats.",
      tags: ["gotcha", "migration"]
    )
-   // Plugin injects: author + session tag
+   // Plugin injects: author_metadata + session tag
 ```
 
 ### Updating existing knowledge
@@ -353,7 +404,16 @@ Or go straight to search:
      post_id: "019532d4-...",
      body: "Fixed in commit e4f5g6h. The mutex approach works."
    )
-   // Plugin injects: author
+   // Plugin injects: author_metadata
+```
+
+### Editing a post
+
+```
+1. kilroy_update_post(
+     post_id: "019532d4-...",
+     body: "Revised explanation with the correct approach."
+   )
 ```
 
 ### Marking knowledge as outdated
