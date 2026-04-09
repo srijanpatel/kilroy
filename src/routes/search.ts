@@ -6,13 +6,6 @@ export const searchRouter = new Hono<Env>();
 
 searchRouter.get("/", async (c) => {
   const query = c.req.query("query");
-  if (!query) {
-    return c.json(
-      { error: "Missing required parameter: query", code: "INVALID_INPUT" },
-      400
-    );
-  }
-
   const regex = c.req.query("regex") === "true";
   const tagsParam = c.req.query("tags");
   const status = c.req.query("status") || "active";
@@ -21,6 +14,11 @@ searchRouter.get("/", async (c) => {
   const cursor = c.req.query("cursor");
 
   const projectId = c.get("projectId");
+
+  // No query: list mode — return all posts sorted by date
+  if (!query) {
+    return listPosts(c, { projectId, tagsParam, status, orderBy: orderBy === "relevance" ? "updated_at" : orderBy, limit, cursor });
+  }
 
   if (regex) {
     return regexSearch(c, { query, projectId, tagsParam, status, orderBy, limit, cursor });
@@ -325,6 +323,75 @@ async function regexSearch(
   }));
 
   const response: any = { query, results: cleanResults };
+  if (hasMore) {
+    response.next_cursor = String(startIdx + limit);
+    response.has_more = true;
+  }
+
+  return c.json(response);
+}
+
+async function listPosts(
+  c: any,
+  opts: {
+    projectId: string;
+    tagsParam?: string;
+    status: string;
+    orderBy: string;
+    limit: number;
+    cursor?: string;
+  }
+) {
+  const { projectId, tagsParam, status, orderBy, limit, cursor } = opts;
+
+  let query = `SELECT * FROM posts WHERE project_id = $1`;
+  const params: any[] = [projectId];
+  let paramIdx = 2;
+
+  if (status !== "all") {
+    query += ` AND status = $${paramIdx++}`;
+    params.push(status);
+  }
+
+  const posts = await client.unsafe(query, params) as any[];
+
+  // Apply tag filter
+  let filtered = posts;
+  if (tagsParam) {
+    const requiredTags = tagsParam.split(",").map((t) => t.trim());
+    filtered = posts.filter((p) => {
+      const postTags: string[] = p.tags ? JSON.parse(p.tags) : [];
+      return requiredTags.every((t) => postTags.includes(t));
+    });
+  }
+
+  // Sort
+  const sortField = orderBy === "created_at" ? "created_at" : "updated_at";
+  filtered.sort((a: any, b: any) => {
+    const aVal = a[sortField] instanceof Date ? a[sortField].toISOString() : a[sortField];
+    const bVal = b[sortField] instanceof Date ? b[sortField].toISOString() : b[sortField];
+    return bVal.localeCompare(aVal);
+  });
+
+  // Paginate
+  let startIdx = 0;
+  if (cursor) startIdx = parseInt(cursor) || 0;
+
+  const paged = filtered.slice(startIdx, startIdx + limit);
+  const hasMore = startIdx + limit < filtered.length;
+
+  const results = paged.map((p: any, i: number) => ({
+    post_id: p.id,
+    title: p.title,
+    status: p.status,
+    tags: p.tags ? JSON.parse(p.tags) : [],
+    snippet: null,
+    match_location: null,
+    rank: startIdx + i + 1,
+    updated_at: p.updated_at instanceof Date ? p.updated_at.toISOString() : p.updated_at,
+  }));
+
+  const response: any = { query: null, results };
   if (hasMore) {
     response.next_cursor = String(startIdx + limit);
     response.has_more = true;

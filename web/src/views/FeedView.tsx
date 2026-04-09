@@ -19,7 +19,6 @@ export function FeedView({ selectedTags }: FeedViewProps) {
   useEffect(() => {
     setLoading(true);
     const params: Record<string, string> = {
-      query: '*',
       status,
       order_by: sortBy,
       limit: '50',
