@@ -6,6 +6,9 @@
 import { client } from "./index";
 
 export async function migrateSharingModel() {
+  // 0. project_key is no longer required (member keys replaced it) — make nullable
+  await client.unsafe(`ALTER TABLE projects ALTER COLUMN project_key DROP NOT NULL`);
+
   // 1. Generate invite tokens for projects without one
   // gen_random_bytes may not be available, use a plpgsql alternative
   await client.unsafe(`
