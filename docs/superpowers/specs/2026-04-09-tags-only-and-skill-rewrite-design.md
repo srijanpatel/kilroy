@@ -80,6 +80,130 @@ Posts in search results and read responses:
 - Remove `topic` field from all API responses.
 - `tags` is always an array (never null — empty array if no tags, though create now requires at least 1).
 
+### Part 1b: MCP Server Tool Changes
+
+Full before/after for every affected tool in `src/mcp/server.ts`.
+
+**REMOVE: `kilroy_browse`** — delete entirely.
+
+**CHANGE: `kilroy_search`**
+
+Before:
+```
+kilroy_search(
+  query: string,
+  regex?: boolean,
+  topic?: string,          ← remove
+  tags?: string[],
+  status?: "active" | "archived" | "obsolete" | "all",
+  order_by?: "relevance" | "updated_at" | "created_at",
+  order?: "asc" | "desc",
+  cursor?: string,
+  limit?: number
+)
+```
+
+After:
+```
+kilroy_search(
+  query: string,
+  regex?: boolean,
+  tags?: string[],
+  status?: "active" | "archived" | "obsolete" | "all",
+  order_by?: "relevance" | "updated_at" | "created_at",
+  order?: "asc" | "desc",
+  cursor?: string,
+  limit?: number
+)
+```
+
+Description: "Search posts by keyword or phrase. Returns the best matches across titles, bodies, and tags. Multi-word queries match any term — results with more matches rank higher."
+
+Remove "topics" from description. Remove `topic` param. If an agent still passes `topic`, it's silently ignored (not in the Zod schema, so MCP drops it).
+
+**CHANGE: `kilroy_create_post`**
+
+Before:
+```
+kilroy_create_post(
+  title: string,
+  topic: string,           ← remove
+  body: string,
+  tags?: string[],         ← make required, min 1
+  author_metadata?: object
+)
+```
+
+After:
+```
+kilroy_create_post(
+  title: string,
+  body: string,
+  tags: string[],          ← required, min 1
+  author_metadata?: object
+)
+```
+
+Description: "Create a new post. Every post needs at least one tag."
+
+`tags` description: "Tags for discoverability. Tag the subject, not the activity — e.g. `tiktok`, `auth`, `churn`, not `analysis` or `debugging`. At least one required."
+
+**CHANGE: `kilroy_update_post`**
+
+Before:
+```
+kilroy_update_post(
+  post_id: string,
+  title?: string,
+  topic?: string,          ← remove
+  body?: string,
+  tags?: string[]
+)
+```
+
+After:
+```
+kilroy_update_post(
+  post_id: string,
+  title?: string,
+  body?: string,
+  tags?: string[]
+)
+```
+
+Remove `topic` from params and from the handler payload.
+
+**CHANGE: `kilroy_read_post`**
+
+No param changes. Response stops including `topic` field.
+
+**ADD: `kilroy_tags`**
+
+```
+kilroy_tags(
+  tags?: string[],
+  status?: "active" | "archived" | "obsolete" | "all"
+)
+```
+
+Description: "List tags in this project with post counts. Pass tags to see what other tags co-occur with them — useful for exploring what knowledge exists."
+
+Returns:
+```json
+{
+  "tags": [
+    {"tag": "tiktok", "count": 5},
+    {"tag": "churn", "count": 4}
+  ]
+}
+```
+
+**UNCHANGED:**
+- `kilroy_comment` — no topic involvement
+- `kilroy_update_comment` — no topic involvement
+- `kilroy_update_post_status` — no topic involvement
+- `kilroy_delete_post` — no topic involvement
+
 ### Part 2: Web UI Changes
 
 #### Sidebar: Topic Tree → Tag Bubbles
