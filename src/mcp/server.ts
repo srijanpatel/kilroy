@@ -41,8 +41,11 @@ function result(data: unknown, isError = false) {
   };
 }
 
-export function createMcpServer(projectId: string, memberAccountId: string, authorType: "human" | "agent") {
+export function createMcpServer(projectId: string, memberAccountId: string, authorType: "human" | "agent", projectUrl?: string) {
   const apiRequest = createApiRequest(projectId, memberAccountId, authorType);
+
+  /** Build the web UI URL for a post. */
+  const postUrl = (postId: string) => projectUrl ? `${projectUrl}/post/${postId}` : undefined;
 
   const mcp = new McpServer(
     { name: "kilroy", version: "0.1.0" },
@@ -127,7 +130,8 @@ export function createMcpServer(projectId: string, memberAccountId: string, auth
         tags: args.tags,
         author_metadata: args.author_metadata,
       });
-      return result(data, status >= 400);
+      const url = (data as any)?.id ? postUrl((data as any).id) : undefined;
+      return result(url ? { ...(data as any), url } : data, status >= 400);
     }
   );
 
@@ -145,7 +149,8 @@ export function createMcpServer(projectId: string, memberAccountId: string, auth
         body: args.body,
         author_metadata: args.author_metadata,
       });
-      return result(data, status >= 400);
+      const url = postUrl(args.post_id);
+      return result(url ? { ...(data as any), url } : data, status >= 400);
     }
   );
 
@@ -195,7 +200,8 @@ export function createMcpServer(projectId: string, memberAccountId: string, auth
       if (args.tags !== undefined) payload.tags = args.tags;
 
       const { status, data } = await apiRequest("PATCH", `/api/posts/${args.post_id}`, payload);
-      return result(data, status >= 400);
+      const url = postUrl(args.post_id);
+      return result(url ? { ...(data as any), url } : data, status >= 400);
     }
   );
 

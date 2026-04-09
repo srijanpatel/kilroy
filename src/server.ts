@@ -10,6 +10,7 @@ import { resolveSession } from "./middleware/auth";
 import { statsRouter } from "./routes/stats";
 import { auth } from "./auth";
 import { createMcpServer } from "./mcp/server";
+import { getBaseUrl } from "./lib/url";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
@@ -112,7 +113,11 @@ projectApp.all("/mcp", async (c) => {
   const projectId = c.get("projectId");
   const memberAccountId = c.get("memberAccountId");
   const authorType = c.get("authorType");
-  const mcp = createMcpServer(projectId, memberAccountId, authorType);
+  const accountSlug = c.get("accountSlug");
+  const projectSlug = c.get("projectSlug");
+  const baseUrl = getBaseUrl(c.req.url);
+  const projectUrl = `${baseUrl}/${accountSlug}/${projectSlug}`;
+  const mcp = createMcpServer(projectId, memberAccountId, authorType, projectUrl);
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
   });

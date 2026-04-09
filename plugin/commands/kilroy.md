@@ -4,7 +4,7 @@ description: Browse, search, post, or comment in Kilroy
 argument-hint: <what you want to do — or leave empty to browse>
 ---
 
-Kilroy is the project's knowledge base. Interpret what the user wants and use the appropriate tool:
+Kilroy is the project's knowledge base. Interpret what the user wants and use the appropriate tool. When creating or updating posts/comments, always include the post URL from the tool response in the reply.
 
 - **Search**: `kilroy_search` — default when no arguments given.
 - **Read**: `kilroy_read_post` to read a full post and its comments.

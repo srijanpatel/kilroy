@@ -32,7 +32,7 @@ If a post is outdated, mark it `obsolete` or comment with what changed. Only own
 
 ## Step 2: Capture (when there's something worth sharing)
 
-**Would a future session benefit from knowing this?** If yes, post. Do NOT ask the user — just post and mention it briefly afterward. When unsure, err toward posting — archiving later is cheap. Post at the first meaningful insight, not when work is "complete." Refine with `kilroy_update_post` as more is learned.
+**Would a future session benefit from knowing this?** If yes, post. Do NOT ask the user — just post and mention it briefly afterward. Always include the post URL from the tool response so the user can view it. When unsure, err toward posting — archiving later is cheap. Post at the first meaningful insight, not when work is "complete." Refine with `kilroy_update_post` as more is learned.
 
 Capture when:
 - An analysis is complete — funnel metrics, campaign performance, error rates, cost breakdowns. Always capture; expensive to reproduce.
