@@ -14,7 +14,6 @@ searchRouter.get("/", async (c) => {
   }
 
   const regex = c.req.query("regex") === "true";
-  const topic = c.req.query("topic");
   const tagsParam = c.req.query("tags");
   const status = c.req.query("status") || "active";
   const orderBy = c.req.query("order_by") || "relevance";
@@ -24,10 +23,10 @@ searchRouter.get("/", async (c) => {
   const projectId = c.get("projectId");
 
   if (regex) {
-    return regexSearch(c, { query, projectId, topic, tagsParam, status, orderBy, limit, cursor });
+    return regexSearch(c, { query, projectId, tagsParam, status, orderBy, limit, cursor });
   }
 
-  return ftsSearch(c, { query, projectId, topic, tagsParam, status, orderBy, limit, cursor });
+  return ftsSearch(c, { query, projectId, tagsParam, status, orderBy, limit, cursor });
 });
 
 async function ftsSearch(
@@ -35,7 +34,6 @@ async function ftsSearch(
   opts: {
     query: string;
     projectId: string;
-    topic?: string;
     tagsParam?: string;
     status: string;
     orderBy: string;
@@ -43,7 +41,7 @@ async function ftsSearch(
     cursor?: string;
   }
 ) {
-  const { query, projectId, topic, tagsParam, status, orderBy, limit, cursor } = opts;
+  const { query, projectId, tagsParam, status, orderBy, limit, cursor } = opts;
   const tsquery = toTsquery(query);
 
   // Search posts using tsvector
@@ -131,16 +129,10 @@ async function ftsSearch(
     postQuery += ` AND status = $${paramIdx++}`;
     params.push(status);
   }
-  if (topic) {
-    postQuery += ` AND (topic = $${paramIdx} OR topic LIKE $${paramIdx + 1})`;
-    params.push(topic, `${topic}/%`);
-    paramIdx += 2;
-  }
 
   const matchedPosts = await client.unsafe(postQuery, params) as Array<{
     id: string;
     title: string;
-    topic: string;
     status: string;
     tags: string | null;
     updated_at: Date;
@@ -163,7 +155,6 @@ async function ftsSearch(
     return {
       post_id: p.id,
       title: p.title,
-      topic: p.topic,
       status: p.status,
       tags: p.tags ? JSON.parse(p.tags) : [],
       snippet: match.snippet,
@@ -196,7 +187,6 @@ async function ftsSearch(
   const cleanResults = paged.map((r, i) => ({
     post_id: r.post_id,
     title: r.title,
-    topic: r.topic,
     status: r.status,
     tags: r.tags,
     snippet: r.snippet,
@@ -219,7 +209,6 @@ async function regexSearch(
   opts: {
     query: string;
     projectId: string;
-    topic?: string;
     tagsParam?: string;
     status: string;
     orderBy: string;
@@ -227,7 +216,7 @@ async function regexSearch(
     cursor?: string;
   }
 ) {
-  const { query, projectId, topic, tagsParam, status, orderBy, limit, cursor } = opts;
+  const { query, projectId, tagsParam, status, orderBy, limit, cursor } = opts;
 
   // PostgreSQL native regex with ~* (case-insensitive)
   let postQuery = `SELECT * FROM posts WHERE project_id = $1 AND (title ~* $2 OR body ~* $3)`;
@@ -237,11 +226,6 @@ async function regexSearch(
   if (status !== "all") {
     postQuery += ` AND status = $${paramIdx++}`;
     params.push(status);
-  }
-  if (topic) {
-    postQuery += ` AND (topic = $${paramIdx} OR topic LIKE $${paramIdx + 1})`;
-    params.push(topic, `${topic}/%`);
-    paramIdx += 2;
   }
 
   let matchedPosts = await client.unsafe(postQuery, params) as any[];
@@ -265,11 +249,6 @@ async function regexSearch(
     if (status !== "all") {
       extraQuery += ` AND status = $${extraIdx++}`;
       extraParams.push(status);
-    }
-    if (topic) {
-      extraQuery += ` AND (topic = $${extraIdx} OR topic LIKE $${extraIdx + 1})`;
-      extraParams.push(topic, `${topic}/%`);
-      extraIdx += 2;
     }
     const extraPosts = await client.unsafe(extraQuery, extraParams) as any[];
     matchedPosts.push(...extraPosts);
@@ -310,7 +289,6 @@ async function regexSearch(
     return {
       post_id: p.id,
       title: p.title,
-      topic: p.topic,
       status: p.status,
       tags: p.tags ? JSON.parse(p.tags) : [],
       snippet,
@@ -338,7 +316,6 @@ async function regexSearch(
   const cleanResults = paged.map((r: any, i: number) => ({
     post_id: r.post_id,
     title: r.title,
-    topic: r.topic,
     status: r.status,
     tags: r.tags,
     snippet: r.snippet,
