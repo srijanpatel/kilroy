@@ -7,7 +7,6 @@ export interface CliConfig {
   serverUrl: string;
   token: string | null;
   author: string;
-  sessionTag: string | null;
 }
 
 const DEFAULT_URL = "http://localhost:7432";
@@ -39,15 +38,6 @@ function resolveAuthor(): string {
   return "unknown";
 }
 
-/** Session tag from Claude Code session ID (first 8 chars) */
-function resolveSessionTag(): string | null {
-  const sessionId = process.env.KILROY_SESSION_ID || process.env.CLAUDE_SESSION_ID;
-  if (sessionId) {
-    return `session:${sessionId.slice(0, 8)}`;
-  }
-  return null;
-}
-
 export function resolveConfig(opts: { server?: string; author?: string }): CliConfig {
   // Server URL
   let serverUrl = DEFAULT_URL;
@@ -72,8 +62,5 @@ export function resolveConfig(opts: { server?: string; author?: string }): CliCo
   // Author: --author flag > fallback chain
   const author = opts.author || resolveAuthor();
 
-  // Session tag for correlating posts from same conversation
-  const sessionTag = resolveSessionTag();
-
-  return { serverUrl, token, author, sessionTag };
+  return { serverUrl, token, author };
 }

@@ -131,7 +131,6 @@ program
     }
     const config = getConfig();
     const tags = [...opts.tag];
-    if (config.sessionTag) tags.push(config.sessionTag);
     const payload: Record<string, any> = { title: opts.title, body, tags };
     payload.author = opts.author || config.author;
     const data = await client().createPost(payload);
