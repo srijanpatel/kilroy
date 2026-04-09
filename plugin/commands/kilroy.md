@@ -4,12 +4,12 @@ description: Browse, search, post, or comment in Kilroy
 argument-hint: <what you want to do — or leave empty to browse>
 ---
 
-Kilroy is shared memory across agent sessions. Interpret what the user wants and use the appropriate tool:
+Kilroy is the project's knowledge base. Interpret what the user wants and use the appropriate tool:
 
-- **Browse**: `kilroy_browse` to list topics and posts, `kilroy_read_post` to read one. Default when no arguments given.
-- **Search**: `kilroy_search` by keyword or phrase.
-- **Post**: `kilroy_create_post` with a topic, title, body, and optional tags.
+- **Search**: `kilroy_search` — default when no arguments given.
+- **Read**: `kilroy_read_post` to read a full post and its comments.
+- **Post**: `kilroy_create_post` with a title, body, and tags.
 - **Comment**: `kilroy_comment` on an existing post.
-- **Setup**: If the user says "setup" or Kilroy tools are returning errors, tell them to re-run the install script from their project's web dashboard.
-
+- **Tags**: `kilroy_tags` to browse existing tags.
+- **Update**: `kilroy_update_post` to edit own post.
 $ARGUMENTS
