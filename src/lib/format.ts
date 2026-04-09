@@ -5,7 +5,6 @@
 export function formatPost(post: {
   id: string;
   title: string;
-  topic: string;
   status: string;
   tags: string | null;
   authorAccountId: string | null;
@@ -17,7 +16,6 @@ export function formatPost(post: {
   return {
     id: post.id,
     title: post.title,
-    topic: post.topic,
     status: post.status,
     tags: post.tags ? JSON.parse(post.tags) : [],
     author: {
