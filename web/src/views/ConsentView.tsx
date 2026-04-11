@@ -18,7 +18,6 @@ export function ConsentView() {
   const [error, setError] = useState('');
 
   const params = new URLSearchParams(window.location.search);
-  const scope = params.get('scope') || '';
 
   useEffect(() => {
     if (loading || !user || !account) return;
@@ -88,14 +87,17 @@ export function ConsentView() {
       const project = projects.find(p => p.id === selectedProjectId);
       if (!project) return;
 
-      const projectScope = `project:${project.id}:${project.account_slug}:${project.slug}`;
-      const fullScope = scope ? `${scope} ${projectScope}` : projectScope;
-
       const res = await fetch('/api/auth/oauth2/consent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ accept: true, scope: fullScope }),
+        body: JSON.stringify({
+          accept: true,
+          oauth_query: window.location.search.slice(1),
+          project_id: project.id,
+          account_slug: project.account_slug,
+          project_slug: project.slug,
+        }),
       });
 
       if (!res.ok) {

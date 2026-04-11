@@ -15,6 +15,7 @@ import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resourc
 import { createMcpServer } from "./mcp/server";
 import { getBaseUrl } from "./lib/url";
 import { getProjectByAuthUserId } from "./members/registry";
+import { setPendingProject } from "./pending-projects";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
@@ -85,6 +86,29 @@ if (!viteDevUrl && indexHtml) {
 const oauthMetadata = oauthProviderAuthServerMetadata(auth);
 app.get("/.well-known/oauth-authorization-server", (c) => oauthMetadata(c.req.raw));
 app.get("/.well-known/oauth-authorization-server/*", (c) => oauthMetadata(c.req.raw));
+
+// Intercept consent requests to extract project selection before Better Auth sees them.
+// The project info is stored in a Map keyed by session ID, then read by consentReferenceId
+// in auth.ts — all within this same request.
+app.use("/api/auth/oauth2/consent", async (c, next) => {
+  if (c.req.method === "POST") {
+    try {
+      const cloned = c.req.raw.clone();
+      const body = await cloned.json();
+      if (body.project_id) {
+        const session = await auth.api.getSession({ headers: c.req.raw.headers });
+        if (session) {
+          setPendingProject(session.session.id, {
+            projectId: body.project_id,
+            accountSlug: body.account_slug,
+            projectSlug: body.project_slug,
+          });
+        }
+      }
+    } catch {}
+  }
+  await next();
+});
 
 // Better Auth handles all auth routes
 app.all("/api/auth/*", (c) => auth.handler(c.req.raw));

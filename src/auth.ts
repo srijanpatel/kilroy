@@ -5,6 +5,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "./db";
 import * as authSchema from "./db/auth-schema";
 import { getProjectByAuthUserId } from "./members/registry";
+import { getPendingProject } from "./pending-projects";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -31,19 +32,33 @@ export const auth = betterAuth({
     oauthProvider({
       loginPage: "/login",
       consentPage: "/consent",
+      scopes: ["kilroy:access"],
+      clientRegistrationDefaultScopes: ["kilroy:access"],
       allowDynamicClientRegistration: true,
       allowUnauthenticatedClientRegistration: true,
       silenceWarnings: { oauthAuthServerConfig: true },
-      customAccessTokenClaims: async ({ user, scopes }) => {
-        const projectScope = (scopes || []).find((s: string) => s.startsWith("project:"));
-        if (!projectScope) return {};
+      postLogin: {
+        page: "/consent",
+        shouldRedirect: () => false,
+        consentReferenceId: ({ session }) => {
+          const project = getPendingProject(session.id);
+          if (!project) return undefined;
+          return JSON.stringify(project);
+        },
+      },
+      customAccessTokenClaims: async ({ user, referenceId }) => {
+        if (!referenceId || !user?.id) return {};
 
-        const [, projectId, accountSlug, projectSlug] = projectScope.split(":");
+        let project;
+        try {
+          project = JSON.parse(referenceId);
+        } catch {
+          return {};
+        }
 
-        // Validate that the authenticated user is actually a member of this project.
-        // The scope is client-controlled — without this check, a crafted scope could
-        // produce a JWT with claims for a project the user doesn't belong to.
-        if (!user?.id) return {};
+        const { projectId, accountSlug, projectSlug } = project;
+        if (!projectId || !accountSlug || !projectSlug) return {};
+
         const membership = await getProjectByAuthUserId(user.id, projectId);
         if (!membership) return {};
 
