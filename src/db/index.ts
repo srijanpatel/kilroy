@@ -13,6 +13,9 @@ export const client = postgres(DATABASE_URL, {
 export const db = drizzle(client, { schema: { ...schema, ...authSchema } });
 
 export async function initDatabase() {
+  // Suppress "relation already exists, skipping" NOTICEs from IF NOT EXISTS statements
+  await client.unsafe(`SET client_min_messages TO warning`);
+
   // Better Auth tables (ba_ prefix)
   await client.unsafe(`
     CREATE TABLE IF NOT EXISTS ba_user (
@@ -341,4 +344,7 @@ export async function initDatabase() {
   // Run sharing model migration (idempotent)
   const { migrateSharingModel } = await import("./migrate-sharing");
   await migrateSharingModel();
+
+  // Restore default notice level for runtime queries
+  await client.unsafe(`SET client_min_messages TO notice`);
 }
