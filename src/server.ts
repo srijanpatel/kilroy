@@ -127,7 +127,7 @@ app.get("/mcp/.well-known/oauth-protected-resource", (c) => {
 const resourceClient = oauthProviderResourceClient(auth);
 const { verifyAccessToken } = resourceClient.getActions();
 
-app.all("/mcp", async (c) => {
+app.post("/mcp", async (c) => {
   const baseUrl = getBaseUrl(c.req.url);
 
   // Extract Bearer token

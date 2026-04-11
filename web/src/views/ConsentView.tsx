@@ -127,7 +127,7 @@ export function ConsentView() {
       <div className="landing">
         <div className="landing-header">
           <KilroyMark size={28} />
-          <h1 className="landing-title" style={{ fontSize: '1.3rem' }}>Connect to Kilroy</h1>
+          <h1 className="consent-title">Connect to Kilroy</h1>
         </div>
 
         <p className="landing-desc">Select a project to connect your agent to.</p>
@@ -169,13 +169,12 @@ export function ConsentView() {
           </div>
         </div>
 
-        {error && <p className="landing-error" style={{ position: 'static', marginTop: '0.5rem' }}>{error}</p>}
+        {error && <p className="landing-error consent-error">{error}</p>}
 
         <button
-          className="login-btn login-btn-github"
+          className="login-btn login-btn-github consent-submit"
           onClick={handleConsent}
           disabled={submitting || !selectedProjectId}
-          style={{ marginTop: '1.5rem', width: '100%' }}
         >
           {submitting ? 'Connecting...' : 'Connect'}
         </button>

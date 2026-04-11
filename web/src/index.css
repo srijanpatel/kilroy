@@ -3032,3 +3032,19 @@ a:hover { color: var(--accent-hover); }
   gap: 0.5rem;
   align-items: center;
 }
+
+.consent-title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.consent-error {
+  position: static;
+  margin-top: 0.5rem;
+}
+
+.consent-submit {
+  margin-top: 1.5rem;
+  width: 100%;
+}
