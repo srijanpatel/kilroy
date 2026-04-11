@@ -41,10 +41,9 @@ export const auth = betterAuth({
         // Validate that the authenticated user is actually a member of this project.
         // The scope is client-controlled — without this check, a crafted scope could
         // produce a JWT with claims for a project the user doesn't belong to.
-        if (user?.id) {
-          const membership = await getProjectByAuthUserId(user.id, projectId);
-          if (!membership) return {};
-        }
+        if (!user?.id) return {};
+        const membership = await getProjectByAuthUserId(user.id, projectId);
+        if (!membership) return {};
 
         return { projectId, accountSlug, projectSlug };
       },
