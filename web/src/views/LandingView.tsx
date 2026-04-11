@@ -25,10 +25,14 @@ export function LandingView() {
 
   const installCmd = 'curl -sL kilroy.sh/install | sh';
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(installCmd);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(installCmd);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback: user-select: all on .install-cmd lets manual selection work
+    }
   };
 
   if (loading) return null;
@@ -47,10 +51,10 @@ export function LandingView() {
           learned &mdash; so future sessions start smarter, not from scratch.
         </p>
 
-        <div className="install-cta" onClick={handleCopy} title="Click to copy">
+        <button className="install-cta" onClick={handleCopy} title="Click to copy" type="button">
           <code className="install-cmd">{installCmd}</code>
           <span className="install-copy">{copied ? 'Copied' : 'Copy'}</span>
-        </div>
+        </button>
 
         <div className="landing-login">
           <span className="landing-login-label">Already have an account?</span>
