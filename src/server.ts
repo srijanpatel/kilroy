@@ -4,7 +4,8 @@ import { initDatabase } from "./db";
 import { api } from "./routes/api";
 import { globalApi } from "./routes/global-api";
 import { joinHandler } from "./routes/join";
-import { installHandler } from "./routes/install";
+import { installHandler, universalInstallHandler } from "./routes/install";
+import { tokenHandler } from "./routes/token";
 import { projectAuth } from "./middleware/project";
 import { resolveSession } from "./middleware/auth";
 import { statsRouter } from "./routes/stats";
@@ -27,6 +28,7 @@ const viteDevUrl = process.env.KILROY_WEB_DEV_URL?.replace(/\/$/, "");
 
 function isBackendRoute(path: string): boolean {
   if (path === "/mcp") return true;
+  if (path === "/install") return true;
   if (path.startsWith("/api/")) return true;
   return /^\/[^/]+\/[^/]+\/(api|mcp|install|join)(\/|$)/.test(path);
 }
@@ -179,11 +181,17 @@ app.all("/mcp", async (c) => {
   return response;
 });
 
+// Universal install — no project, no token
+app.route("/install", universalInstallHandler);
+
 // Project-scoped routes
 const projectApp = new Hono<Env>();
 
-// Install bypasses projectAuth — token in query IS the auth
+// Install bypasses projectAuth — key in query IS the auth
 projectApp.route("/install", installHandler);
+
+// Token exchange bypasses projectAuth — member key in body IS the auth
+projectApp.route("/api/token", tokenHandler);
 
 // Join API bypasses projectAuth — invite token IS the auth
 projectApp.route("/api/join", joinHandler);
