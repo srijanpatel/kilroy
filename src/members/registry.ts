@@ -153,6 +153,28 @@ export async function getMemberKey(
   return row?.memberKey ?? null;
 }
 
+export async function getProjectByAuthUserId(authUserId: string, projectId: string) {
+  const rows = await db
+    .select({
+      projectId: projectMembers.projectId,
+      memberAccountId: projectMembers.accountId,
+      accountSlug: accounts.slug,
+      projectSlug: projects.slug,
+    })
+    .from(projectMembers)
+    .innerJoin(projects, eq(projectMembers.projectId, projects.id))
+    .innerJoin(accounts, eq(projects.accountId, accounts.id))
+    .where(
+      and(
+        eq(accounts.authUserId, authUserId),
+        eq(projectMembers.projectId, projectId)
+      )
+    );
+
+  if (rows.length === 0) return null;
+  return rows[0];
+}
+
 export async function listMembershipsForAccount(accountId: string) {
   return db
     .select({

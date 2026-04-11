@@ -10,8 +10,10 @@ import { resolveSession } from "./middleware/auth";
 import { statsRouter } from "./routes/stats";
 import { auth } from "./auth";
 import { oauthProviderAuthServerMetadata } from "@better-auth/oauth-provider";
+import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resource-client";
 import { createMcpServer } from "./mcp/server";
 import { getBaseUrl } from "./lib/url";
+import { getProjectByAuthUserId } from "./members/registry";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
@@ -24,6 +26,7 @@ const app = new Hono();
 const viteDevUrl = process.env.KILROY_WEB_DEV_URL?.replace(/\/$/, "");
 
 function isBackendRoute(path: string): boolean {
+  if (path === "/mcp") return true;
   if (path.startsWith("/api/")) return true;
   return /^\/[^/]+\/[^/]+\/(api|mcp|install|join)(\/|$)/.test(path);
 }
@@ -97,6 +100,83 @@ if (!viteDevUrl && indexHtml) {
   app.get("/onboarding", (c) => c.html(indexHtml));
   app.get("/projects", (c) => c.html(indexHtml));
 }
+
+// OAuth 2.1 protected resource metadata (for root /mcp endpoint)
+app.get("/.well-known/oauth-protected-resource", (c) => {
+  const baseUrl = getBaseUrl(c.req.url);
+  return c.json({
+    resource: `${baseUrl}/mcp`,
+    authorization_servers: [`${baseUrl}/api/auth`],
+    bearer_methods_supported: ["header"],
+  });
+});
+
+app.get("/mcp/.well-known/oauth-protected-resource", (c) => {
+  const baseUrl = getBaseUrl(c.req.url);
+  return c.json({
+    resource: `${baseUrl}/mcp`,
+    authorization_servers: [`${baseUrl}/api/auth`],
+    bearer_methods_supported: ["header"],
+  });
+});
+
+// Root-level MCP endpoint — JWT auth via OAuth provider
+const resourceClient = oauthProviderResourceClient(auth);
+const { verifyAccessToken } = resourceClient.getActions();
+
+app.all("/mcp", async (c) => {
+  const baseUrl = getBaseUrl(c.req.url);
+
+  // Extract Bearer token
+  const authorization = c.req.header("Authorization") ?? "";
+  const accessToken = authorization.startsWith("Bearer ")
+    ? authorization.slice(7)
+    : "";
+
+  if (!accessToken) {
+    return c.text("Unauthorized", 401, {
+      "WWW-Authenticate": `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource"`,
+    });
+  }
+
+  // Verify the JWT
+  let payload;
+  try {
+    payload = await verifyAccessToken(accessToken, {
+      verifyOptions: { audience: baseUrl },
+    });
+  } catch (err) {
+    return c.text("Unauthorized", 401, {
+      "WWW-Authenticate": `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource"`,
+    });
+  }
+
+  // Read project info from JWT claims
+  const projectId = payload.projectId as string | undefined;
+  const accountSlug = payload.accountSlug as string | undefined;
+  const projectSlug = payload.projectSlug as string | undefined;
+  const sub = payload.sub as string | undefined;
+
+  if (!projectId || !accountSlug || !projectSlug || !sub) {
+    return c.text("Missing project claims in token", 403);
+  }
+
+  // Verify membership
+  const membership = await getProjectByAuthUserId(sub, projectId);
+  if (!membership) {
+    return c.text("Not a member of this project", 403);
+  }
+
+  // Create MCP server scoped to the project
+  const projectUrl = `${baseUrl}/${accountSlug}/${projectSlug}`;
+  const mcp = createMcpServer(projectId, membership.memberAccountId, "agent", projectUrl);
+  const transport = new WebStandardStreamableHTTPServerTransport({
+    sessionIdGenerator: undefined,
+  });
+  await mcp.connect(transport);
+  const response = await transport.handleRequest(c.req.raw);
+  return response;
+});
 
 // Project-scoped routes
 const projectApp = new Hono<Env>();
