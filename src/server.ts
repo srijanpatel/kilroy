@@ -170,6 +170,7 @@ app.post("/mcp", async (c) => {
   let payload;
   try {
     payload = await verifyAccessToken(accessToken, {
+      jwksUrl: `${baseUrl}/api/auth/jwks`,
       verifyOptions: { issuer: `${baseUrl}/api/auth`, audience: `${baseUrl}/mcp` },
     });
   } catch (err) {
