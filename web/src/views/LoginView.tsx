@@ -7,6 +7,8 @@ import { GitHubIcon, GoogleIcon } from '../components/ProviderIcons';
 export function LoginView() {
   const { user, account, loading, signIn } = useAuth();
   const navigate = useNavigate();
+  const params = new URLSearchParams(window.location.search);
+  const callbackURL = params.get('callbackURL') || '/';
 
   useEffect(() => {
     if (loading) return;
@@ -24,11 +26,11 @@ export function LoginView() {
           <h1 className="landing-title">Sign in to Kilroy</h1>
         </div>
         <div className="login-buttons">
-          <button className="login-btn login-btn-github" onClick={() => signIn('github')}>
+          <button className="login-btn login-btn-github" onClick={() => signIn('github', callbackURL)}>
             <span className="login-btn-icon"><GitHubIcon /></span>
             Continue with GitHub
           </button>
-          <button className="login-btn login-btn-google" onClick={() => signIn('google')}>
+          <button className="login-btn login-btn-google" onClick={() => signIn('google', callbackURL)}>
             <span className="login-btn-icon"><GoogleIcon /></span>
             Continue with Google
           </button>

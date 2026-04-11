@@ -5,6 +5,7 @@ import { KilroyMark } from '../components/KilroyMark';
 interface Project {
   id: string;
   slug: string;
+  account_slug: string;
 }
 
 export function ConsentView() {
@@ -24,9 +25,22 @@ export function ConsentView() {
     fetch('/api/projects', { credentials: 'include' })
       .then(r => r.json())
       .then(data => {
-        const owned = data.owned || [];
-        setProjects(owned);
-        if (owned.length === 1) setSelectedProjectId(owned[0].id);
+        const owned = (data.owned || []).map((project: { id: string; slug: string }) => ({
+          id: project.id,
+          slug: project.slug,
+          account_slug: account.slug,
+        }));
+        const joined = (data.joined || []).map((project: { id: string; slug: string; owner: string }) => ({
+          id: project.id,
+          slug: project.slug,
+          account_slug: project.owner,
+        }));
+        const accessible = [...owned, ...joined].filter(
+          (project: Project, index: number, all: Project[]) =>
+            all.findIndex((candidate) => candidate.id === project.id) === index,
+        );
+        setProjects(accessible);
+        if (accessible.length === 1) setSelectedProjectId(accessible[0].id);
       })
       .catch(() => {});
   }, [user, account, loading]);
@@ -53,7 +67,7 @@ export function ConsentView() {
         return;
       }
       const project = await res.json();
-      setProjects(prev => [...prev, { id: project.id, slug: project.slug }]);
+      setProjects(prev => [...prev, { id: project.id, slug: project.slug, account_slug: account!.slug }]);
       setSelectedProjectId(project.id);
       setNewProjectSlug('');
     } catch {
@@ -74,8 +88,7 @@ export function ConsentView() {
       const project = projects.find(p => p.id === selectedProjectId);
       if (!project) return;
 
-      const accountSlug = account!.slug;
-      const projectScope = `project:${project.id}:${accountSlug}:${project.slug}`;
+      const projectScope = `project:${project.id}:${project.account_slug}:${project.slug}`;
       const fullScope = scope ? `${scope} ${projectScope}` : projectScope;
 
       const res = await fetch('/api/auth/oauth2/consent', {
@@ -130,7 +143,7 @@ export function ConsentView() {
                   checked={selectedProjectId === p.id}
                   onChange={() => setSelectedProjectId(p.id)}
                 />
-                <span className="consent-project-slug">{account.slug}/{p.slug}</span>
+                <span className="consent-project-slug">{p.account_slug}/{p.slug}</span>
               </label>
             ))}
           </div>
