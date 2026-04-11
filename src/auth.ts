@@ -34,6 +34,10 @@ export const auth = betterAuth({
       consentPage: "/consent",
       scopes: ["kilroy:access"],
       clientRegistrationDefaultScopes: ["kilroy:access"],
+      validAudiences: [
+        process.env.BETTER_AUTH_URL!,
+        `${process.env.BETTER_AUTH_URL!}/mcp`,
+      ],
       allowDynamicClientRegistration: true,
       allowUnauthenticatedClientRegistration: true,
       silenceWarnings: { oauthAuthServerConfig: true },

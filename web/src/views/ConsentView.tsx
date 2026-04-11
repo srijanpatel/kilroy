@@ -17,8 +17,6 @@ export function ConsentView() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const params = new URLSearchParams(window.location.search);
-
   useEffect(() => {
     if (loading || !user || !account) return;
     fetch('/api/projects', { credentials: 'include' })
