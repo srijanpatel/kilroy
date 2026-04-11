@@ -4,6 +4,7 @@ import { oauthProvider } from "@better-auth/oauth-provider";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "./db";
 import * as authSchema from "./db/auth-schema";
+import { getProjectByAuthUserId } from "./members/registry";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -31,11 +32,20 @@ export const auth = betterAuth({
       loginPage: "/login",
       consentPage: "/consent",
       allowDynamicClientRegistration: true,
-      customAccessTokenClaims: async ({ scopes }) => {
+      customAccessTokenClaims: async ({ user, scopes }) => {
         const projectScope = (scopes || []).find((s: string) => s.startsWith("project:"));
         if (!projectScope) return {};
 
         const [, projectId, accountSlug, projectSlug] = projectScope.split(":");
+
+        // Validate that the authenticated user is actually a member of this project.
+        // The scope is client-controlled — without this check, a crafted scope could
+        // produce a JWT with claims for a project the user doesn't belong to.
+        if (user?.id) {
+          const membership = await getProjectByAuthUserId(user.id, projectId);
+          if (!membership) return {};
+        }
+
         return { projectId, accountSlug, projectSlug };
       },
     }),

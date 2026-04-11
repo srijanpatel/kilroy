@@ -17,10 +17,8 @@ export const tokenHandler = new Hono();
  * Returns: { "access_token": "<jwt>", "token_type": "Bearer" }
  */
 tokenHandler.post("/", async (c) => {
-  const url = new URL(c.req.url);
-  const segments = url.pathname.split("/").filter(Boolean);
-  const accountSlug = segments[0];
-  const projectSlug = segments[1];
+  const accountSlug = c.req.param("account")!;
+  const projectSlug = c.req.param("project")!;
 
   let body: { key?: string };
   try {
