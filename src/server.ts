@@ -170,7 +170,7 @@ app.post("/mcp", async (c) => {
   let payload;
   try {
     payload = await verifyAccessToken(accessToken, {
-      verifyOptions: { audience: baseUrl },
+      verifyOptions: { audience: `${baseUrl}/mcp` },
     });
   } catch {
     return c.text("Unauthorized", 401, {
