@@ -173,14 +173,11 @@ app.post("/mcp", async (c) => {
       jwksUrl: `${baseUrl}/api/auth/jwks`,
       verifyOptions: { issuer: `${baseUrl}/api/auth`, audience: `${baseUrl}/mcp` },
     });
-  } catch (err) {
-    console.error("[mcp] JWT verify failed:", err);
+  } catch {
     return c.text("Unauthorized", 401, {
       "WWW-Authenticate": `Bearer resource_metadata="${baseUrl}/.well-known/oauth-protected-resource"`,
     });
   }
-
-  console.log("[mcp] JWT payload:", JSON.stringify(payload));
 
   // Read project info from JWT claims
   const projectId = payload.projectId as string | undefined;
@@ -189,7 +186,6 @@ app.post("/mcp", async (c) => {
   const sub = payload.sub as string | undefined;
 
   if (!projectId || !accountSlug || !projectSlug || !sub) {
-    console.error("[mcp] Missing project claims:", { projectId, accountSlug, projectSlug, sub });
     return c.text("Missing project claims in token", 403);
   }
 
