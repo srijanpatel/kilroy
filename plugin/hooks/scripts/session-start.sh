@@ -37,7 +37,7 @@ fi
 
 # If no token, Kilroy isn't configured — inject setup guidance instead of the full skill
 if [ -z "${KILROY_TOKEN:-}" ]; then
-  using_kilroy="Kilroy is installed but not configured yet. Re-run the install script from the project's web dashboard to connect. Until then, Kilroy MCP tools will not work."
+  using_kilroy="Kilroy is installed. When you use a Kilroy tool, your agent client will prompt you to sign in and connect a project. Just follow the browser prompt."
 else
   # Read the using-kilroy workflow
   using_kilroy=$(cat "${PLUGIN_ROOT}/skills/using-kilroy/SKILL.md" 2>/dev/null || echo "Kilroy tribal knowledge is available. Use kilroy_search, kilroy_browse, kilroy_create_post, kilroy_comment.")
