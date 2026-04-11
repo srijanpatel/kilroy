@@ -1773,6 +1773,33 @@ a:hover { color: var(--accent-hover); }
   color: var(--status-obsolete);
 }
 
+.onboarding-preview {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.onboarding-preview strong {
+  color: var(--text);
+}
+
+.landing-skip {
+  display: inline-block;
+  background: none;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.landing-skip:hover {
+  color: var(--accent);
+}
+
 /* Join page — three-zone visual hierarchy */
 .join-section {
   padding-top: 1.5rem;
