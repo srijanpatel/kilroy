@@ -60,6 +60,11 @@ export async function createAccount(opts: {
   return { id, slug: opts.slug, displayName: opts.displayName };
 }
 
+export async function getAccountById(id: string) {
+  const [account] = await db.select().from(accounts).where(eq(accounts.id, id));
+  return account ?? null;
+}
+
 export async function getAccountBySlug(slug: string) {
   const [account] = await db.select().from(accounts).where(eq(accounts.slug, slug));
   return account ?? null;
