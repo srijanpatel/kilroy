@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Decouple auth (user identity) from project routing (which project to write to) so the plugin works user-scoped with per-directory project mapping.
+**Goal:** Decouple auth (user identity) from project routing (which project to write to) so the plugin works user-scoped with a repo-owned project mapping.
 
-**Architecture:** OAuth tokens carry user identity only — no project claims. Every MCP tool takes a `project` param (`account/slug` format). A `resolveProject` helper validates membership per-call. The plugin's `using-kilroy` skill reads `.claude/kilroy.local.md` to tell the agent which project to pass. Two new management tools (`kilroy_list_projects`, `kilroy_create_project`) enable setup from Claude Code.
+**Architecture:** OAuth tokens carry user identity only — no project claims. Every MCP tool takes a `project` param (`account/slug` format). A `resolveProject` helper validates membership per-call. The plugin reads `.kilroy/config.toml` to tell the agent which project to pass. Two new management tools (`kilroy_list_projects`, `kilroy_create_project`) enable setup when the repo is not yet configured.
 
 **Tech Stack:** TypeScript/Bun, Hono, Better Auth OAuth Provider, MCP SDK, React (consent page)
 
@@ -526,15 +526,15 @@ git commit -m "refactor: update project-scoped MCP endpoint for new createMcpSer
 - Modify: `plugin/skills/using-kilroy/SKILL.md`
 - Modify: `plugin/hooks/scripts/session-start.sh`
 
-- [ ] **Step 1: Update `session-start.sh` to read project from `.local.md`**
+- [ ] **Step 1: Update `session-start.sh` to read project from `.kilroy/config.toml`**
 
 Add project detection to the session-start hook. After existing env setup:
 
 ```bash
-# Read project mapping from .local.md
-KILROY_LOCAL=".claude/kilroy.local.md"
-if [[ -f "$KILROY_LOCAL" ]]; then
-  KILROY_PROJECT=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$KILROY_LOCAL" | grep '^project:' | sed 's/project: *//' | sed 's/^"\(.*\)"$/\1/')
+# Read project mapping from repo config
+KILROY_CONFIG=".kilroy/config.toml"
+if [[ -f "$KILROY_CONFIG" ]]; then
+  KILROY_PROJECT=$(sed -n 's/^project[[:space:]]*=[[:space:]]*"\(.*\)"$/\1/p' "$KILROY_CONFIG" | head -n 1)
   if [[ -n "$KILROY_PROJECT" ]]; then
     echo "KILROY_PROJECT=$KILROY_PROJECT" >> "$CLAUDE_ENV_FILE"
   fi
@@ -548,18 +548,16 @@ Add a section to SKILL.md that instructs the agent:
 ```markdown
 ## Project Routing
 
-Check `.claude/kilroy.local.md` for the project mapping. If it exists and has a `project` field, 
+Check `.kilroy/config.toml` for the project mapping. If it exists and has a `project` field,
 pass that value as the `project` parameter on every Kilroy tool call.
 
 If no mapping exists:
 1. Call `kilroy_list_projects` to see available projects
 2. Ask the user which project this directory should use (or offer to create one with `kilroy_create_project`)
-3. Save the mapping to `.claude/kilroy.local.md`:
+3. Save the mapping to `.kilroy/config.toml`:
 
-\`\`\`markdown
----
-project: account/slug
----
+\`\`\`toml
+project = "account/slug"
 \`\`\`
 ```
 
@@ -571,7 +569,7 @@ In `plugin/hooks/scripts/inject-context.sh`, no changes needed — it already in
 
 ```bash
 git add plugin/skills/using-kilroy/SKILL.md plugin/hooks/scripts/session-start.sh
-git commit -m "feat: update plugin to read project mapping from .local.md"
+git commit -m "feat: update plugin to read project mapping from .kilroy/config.toml"
 ```
 
 ---
