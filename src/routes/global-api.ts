@@ -111,7 +111,7 @@ globalApi.post("/projects", async (c) => {
       account_slug: account.slug,
       member_key: project.memberKey,
       project_url: `${baseUrl}/${account.slug}/${project.slug}`,
-      install_command: `curl -sL "${baseUrl}/${account.slug}/${project.slug}/install?key=${project.memberKey}" | sh`,
+      install_command: `curl -sL "${baseUrl}/${account.slug}/${project.slug}/install" | sh`,
       invite_link: `${baseUrl}/${account.slug}/${project.slug}/join?token=${project.inviteToken}`,
     }, 201);
   } catch (err: any) {

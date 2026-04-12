@@ -68,7 +68,7 @@ joinHandler.get("/", async (c) => {
       project_url: projectUrl,
       already_member: true,
       member_key: existing.memberKey,
-      install_command: `curl -sL "${projectUrl}/install?key=${existing.memberKey}" | sh`,
+      install_command: `curl -sL "${projectUrl}/install" | sh`,
     });
   }
 
@@ -83,6 +83,6 @@ joinHandler.get("/", async (c) => {
     project_url: projectUrl,
     joined: true,
     member_key: member.memberKey,
-    install_command: `curl -sL "${projectUrl}/install?key=${member.memberKey}" | sh`,
+    install_command: `curl -sL "${projectUrl}/install" | sh`,
   });
 });

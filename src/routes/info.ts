@@ -26,7 +26,7 @@ infoRouter.get("/", async (c) => {
     project: projectSlug,
     project_id: projectId,
     member_key: memberKey,
-    install_command: `curl -sL "${projectUrl}/install?key=${memberKey}" | sh`,
+    install_command: `curl -sL "${projectUrl}/install" | sh`,
     invite_link: inviteToken ? `${projectUrl}/join?token=${inviteToken}` : null,
   });
 });

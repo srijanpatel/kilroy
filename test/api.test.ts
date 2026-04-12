@@ -56,7 +56,7 @@ describe("GET /api/info", () => {
     expect(data.project).toBe("test-workspace");
     expect(data.member_key).toBeTruthy();
     expect(data.install_command).toContain("curl");
-    expect(data.install_command).toContain("key=");
+    expect(data.install_command).toContain("/install");
     expect(data.invite_link).toContain("/join?token=");
   });
 });
