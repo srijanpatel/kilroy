@@ -74,8 +74,9 @@ if (!viteDevUrl && indexHtml) {
   // Root-level assets (JS/CSS bundles)
   app.use("/assets/*", serveStatic({ root: webDistPath }));
 
-  // Favicon
+  // Favicon + OG image
   app.use("/kilroy.svg", serveStatic({ root: webDistPath, path: "kilroy.svg" }));
+  app.use("/og.png", serveStatic({ root: webDistPath, path: "og.png" }));
 
   // Landing page — SPA shell at root
   app.get("/", (c) => c.html(indexHtml));
