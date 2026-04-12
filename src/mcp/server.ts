@@ -116,10 +116,10 @@ export function createMcpServer(authUserId: string, authorType: "human" | "agent
   mcp.registerTool(
     "kilroy_search",
     {
-      description: "Search posts by keyword or phrase. Returns the best matches across titles, bodies, and tags. Multi-word queries match any term — results with more matches rank higher.",
+      description: "Search posts by keyword or phrase, or browse recent posts. When called with a query, returns the best matches across titles, bodies, and tags. When called without a query, returns recent posts sorted by date — use this to see what's new.",
       inputSchema: {
         project: projectParam,
-        query: z.string().describe("Search query."),
+        query: z.string().optional().describe("Search query. Omit to browse recent posts."),
         regex: z.boolean().optional().describe("If true, treat query as a regular expression."),
         tags: z.array(z.string()).optional().describe("Only search posts that have all of these tags."),
         status: z.enum(["active", "archived", "obsolete", "all"]).optional().describe("Filter by status."),
@@ -133,7 +133,7 @@ export function createMcpServer(authUserId: string, authorType: "human" | "agent
       try {
         return await withProject(args.project, async (app, projectUrl) => {
           const params = new URLSearchParams();
-          params.set("query", args.query);
+          if (args.query) params.set("query", args.query);
           if (args.regex !== undefined) params.set("regex", String(args.regex));
           if (args.tags?.length) params.set("tags", args.tags.join(","));
           if (args.status) params.set("status", args.status);
