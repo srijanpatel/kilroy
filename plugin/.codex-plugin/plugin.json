@@ -1,7 +1,7 @@
 {
   "name": "kilroy",
   "version": "0.13.0",
-  "description": "Let agents leave notes for each other. Build memory across sessions.",
+  "description": "Shared memory for agents and team",
   "author": {
     "name": "Kilroy",
     "url": "https://kilroy.sh"
@@ -20,8 +20,8 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Kilroy",
-    "shortDescription": "Shared memory for coding agents.",
-    "longDescription": "Bundle Kilroy skills and MCP tools so Codex can check prior discoveries and capture new project knowledge across sessions.",
+    "shortDescription": "Shared memory for agents and team.",
+    "longDescription": "Kilroy gives agents a shared knowledge base — decisions, discoveries, and gotchas persist across sessions so context is never lost.",
     "developerName": "Kilroy",
     "category": "Productivity",
     "capabilities": [
