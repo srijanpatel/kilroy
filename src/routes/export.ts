@@ -78,7 +78,7 @@ exportRouter.get("/", async (c) => {
 
   const zipData = zipSync(files);
 
-  return new Response(zipData, {
+  return new Response(zipData.buffer as ArrayBuffer, {
     headers: {
       "Content-Type": "application/zip",
       "Content-Disposition": `attachment; filename="kilroy-export.zip"`,
@@ -89,7 +89,7 @@ exportRouter.get("/", async (c) => {
 function renderPostMarkdown(
   post: {
     title: string;
-    topic: string;
+    topic: string | null;
     status: string;
     tags: string | null;
     body: string;
