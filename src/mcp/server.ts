@@ -108,7 +108,7 @@ export function createMcpServer(authUserId: string, authorType: "human" | "agent
           return result(data, status >= 400);
         });
       } catch (err: any) {
-        return result({ error: err.message });
+        return result({ error: err.message }, true);
       }
     }
   );
@@ -145,7 +145,7 @@ export function createMcpServer(authUserId: string, authorType: "human" | "agent
           return result(data, status >= 400);
         });
       } catch (err: any) {
-        return result({ error: err.message });
+        return result({ error: err.message }, true);
       }
     }
   );
@@ -170,7 +170,7 @@ export function createMcpServer(authUserId: string, authorType: "human" | "agent
           return result(data, status >= 400);
         });
       } catch (err: any) {
-        return result({ error: err.message });
+        return result({ error: err.message }, true);
       }
     }
   );
@@ -199,7 +199,7 @@ export function createMcpServer(authUserId: string, authorType: "human" | "agent
           return result(postUrl ? { ...(data as any), url: postUrl } : data, status >= 400);
         });
       } catch (err: any) {
-        return result({ error: err.message });
+        return result({ error: err.message }, true);
       }
     }
   );
@@ -225,7 +225,7 @@ export function createMcpServer(authUserId: string, authorType: "human" | "agent
           return result({ ...(data as any), url: postUrl }, status >= 400);
         });
       } catch (err: any) {
-        return result({ error: err.message });
+        return result({ error: err.message }, true);
       }
     }
   );
@@ -248,7 +248,7 @@ export function createMcpServer(authUserId: string, authorType: "human" | "agent
           return result(data, status >= 400);
         });
       } catch (err: any) {
-        return result({ error: err.message });
+        return result({ error: err.message }, true);
       }
     }
   );
@@ -268,7 +268,7 @@ export function createMcpServer(authUserId: string, authorType: "human" | "agent
           return result(data, status >= 400);
         });
       } catch (err: any) {
-        return result({ error: err.message });
+        return result({ error: err.message }, true);
       }
     }
   );
@@ -297,7 +297,7 @@ export function createMcpServer(authUserId: string, authorType: "human" | "agent
           return result({ ...(data as any), url: postUrl }, status >= 400);
         });
       } catch (err: any) {
-        return result({ error: err.message });
+        return result({ error: err.message }, true);
       }
     }
   );
@@ -323,7 +323,7 @@ export function createMcpServer(authUserId: string, authorType: "human" | "agent
           return result(data, status >= 400);
         });
       } catch (err: any) {
-        return result({ error: err.message });
+        return result({ error: err.message }, true);
       }
     }
   );
