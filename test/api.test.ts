@@ -833,9 +833,9 @@ describe("GET /:account/:project/install", () => {
     return a;
   }
 
-  it("returns a shell script when key is valid", async () => {
+  it("returns a shell script with project mapping (no key required)", async () => {
     const a = installApp();
-    const res = await a.request(`/test-account/test-workspace/install?key=${testToken}`);
+    const res = await a.request("/test-account/test-workspace/install");
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toContain("text/plain");
     const body = await res.text();
@@ -847,17 +847,5 @@ describe("GET /:account/:project/install", () => {
     expect(body).toContain('project = "test-account/test-workspace"');
     expect(body).not.toContain("[mcp_servers.kilroy]");
     expect(body).not.toContain("KILROY_TOKEN");
-  });
-
-  it("returns 400 when key is missing", async () => {
-    const a = installApp();
-    const res = await a.request("/test-account/test-workspace/install");
-    expect(res.status).toBe(400);
-  });
-
-  it("returns 401 when key is invalid", async () => {
-    const a = installApp();
-    const res = await a.request("/test-account/test-workspace/install?key=bad_token");
-    expect(res.status).toBe(401);
   });
 });

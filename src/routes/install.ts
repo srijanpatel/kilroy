@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import { readFileSync, readdirSync } from "fs";
 import { posix, resolve } from "path";
-import { validateMemberKey } from "../members/registry";
 import { getBaseUrl } from "../lib/url";
 
 /**
@@ -22,16 +21,16 @@ universalInstallHandler.get("/", (c) => {
 });
 
 /**
- * GET /:account/:project/install?key=... — serves a shell script that fully
- * sets up Kilroy for a project in one shot. Teammate runs:
+ * GET /:account/:project/install — serves a shell script that sets up Kilroy
+ * for a project in one shot. No key required — OAuth handles auth at runtime.
  *
- *   curl -sL https://kilroy.sh/acme/my-project/install?key=klry_proj_... | sh
+ *   curl -sL https://kilroy.sh/acme/my-project/install | sh
  *
  * The script:
  *  1. Installs and enables a home-local Codex plugin bundle for Kilroy skills
- *  2. Configures Codex via repo-local `.codex/config.toml`
+ *  2. Writes `.kilroy/config.toml` with the project mapping
  *  3. Installs the Kilroy plugin in Claude Code when `claude` is available
- *  4. Configures KILROY_URL + KILROY_TOKEN (JWT) in `.claude/settings.local.json`
+ *  4. Configures KILROY_URL in `.claude/settings.local.json`
  */
 export const installHandler = new Hono();
 
@@ -40,39 +39,11 @@ type InstallFile = {
   content: string;
 };
 
-installHandler.get("/", async (c) => {
+installHandler.get("/", (c) => {
   const url = new URL(c.req.url);
   const segments = url.pathname.split("/").filter(Boolean);
   const accountSlug = segments[0];
   const projectSlug = segments[1];
-  const key = c.req.query("key");
-  const legacyToken = c.req.query("token");
-
-  if (!key && legacyToken) {
-    return c.text(
-      "echo 'Error: the ?token= parameter is no longer supported.'\necho 'Ask your project admin for a fresh install link using ?key=.'\nexit 1",
-      400,
-      { "Content-Type": "text/plain" },
-    );
-  }
-
-  if (!key) {
-    return c.text(
-      "echo 'Error: missing key. Use the install link from your project admin.'\nexit 1",
-      400,
-      { "Content-Type": "text/plain" },
-    );
-  }
-
-  const result = await validateMemberKey(accountSlug, projectSlug, key);
-  if (!result.valid) {
-    return c.text(
-      "echo 'Error: invalid key. Ask your project admin for a fresh install link.'\nexit 1",
-      401,
-      { "Content-Type": "text/plain" },
-    );
-  }
-
   const baseUrl = getBaseUrl(c.req.url);
   const projectUrl = `${baseUrl}/${accountSlug}/${projectSlug}`;
 

@@ -172,7 +172,7 @@ app.route("/install", universalInstallHandler);
 // Project-scoped routes
 const projectApp = new Hono<Env>();
 
-// Install bypasses projectAuth — key in query IS the auth
+// Install is public — no auth needed, OAuth handles it at runtime
 projectApp.route("/install", installHandler);
 
 // Token exchange bypasses projectAuth — member key in body IS the auth
