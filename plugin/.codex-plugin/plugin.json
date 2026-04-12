@@ -31,7 +31,9 @@
     "websiteURL": "https://kilroy.sh",
     "defaultPrompt": [
       "Use Kilroy to check whether this repo already has notes about the subsystem I am touching.",
-      "Use Kilroy to capture any non-obvious decision, workaround, or gotcha from this task."
+      "Use Kilroy to capture any non-obvious decision, workaround, or gotcha from this task.",
+      "Before using Kilroy tools, check .kilroy/config.toml for project = \"account/slug\" and pass that value as the project parameter.",
+      "If .kilroy/config.toml is missing, use kilroy_list_projects to ask user which project this directory should use or kilroy_create_project to create one, and write the file, then continue."
     ],
     "brandColor": "#0F766E"
   }
