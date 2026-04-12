@@ -840,13 +840,13 @@ describe("GET /:account/:project/install", () => {
     expect(res.headers.get("Content-Type")).toContain("text/plain");
     const body = await res.text();
     expect(body).toContain("#!/usr/bin/env sh");
-    expect(body).toContain(".codex/config.toml");
-    expect(body).toContain("[mcp_servers.kilroy]");
-    expect(body).toContain("/mcp");
     expect(body).toContain("claude plugin");
     expect(body).toContain("settings.local.json");
-    // Install script now embeds a JWT (not the raw member key)
-    expect(body).toContain("Bearer ");
+    // Project mapping via .kilroy/config.toml (no tokens or MCP server config)
+    expect(body).toContain('.kilroy/config.toml');
+    expect(body).toContain('project = "test-account/test-workspace"');
+    expect(body).not.toContain("[mcp_servers.kilroy]");
+    expect(body).not.toContain("KILROY_TOKEN");
   });
 
   it("returns 400 when key is missing", async () => {

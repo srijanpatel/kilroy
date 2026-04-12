@@ -3,7 +3,6 @@ import { readFileSync, readdirSync } from "fs";
 import { posix, resolve } from "path";
 import { validateMemberKey } from "../members/registry";
 import { getBaseUrl } from "../lib/url";
-import { mintProjectJwt } from "./token";
 
 /**
  * GET /install — serves a universal install script (no project, no token).
@@ -77,15 +76,7 @@ installHandler.get("/", async (c) => {
   const baseUrl = getBaseUrl(c.req.url);
   const projectUrl = `${baseUrl}/${accountSlug}/${projectSlug}`;
 
-  // Exchange member key for a JWT — this becomes KILROY_TOKEN
-  const jwt = await mintProjectJwt(
-    result.projectId,
-    result.memberAccountId,
-    accountSlug,
-    projectSlug,
-  );
-
-  const script = generateInstallScript(projectUrl, jwt, projectSlug);
+  const script = generateInstallScript(projectUrl, projectSlug, accountSlug);
 
   return c.text(script, 200, {
     "Content-Type": "text/plain",
@@ -135,7 +126,7 @@ function codexMarketplaceScripts() {
   const entryJson = JSON.stringify({
     name: "kilroy",
     source: { source: "local", path: "./kilroy" },
-    policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" },
+    policy: { installation: "AVAILABLE", authentication: "ON_FIRST_USE" },
     category: "Productivity",
   });
 
@@ -305,71 +296,6 @@ if (start !== -1) {
 }
 fs.mkdirSync(path.dirname(configPath), { recursive: true });
 fs.writeFileSync(configPath, text);
-`.trim();
-
-  return { py, js };
-}
-
-function codexConfigScripts(codexConfigToml: string) {
-  const py = `
-from pathlib import Path
-
-path = Path(".codex/config.toml")
-section = '''${codexConfigToml}'''
-text = path.read_text() if path.exists() else ""
-lines = text.splitlines(keepends=True)
-section_lines = section.splitlines(keepends=True)
-start = None
-
-for i, line in enumerate(lines):
-    if line.strip() == "[mcp_servers.kilroy]":
-        start = i
-        break
-
-if start is not None:
-    end = len(lines)
-    for i in range(start + 1, len(lines)):
-        if lines[i].startswith("["):
-            end = i
-            break
-    lines = lines[:start] + section_lines + lines[end:]
-    text = "".join(lines)
-else:
-    if text and not text.endswith("\\n"):
-        text += "\\n"
-    if text:
-        text += "\\n"
-    text += section
-
-path.parent.mkdir(parents=True, exist_ok=True)
-path.write_text(text)
-`.trim();
-
-  const js = `
-const fs = require('fs');
-const path = '.codex/config.toml';
-const section = ${JSON.stringify(codexConfigToml)};
-let text = '';
-try { text = fs.readFileSync(path, 'utf8'); } catch {}
-const lines = text ? text.split(/(?<=\\n)/) : [];
-const sectionLines = section.split(/(?<=\\n)/);
-const start = lines.findIndex((line) => line.trim() === '[mcp_servers.kilroy]');
-if (start !== -1) {
-  let end = lines.length;
-  for (let i = start + 1; i < lines.length; i++) {
-    if (lines[i].startsWith('[')) {
-      end = i;
-      break;
-    }
-  }
-  text = [...lines.slice(0, start), ...sectionLines, ...lines.slice(end)].join('');
-} else {
-  if (text && !text.endsWith('\\n')) text += '\\n';
-  if (text) text += '\\n';
-  text += section;
-}
-fs.mkdirSync('.codex', { recursive: true });
-fs.writeFileSync(path, text);
 `.trim();
 
   return { py, js };
@@ -570,7 +496,7 @@ function shellClaudeCodeInstall(
 if command -v claude >/dev/null 2>&1; then
   echo "Installing Kilroy plugin for Claude Code..."
   claude plugin marketplace add kilroy-sh/kilroy </dev/null 2>/dev/null || true
-  if claude plugin install kilroy@kilroy-marketplace --scope local </dev/null; then
+  if claude plugin install kilroy@kilroy-marketplace --scope user </dev/null; then
     echo "Configuring Claude Code workspace..."
     mkdir -p .claude
     warn_if_tracked .claude/settings.local.json
@@ -638,41 +564,16 @@ echo ""
 
 export function generateInstallScript(
   projectUrl: string,
-  token: string,
   slug: string,
+  accountSlug: string,
 ): string {
-  const mcpUrl = `${projectUrl}/mcp`;
-  const codexApprovedTools = [
-    "kilroy_browse",
-    "kilroy_read_post",
-    "kilroy_search",
-    "kilroy_create_post",
-    "kilroy_comment",
-    "kilroy_update_post_status",
-    "kilroy_delete_post",
-    "kilroy_update_post",
-    "kilroy_update_comment",
-  ];
   const settingsJson = JSON.stringify(
-    { env: { KILROY_URL: projectUrl, KILROY_TOKEN: token } },
+    { env: { KILROY_URL: projectUrl } },
     null,
     2,
   );
-  const codexConfigToml = [
-    "[mcp_servers.kilroy]",
-    "enabled = true",
-    `url = ${JSON.stringify(mcpUrl)}`,
-    `http_headers = { Authorization = ${JSON.stringify(`Bearer ${token}`)} }`,
-    "",
-    ...codexApprovedTools.flatMap((tool) => [
-      `[mcp_servers.kilroy.tools.${tool}]`,
-      'approval_mode = "approve"',
-      "",
-    ]),
-  ].join("\n");
 
   const mergeSettings = mergeSettingsScripts(settingsJson);
-  const mergeCodex = codexConfigScripts(codexConfigToml);
   const mergeMarketplace = codexMarketplaceScripts();
   const mergePluginState = codexPluginStateScripts();
   const mergeProjectTrust = codexProjectTrustScripts();
@@ -683,32 +584,10 @@ export function generateInstallScript(
 
   return `${preamble}
 
-CODEX_READY=0
 CODEX_TRUST_READY=0
 ${codexPlugin}
 
-echo "Configuring Codex project connection..."
-mkdir -p .codex
-warn_if_tracked .codex/config.toml
-
-if [ -n "$PYTHON" ]; then
-  "$PYTHON" - <<'PY'
-${mergeCodex.py}
-PY
-  CODEX_READY=1
-elif [ -n "$JS" ]; then
-  $JS -e '${esc(mergeCodex.js)}'
-  CODEX_READY=1
-elif [ ! -f .codex/config.toml ]; then
-  cat > .codex/config.toml <<'EOF_CODEX'
-${codexConfigToml}
-EOF_CODEX
-  CODEX_READY=1
-else
-  echo "Warning: could not merge .codex/config.toml without python, node, or bun."
-fi
-
-if [ "$CODEX_READY" -eq 1 ]; then
+if [ "$CODEX_PLUGIN_READY" -eq 1 ]; then
   if [ -n "$PYTHON" ]; then
     "$PYTHON" - <<'PY'
 ${mergeProjectTrust.py}
@@ -720,10 +599,16 @@ PY
   fi
 fi
 
+# Write project mapping
+mkdir -p .kilroy
+cat > .kilroy/config.toml <<'EOF_KILROY'
+project = "${accountSlug}/${slug}"
+EOF_KILROY
+
 ensure_local_git_excludes
 ${claudeCode}
 
-if [ "$CODEX_READY" -ne 1 ] && [ "$CODEX_PLUGIN_READY" -ne 1 ] && [ "$CLAUDE_READY" -ne 1 ]; then
+if [ "$CODEX_PLUGIN_READY" -ne 1 ] && [ "$CLAUDE_READY" -ne 1 ]; then
   echo ""
   echo "Error: Kilroy could not configure Codex or Claude Code automatically."
   echo "Install python3, node, or bun for Codex setup, or install Claude Code first."
@@ -731,10 +616,10 @@ if [ "$CODEX_READY" -ne 1 ] && [ "$CODEX_PLUGIN_READY" -ne 1 ] && [ "$CLAUDE_REA
 fi
 
 echo ""
-echo "  Done. Kilroy is ready for project ${slug}."
-if [ "$CODEX_PLUGIN_READY" -eq 1 ] || [ "$CODEX_READY" -eq 1 ]; then
+echo "  Done. Kilroy is ready for project ${accountSlug}/${slug}."
+if [ "$CODEX_PLUGIN_READY" -eq 1 ]; then
   if [ "$CODEX_TRUST_READY" -eq 1 ]; then
-    echo "  Codex: start a new session in this repo; Kilroy tools are pre-approved."
+    echo "  Codex: start a new session in this repo; Kilroy will prompt you to sign in."
   else
     echo "  Codex: start a new session in this repo after trusting the repo in Codex."
   fi

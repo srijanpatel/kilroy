@@ -13,33 +13,32 @@ import { join } from "path";
 import { generateInstallScript } from "../src/routes/install";
 
 describe("generateInstallScript", () => {
-  it("includes Codex and Claude setup paths in the generated shell script", () => {
+  it("includes Codex plugin, project mapping, and Claude setup paths", () => {
     const script = generateInstallScript(
       "https://kilroy.sh/srijan/sagaland",
-      "klry_mem_test_123",
       "sagaland",
+      "srijan",
     );
 
     expect(script).toContain("#!/usr/bin/env sh");
-    expect(script).toContain(".codex/config.toml");
-    expect(script).toContain("[mcp_servers.kilroy]");
-    expect(script).toContain('url = "https://kilroy.sh/srijan/sagaland/mcp"');
-    expect(script).toContain(
-      'http_headers = { Authorization = "Bearer klry_mem_test_123" }',
-    );
-    expect(script).toContain("[mcp_servers.kilroy.tools.kilroy_search]");
-    expect(script).toContain("[mcp_servers.kilroy.tools.kilroy_browse]");
-    expect(script).toContain('approval_mode = "approve"');
+    // Codex plugin install (marketplace + bundle)
     expect(script).toContain('.agents/plugins/marketplace.json');
     expect(script).toContain('[plugins."kilroy@');
     expect(script).toContain('[projects."');
     expect(script).toContain('trust_level = "trusted"');
+    // Project mapping via .kilroy/config.toml
+    expect(script).toContain('.kilroy/config.toml');
+    expect(script).toContain('project = "srijan/sagaland"');
+    // No MCP server config or tokens in .codex/config.toml
+    expect(script).not.toContain("[mcp_servers.kilroy]");
+    expect(script).not.toContain("KILROY_TOKEN");
+    // Claude Code plugin install
     expect(script).toContain(".claude/settings.local.json");
     expect(script).toContain("claude plugin install");
     expect(script).toContain("Claude Code not found; skipping Claude-specific plugin install.");
   });
 
-  it("bootstraps Codex plugin state when executed in a repo", () => {
+  it("bootstraps Codex plugin and project mapping when executed in a repo", () => {
     const root = mkdtempSync(join(tmpdir(), "kilroy-install-"));
     const homeDir = join(root, "home");
     const projectDir = join(root, "project");
@@ -58,8 +57,8 @@ describe("generateInstallScript", () => {
 
     const script = generateInstallScript(
       "https://kilroy.sh/srijan/sagaland",
-      "klry_mem_test_123",
       "sagaland",
+      "srijan",
     );
     writeFileSync(scriptPath, script);
     chmodSync(scriptPath, 0o755);
@@ -84,17 +83,15 @@ describe("generateInstallScript", () => {
     expect(stdout).toContain("Installing Kilroy plugin for Codex...");
     expect(stdout).toContain("Codex: start a new session in this repo");
 
-    const projectConfig = readFileSync(
-      join(projectDir, ".codex/config.toml"),
+    // Project mapping written to .kilroy/config.toml
+    const kilroyConfig = readFileSync(
+      join(projectDir, ".kilroy/config.toml"),
       "utf8",
     );
-    expect(projectConfig).toContain("[mcp_servers.kilroy]");
-    expect(projectConfig).toContain(
-      'url = "https://kilroy.sh/srijan/sagaland/mcp"',
-    );
-    expect(projectConfig).toContain("[mcp_servers.kilroy.tools.kilroy_search]");
-    expect(projectConfig).toContain("[mcp_servers.kilroy.tools.kilroy_browse]");
-    expect(projectConfig).toContain('approval_mode = "approve"');
+    expect(kilroyConfig).toContain('project = "srijan/sagaland"');
+
+    // No project-level .codex/config.toml (Codex uses plugin OAuth)
+    expect(existsSync(join(projectDir, ".codex/config.toml"))).toBe(false);
 
     const marketplace = JSON.parse(
       readFileSync(join(homeDir, ".agents/plugins/marketplace.json"), "utf8"),
