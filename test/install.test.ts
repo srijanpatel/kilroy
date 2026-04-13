@@ -35,7 +35,7 @@ describe("generateInstallScript", () => {
     // Claude Code plugin install
     expect(script).toContain(".claude/settings.local.json");
     expect(script).toContain("claude plugin install");
-    expect(script).toContain("Claude Code not found; skipping Claude-specific plugin install.");
+    expect(script).toContain("if command -v claude >/dev/null 2>&1");
   });
 
   it("bootstraps Codex plugin and project mapping when executed in a repo", () => {
@@ -80,8 +80,9 @@ describe("generateInstallScript", () => {
 
     expect(result.exitCode).toBe(0);
     expect(stderr).toBe("");
-    expect(stdout).toContain("Installing Kilroy plugin for Codex...");
-    expect(stdout).toContain("Codex: start a new session in this repo");
+    expect(stdout).toContain("Setting up Kilroy for srijan/sagaland");
+    expect(stdout).toContain("Codex plugin installed");
+    expect(stdout).toContain("Kilroy is ready for srijan/sagaland");
 
     // Project mapping written to .kilroy/config.toml
     const kilroyConfig = readFileSync(
@@ -109,7 +110,7 @@ describe("generateInstallScript", () => {
       readFileSync(homePluginManifestPath, "utf8"),
     );
     expect(homePluginManifest.skills).toBe("./skills/");
-    expect(homePluginManifest.mcpServers).toBeUndefined();
+    expect(homePluginManifest.mcpServers).toBe("./.mcp.json");
 
     const cachePluginManifestPath = join(
       homeDir,
