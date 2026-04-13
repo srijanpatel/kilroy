@@ -124,8 +124,9 @@ app.post("/api/auth/oauth2/token", async (c) => {
   if (!params.has("resource")) {
     // Must match an entry in auth.ts `validAudiences` — use the configured
     // BETTER_AUTH_URL so this works regardless of how the request arrived
-    // (localhost, proxy, direct).
-    const authBase = process.env.BETTER_AUTH_URL ?? getBaseUrl(c.req.url);
+    // (localhost, proxy, direct). Strip any trailing slash so the resulting
+    // `${authBase}/mcp` doesn't become `...//mcp` and fall outside validAudiences.
+    const authBase = (process.env.BETTER_AUTH_URL ?? getBaseUrl(c.req.url)).replace(/\/$/, "");
     params.set("resource", `${authBase}/mcp`);
   }
   const headers = new Headers(c.req.raw.headers);

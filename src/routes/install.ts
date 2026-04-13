@@ -628,7 +628,7 @@ PY
   fi
 
   if [ "$OPENCODE_READY" -eq 1 ]; then
-    k_ok "OpenCode plugin installed"
+    k_ok "OpenCode configured — plugin will load on next launch"
   else
     k_warn "Skipped OpenCode config merge (needs python3, node, or bun)"
   fi

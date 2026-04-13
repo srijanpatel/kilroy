@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Sync plugin assets from kilroy-sh/kilroy → kilroy-sh/kilroy-opencode.
+# Sync the using-kilroy skill from kilroy-sh/kilroy → kilroy-sh/kilroy-opencode.
 #
 # The thin repo at kilroy-sh/kilroy-opencode is the OpenCode distribution
-# target. It holds a copy of the using-kilroy skill and the plugin module.
-# The skill is source-of-truth in the main repo, so whenever it changes we
-# need to mirror it into the thin repo and push a new commit there.
+# target. The skill file in the main repo is source-of-truth; this script
+# mirrors it into the thin repo's skills/ directory so changes can be
+# reviewed and committed there. The plugin module (kilroy.js) lives only
+# in the thin repo and is NOT touched by this script.
 #
 # Usage:
 #   scripts/sync-opencode-plugin.sh [destination-path]
