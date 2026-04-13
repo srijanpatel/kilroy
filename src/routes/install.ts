@@ -342,6 +342,79 @@ fs.writeFileSync(configPath, text);
   return { py, js };
 }
 
+function opencodeConfigScripts(baseUrl: string) {
+  const pluginRef = "kilroy@git+https://github.com/kilroy-sh/kilroy-opencode.git";
+  const mcpUrl = `${baseUrl}/mcp`;
+
+  const py = `
+import json
+from pathlib import Path
+
+path = Path.home() / ".config/opencode/opencode.json"
+plugin_ref = ${JSON.stringify(pluginRef)}
+mcp_entry = {
+    "type": "remote",
+    "url": ${JSON.stringify(mcpUrl)},
+    "enabled": True,
+    "oauth": {},
+}
+
+config = {}
+try:
+    config = json.loads(path.read_text())
+except Exception:
+    config = {}
+if not isinstance(config, dict):
+    config = {}
+
+plugins = config.get("plugin")
+if not isinstance(plugins, list):
+    plugins = []
+if plugin_ref not in plugins:
+    plugins.append(plugin_ref)
+config["plugin"] = plugins
+
+mcp = config.get("mcp")
+if not isinstance(mcp, dict):
+    mcp = {}
+mcp["kilroy"] = mcp_entry
+config["mcp"] = mcp
+
+path.parent.mkdir(parents=True, exist_ok=True)
+path.write_text(json.dumps(config, indent=2) + "\\n")
+`.trim();
+
+  const js = `
+const fs = require('fs');
+const path = require('path');
+const configPath = path.join(process.env.HOME || '', '.config/opencode/opencode.json');
+const pluginRef = ${JSON.stringify(pluginRef)};
+const mcpEntry = {
+  type: 'remote',
+  url: ${JSON.stringify(mcpUrl)},
+  enabled: true,
+  oauth: {},
+};
+
+let config = {};
+try { config = JSON.parse(fs.readFileSync(configPath, 'utf8')); } catch {}
+if (!config || typeof config !== 'object' || Array.isArray(config)) config = {};
+
+const plugins = Array.isArray(config.plugin) ? config.plugin : [];
+if (!plugins.includes(pluginRef)) plugins.push(pluginRef);
+config.plugin = plugins;
+
+const mcp = config.mcp && typeof config.mcp === 'object' && !Array.isArray(config.mcp) ? config.mcp : {};
+mcp.kilroy = mcpEntry;
+config.mcp = mcp;
+
+fs.mkdirSync(path.dirname(configPath), { recursive: true });
+fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\\n');
+`.trim();
+
+  return { py, js };
+}
+
 /**
  * Generates the shared shell preamble: runtime detection, helper functions,
  * and the plugin bundle installer function.
@@ -395,6 +468,7 @@ elif command -v bun >/dev/null 2>&1; then JS=bun; fi
 
 CODEX_PLUGIN_READY=0
 CLAUDE_READY=0
+OPENCODE_READY=0
 CODEX_AUTH_DONE=0
 
 warn_if_tracked() {
@@ -533,6 +607,59 @@ EOF_SETTINGS
 fi`;
 }
 
+/**
+ * Generates the shell block that adds Kilroy entries to opencode.json.
+ * Guards on `command -v opencode` so it's a no-op on machines without OpenCode.
+ */
+function shellOpenCodeInstall(
+  mergeOpenCode: { py: string; js: string },
+): string {
+  return `
+# ── Install OpenCode plugin ──
+if command -v opencode >/dev/null 2>&1; then
+  if [ -n "$PYTHON" ]; then
+    "$PYTHON" - <<'PY'
+${mergeOpenCode.py}
+PY
+    OPENCODE_READY=1
+  elif [ -n "$JS" ]; then
+    $JS -e '${esc(mergeOpenCode.js)}'
+    OPENCODE_READY=1
+  fi
+
+  if [ "$OPENCODE_READY" -eq 1 ]; then
+    k_ok "OpenCode configured — plugin will load on next launch"
+  else
+    k_warn "Skipped OpenCode config merge (needs python3, node, or bun)"
+  fi
+fi`;
+}
+
+/**
+ * Generates the shell block that kicks off `opencode mcp auth kilroy`
+ * interactively if a TTY is available. Mirrors the Codex OAuth kickoff.
+ */
+function shellOpenCodeAuthKickoff(): string {
+  return `
+# ── OpenCode OAuth (interactive, one-time) ──
+if [ "$OPENCODE_READY" -eq 1 ] && command -v opencode >/dev/null 2>&1; then
+  k_blank
+  if [ -e /dev/tty ] && [ -r /dev/tty ]; then
+    k_say "Signing OpenCode into Kilroy (a browser window will open)..."
+    k_blank
+    if opencode mcp auth kilroy </dev/tty >/dev/tty 2>/dev/tty; then
+      k_blank
+      k_ok "OpenCode authenticated"
+    else
+      k_blank
+      k_warn "OpenCode sign-in didn't complete — run: opencode mcp auth kilroy"
+    fi
+  else
+    k_warn "OpenCode needs a one-time sign-in — run: opencode mcp auth kilroy"
+  fi
+fi`;
+}
+
 // ─── Script generators ─────────────────────────────────────────────────────
 
 export function generateUniversalInstallScript(baseUrl: string): string {
@@ -544,10 +671,13 @@ export function generateUniversalInstallScript(baseUrl: string): string {
   const mergeSettings = mergeSettingsScripts(settingsJson);
   const mergeMarketplace = codexMarketplaceScripts();
   const mergePluginState = codexPluginStateScripts();
+  const mergeOpenCode = opencodeConfigScripts(baseUrl);
 
   const preamble = shellPreamble("universal");
   const codexPlugin = shellCodexPluginInstall(mergeMarketplace, mergePluginState);
   const claudeCode = shellClaudeCodeInstall(mergeSettings, settingsJson);
+  const opencode = shellOpenCodeInstall(mergeOpenCode);
+  const opencodeAuth = shellOpenCodeAuthKickoff();
 
   return `${preamble}
 
@@ -558,11 +688,12 @@ ${codexPlugin}
 
 ensure_local_git_excludes
 ${claudeCode}
+${opencode}
 
-if [ "$CODEX_PLUGIN_READY" -ne 1 ] && [ "$CLAUDE_READY" -ne 1 ]; then
+if [ "$CODEX_PLUGIN_READY" -ne 1 ] && [ "$CLAUDE_READY" -ne 1 ] && [ "$OPENCODE_READY" -ne 1 ]; then
   k_blank
-  k_err "Could not configure Codex or Claude Code."
-  k_say "Install python3, node, or bun for Codex setup, or install Claude Code first."
+  k_err "Could not configure Codex, Claude Code, or OpenCode."
+  k_say "Install python3, node, or bun for config merging, and install at least one of codex/claude/opencode."
   k_blank
   exit 1
 fi
@@ -585,6 +716,7 @@ if [ "$CODEX_PLUGIN_READY" -eq 1 ] && command -v codex >/dev/null 2>&1; then
     k_warn "Codex needs a one-time sign-in — run: codex mcp login kilroy"
   fi
 fi
+${opencodeAuth}
 
 k_blank
 printf '  %sDone.%s Start a new session to use Kilroy.\\n' "$K_B" "$K_R"
@@ -607,10 +739,18 @@ export function generateInstallScript(
   const mergeMarketplace = codexMarketplaceScripts();
   const mergePluginState = codexPluginStateScripts();
   const mergeProjectTrust = codexProjectTrustScripts();
+  // OpenCode's MCP entry must target the ROOT /mcp endpoint (JWT OAuth via
+  // server.ts:187), NOT the project-scoped /{account}/{project}/mcp endpoint
+  // (which uses projectAuth/member-key middleware and rejects OAuth JWTs).
+  // Project routing happens via .kilroy/config.toml + the `project` parameter
+  // on each tool call, not via the endpoint URL.
+  const mergeOpenCode = opencodeConfigScripts(new URL(projectUrl).origin);
 
   const preamble = shellPreamble(`project "${slug}"`);
   const codexPlugin = shellCodexPluginInstall(mergeMarketplace, mergePluginState);
   const claudeCode = shellClaudeCodeInstall(mergeSettings, settingsJson);
+  const opencode = shellOpenCodeInstall(mergeOpenCode);
+  const opencodeAuth = shellOpenCodeAuthKickoff();
 
   return `${preamble}
 
@@ -641,11 +781,12 @@ EOF_KILROY
 
 ensure_local_git_excludes
 ${claudeCode}
+${opencode}
 
-if [ "$CODEX_PLUGIN_READY" -ne 1 ] && [ "$CLAUDE_READY" -ne 1 ]; then
+if [ "$CODEX_PLUGIN_READY" -ne 1 ] && [ "$CLAUDE_READY" -ne 1 ] && [ "$OPENCODE_READY" -ne 1 ]; then
   k_blank
-  k_err "Could not configure Codex or Claude Code."
-  k_say "Install python3, node, or bun for Codex setup, or install Claude Code first."
+  k_err "Could not configure Codex, Claude Code, or OpenCode."
+  k_say "Install python3, node, or bun for config merging, and install at least one of codex/claude/opencode."
   k_blank
   exit 1
 fi
@@ -672,6 +813,7 @@ if [ "$CODEX_PLUGIN_READY" -eq 1 ] && command -v codex >/dev/null 2>&1; then
     k_warn "Codex needs a one-time sign-in — run: codex mcp login kilroy"
   fi
 fi
+${opencodeAuth}
 
 k_blank
 printf '  %sDone.%s Kilroy is ready for ${accountSlug}/${slug}. Start a new session.\\n' "$K_B" "$K_R"

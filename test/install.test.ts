@@ -35,7 +35,7 @@ describe("generateInstallScript", () => {
     // Claude Code plugin install
     expect(script).toContain(".claude/settings.local.json");
     expect(script).toContain("claude plugin install");
-    expect(script).toContain("Claude Code not found; skipping Claude-specific plugin install.");
+    expect(script).toContain("if command -v claude >/dev/null 2>&1");
   });
 
   it("bootstraps Codex plugin and project mapping when executed in a repo", () => {
@@ -80,8 +80,9 @@ describe("generateInstallScript", () => {
 
     expect(result.exitCode).toBe(0);
     expect(stderr).toBe("");
-    expect(stdout).toContain("Installing Kilroy plugin for Codex...");
-    expect(stdout).toContain("Codex: start a new session in this repo");
+    expect(stdout).toContain("Setting up Kilroy for srijan/sagaland");
+    expect(stdout).toContain("Codex plugin installed");
+    expect(stdout).toContain("Kilroy is ready for srijan/sagaland");
 
     // Project mapping written to .kilroy/config.toml
     const kilroyConfig = readFileSync(
@@ -109,7 +110,7 @@ describe("generateInstallScript", () => {
       readFileSync(homePluginManifestPath, "utf8"),
     );
     expect(homePluginManifest.skills).toBe("./skills/");
-    expect(homePluginManifest.mcpServers).toBeUndefined();
+    expect(homePluginManifest.mcpServers).toBe("./.mcp.json");
 
     const cachePluginManifestPath = join(
       homeDir,
@@ -125,5 +126,36 @@ describe("generateInstallScript", () => {
     expect(homeCodexConfig).toContain("enabled = true");
     expect(homeCodexConfig).toContain(`[projects."${realpathSync(projectDir)}"]`);
     expect(homeCodexConfig).toContain('trust_level = "trusted"');
+  });
+
+  it("includes OpenCode plugin and MCP entries", () => {
+    const script = generateInstallScript(
+      "https://kilroy.sh/srijan/sagaland",
+      "sagaland",
+      "srijan",
+    );
+
+    // Guards on the `opencode` binary being present
+    expect(script).toContain("command -v opencode");
+    // Writes to the OpenCode config path
+    expect(script).toContain(".config/opencode/opencode.json");
+    // Registers the thin repo as a plugin entry
+    expect(script).toContain(
+      "kilroy@git+https://github.com/kilroy-sh/kilroy-opencode.git",
+    );
+    // Registers Kilroy MCP as a remote server with OAuth, pointed at the ROOT
+    // /mcp endpoint (not the project-scoped one — OAuth JWTs don't pass the
+    // projectAuth middleware). Project routing happens via .kilroy/config.toml.
+    expect(script).toContain('"type": "remote"');
+    expect(script).toContain('"url": "https://kilroy.sh/mcp"');
+    expect(script).not.toContain('"url": "https://kilroy.sh/srijan/sagaland/mcp"');
+    // Python embedded script uses literal True; JS variant uses lowercase true
+    expect(script).toContain('"enabled": True');
+    expect(script).toContain("enabled: true");
+    expect(script).toContain('"oauth": {}');
+    // OpenCode readiness flag exists in preamble
+    expect(script).toContain("OPENCODE_READY=0");
+    // OAuth kickoff command
+    expect(script).toContain("opencode mcp auth kilroy");
   });
 });
