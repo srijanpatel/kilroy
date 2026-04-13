@@ -146,6 +146,9 @@ describe("generateInstallScript", () => {
     // Registers Kilroy MCP as a remote server with OAuth, pointed at the project URL
     expect(script).toContain('"type": "remote"');
     expect(script).toContain('"url": "https://kilroy.sh/srijan/sagaland/mcp"');
+    // Python embedded script uses literal True; JS variant uses lowercase true
+    expect(script).toContain('"enabled": True');
+    expect(script).toContain("enabled: true");
     expect(script).toContain('"oauth": {}');
     // OpenCode readiness flag exists in preamble
     expect(script).toContain("OPENCODE_READY=0");
