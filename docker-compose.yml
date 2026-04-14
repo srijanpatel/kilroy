@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: kilroy
+      POSTGRES_PASSWORD: kilroy
+      POSTGRES_DB: kilroy
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kilroy"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  kilroy:
+    image: oven/bun:1
+    working_dir: /app
+    command: >
+      sh -c "
+        set -e;
+        if [ ! -d /app/.git ]; then
+          git clone https://github.com/kilroy-sh/kilroy.git /app;
+        fi;
+        git fetch --tags --prune;
+        git checkout ${KILROY_REF:-v0.16.0};
+        bun install --frozen-lockfile;
+        (cd web && bun install --frozen-lockfile);
+        exec bun run serve
+      "
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://kilroy:kilroy@postgres:5432/kilroy
+    volumes:
+      - kilroy-src:/app
+    ports:
+      - "7432:7432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  kilroy-src:
