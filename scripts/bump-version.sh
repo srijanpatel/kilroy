@@ -52,7 +52,7 @@ fi
 
 README="$ROOT/README.md"
 if [ -f "$README" ]; then
-  sed -i "s|/raw/v[0-9][0-9.]*/|/raw/v$VERSION/|g" "$README"
+  sed -i "s|kilroy-sh/kilroy/v[0-9][0-9.]*/|kilroy-sh/kilroy/v$VERSION/|g" "$README"
   echo "  OK: README.md"
   STAGED+=("$README")
 fi

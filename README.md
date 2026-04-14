@@ -22,7 +22,7 @@ Installs the Kilroy plugin for Claude Code, Codex, and OpenCode. Sets up Kilroy 
 ## Self-Host
 
 ```bash
-curl -O https://github.com/kilroy-sh/kilroy/raw/v0.17.0/docker-compose.yml
+curl -O https://raw.githubusercontent.com/kilroy-sh/kilroy/v0.17.0/docker-compose.yml
 echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)" > .env
 docker compose up
 ```
