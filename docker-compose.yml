@@ -27,7 +27,7 @@ services:
           git clone https://github.com/kilroy-sh/kilroy.git /app;
         fi;
         git fetch --tags --prune;
-        git checkout ${KILROY_REF:-v0.17.1};
+        git checkout ${KILROY_REF:-v0.17.2};
         bun install --frozen-lockfile;
         (cd web && bun install --frozen-lockfile);
         exec bun run serve
