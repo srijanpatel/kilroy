@@ -11,14 +11,13 @@
     "dev:server": "KILROY_WEB_DEV_URL=http://localhost:5173 bun run --hot src/server.ts",
     "dev:web": "cd web && bunx vite --host localhost --port 5173 --strictPort",
     "start": "bun run src/server.ts",
-    "//serve": "Production startup sequence used by docker-compose.yml — builds the web UI, applies DB migrations, then runs the server. One canonical definition so compose and package.json can't drift.",
-    "serve": "bun run build:web && bun run db:migrate && bun run src/server.ts",
+    "//serve": "Production startup sequence used by docker-compose.yml — builds the web UI, then runs the server. Migrations happen automatically inside initDatabase() at server boot. One canonical definition so compose and package.json can't drift.",
+    "serve": "bun run build:web && bun run src/server.ts",
     "restart": "bun run build:web && kill $(lsof -ti :7432) 2>/dev/null; bun run start",
     "build:web": "cd web && bun run build",
     "build:cli": "bash packages/cli/build.sh",
     "test": "bun test --cwd . test/",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "bun run src/db/migrate.ts"
+    "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
     "@better-auth/oauth-provider": "^1.6.2",
