@@ -56,7 +56,7 @@ export function LandingView() {
       .catch(() => {});
   }, []);
 
-  const installCmd = 'curl -sL kilroy.sh/install | sh';
+  const installCmd = `curl -sL ${window.location.origin}/install | sh`;
 
   const handleCopy = async () => {
     try {

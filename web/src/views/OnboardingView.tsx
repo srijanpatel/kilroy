@@ -40,7 +40,16 @@ export function OnboardingView() {
   useEffect(() => {
     if (loading) return;
     if (!user) { navigate('/login'); return; }
-    if (account && !inFlowRef.current) { navigate('/projects'); return; }
+    if (account && !inFlowRef.current) {
+      const joinReturnTo = sessionStorage.getItem('joinReturnTo');
+      if (joinReturnTo) {
+        sessionStorage.removeItem('joinReturnTo');
+        navigate(joinReturnTo);
+        return;
+      }
+      navigate('/projects');
+      return;
+    }
 
     if (!account) {
       fetch('/api/account/slug-suggestion', { credentials: 'include' })
@@ -95,6 +104,17 @@ export function OnboardingView() {
       await refreshAccount();
       setAccountSlug(cleaned);
       setError('');
+
+      // Join flow: user came here via an invite link and just needs an
+      // account. Skip the project creation step and bounce back to the
+      // join URL, which will auto-complete membership.
+      const joinReturnTo = sessionStorage.getItem('joinReturnTo');
+      if (joinReturnTo) {
+        sessionStorage.removeItem('joinReturnTo');
+        navigate(joinReturnTo);
+        return;
+      }
+
       setStep('project');
       setSubmitting(false);
     } catch {
@@ -159,7 +179,7 @@ export function OnboardingView() {
               This is your identity on Kilroy. Everything you create lives under it.
             </p>
             <div className="onboarding-preview">
-              kilroy.sh/<strong>{handle || '...'}</strong>
+              {window.location.host}/<strong>{handle || '...'}</strong>
             </div>
             <form className="landing-bar" onSubmit={handleCreateAccount}>
               <input
@@ -191,7 +211,7 @@ export function OnboardingView() {
               the things that only matter when you hit them again.
             </p>
             <div className="onboarding-preview">
-              kilroy.sh/{accountSlug}/<strong>{projectSlug || '...'}</strong>
+              {window.location.host}/{accountSlug}/<strong>{projectSlug || '...'}</strong>
             </div>
             <form className="landing-bar" onSubmit={handleCreateProject}>
               <input

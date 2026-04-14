@@ -33,8 +33,10 @@ export function JoinView() {
         if (!res.ok) throw new Error(d.error || 'Invalid or expired invite link');
 
         if (d.requires_login) {
+          sessionStorage.setItem('joinReturnTo', window.location.pathname + window.location.search);
           setState({ kind: 'requires_login' });
         } else if (d.requires_onboarding) {
+          sessionStorage.setItem('joinReturnTo', window.location.pathname + window.location.search);
           setState({ kind: 'requires_onboarding' });
         } else if (d.already_member || d.joined) {
           setState({
@@ -94,7 +96,6 @@ export function JoinView() {
 
   // Requires login
   if (state.kind === 'requires_login') {
-    const returnTo = encodeURIComponent(window.location.pathname + window.location.search);
     return (
       <div className="app">
         <div className="landing">
@@ -105,7 +106,7 @@ export function JoinView() {
           <p className="landing-desc">
             Sign in to join <strong style={{ color: 'var(--text)' }}>{accountSlug}/{projectSlug}</strong>.
           </p>
-          <a className="btn" href={`/login?returnTo=${returnTo}`}>Sign in to join</a>
+          <a className="btn" href="/login">Sign in to join</a>
         </div>
       </div>
     );

@@ -13,8 +13,17 @@ export function LoginView() {
 
   useEffect(() => {
     if (loading) return;
-    if (user && account) navigate('/projects');
-    else if (user && !account) navigate('/onboarding');
+    if (user && account) {
+      const joinReturnTo = sessionStorage.getItem('joinReturnTo');
+      if (joinReturnTo) {
+        sessionStorage.removeItem('joinReturnTo');
+        navigate(joinReturnTo);
+        return;
+      }
+      navigate('/projects');
+      return;
+    }
+    if (user && !account) navigate('/onboarding');
   }, [user, account, loading]);
 
   if (loading) return null;
