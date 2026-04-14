@@ -21,6 +21,11 @@ import type { Context } from "hono";
 import type { Auth as BetterAuthInstance } from "better-auth/types";
 import type { Env } from "./types";
 
+if (!process.env.BETTER_AUTH_SECRET) {
+  console.error("error: BETTER_AUTH_SECRET is required. Generate one with `openssl rand -hex 32` and set it in .env — see .env.example");
+  process.exit(1);
+}
+
 await initDatabase();
 
 const app = new Hono();
@@ -121,10 +126,10 @@ app.post("/api/auth/oauth2/token", async (c) => {
   const params = new URLSearchParams(bodyText);
   if (!params.has("resource")) {
     // Must match an entry in auth.ts `validAudiences` — use the configured
-    // BETTER_AUTH_URL so this works regardless of how the request arrived
+    // KILROY_URL so this works regardless of how the request arrived
     // (localhost, proxy, direct). Strip any trailing slash so the resulting
     // `${authBase}/mcp` doesn't become `...//mcp` and fall outside validAudiences.
-    const authBase = (process.env.BETTER_AUTH_URL ?? getBaseUrl(c.req.url)).replace(/\/$/, "");
+    const authBase = (process.env.KILROY_URL ?? getBaseUrl(c.req.url)).replace(/\/$/, "");
     params.set("resource", `${authBase}/mcp`);
   }
   const headers = new Headers(c.req.raw.headers);

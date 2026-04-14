@@ -3,6 +3,7 @@ import { createProject, validateProjectSlug, listProjectsByAccount, regenerateIn
 import { listMembershipsForAccount, listMembers, getMemberByAccountAndProject, removeMember, regenerateMemberKey } from "../members/registry";
 import { createAccount, validateAccountSlug, suggestSlug } from "../accounts/registry";
 import { getBaseUrl } from "../lib/url";
+import { authConfig } from "../auth";
 
 type AuthEnv = {
   Variables: {
@@ -12,6 +13,9 @@ type AuthEnv = {
 };
 
 export const globalApi = new Hono<AuthEnv>();
+
+// GET /api/auth-config — public, describes which auth methods this instance enables.
+globalApi.get("/auth-config", (c) => c.json(authConfig));
 
 // GET /api/account
 globalApi.get("/account", async (c) => {
