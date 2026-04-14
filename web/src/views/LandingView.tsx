@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { KilroyMark } from '../components/KilroyMark';
 import { GitHubIcon, GoogleIcon } from '../components/ProviderIcons';
+import { EmailAuthForm } from '../components/EmailAuthForm';
 import { Icon } from '@iconify/react';
 
 interface Stats {
@@ -11,7 +12,7 @@ interface Stats {
 }
 
 export function LandingView() {
-  const { user, account, loading, signIn } = useAuth();
+  const { user, account, loading, signIn, config } = useAuth();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -117,12 +118,22 @@ export function LandingView() {
           </button>
           {loginOpen && (
             <div className="login-popover">
-              <button className="login-popover-btn login-popover-github" onClick={() => signIn('github')} type="button">
-                <GitHubIcon /> Continue with GitHub
-              </button>
-              <button className="login-popover-btn login-popover-google" onClick={() => signIn('google')} type="button">
-                <GoogleIcon /> Continue with Google
-              </button>
+              {config?.providers.includes('github') && (
+                <button className="login-popover-btn login-popover-github" onClick={() => signIn('github')} type="button">
+                  <GitHubIcon /> Continue with GitHub
+                </button>
+              )}
+              {config?.providers.includes('google') && (
+                <button className="login-popover-btn login-popover-google" onClick={() => signIn('google')} type="button">
+                  <GoogleIcon /> Continue with Google
+                </button>
+              )}
+              {config?.emailPassword && config.providers.length > 0 && (
+                <div className="login-popover-divider">or</div>
+              )}
+              {config?.emailPassword && (
+                <EmailAuthForm onSuccess={() => setLoginOpen(false)} />
+              )}
             </div>
           )}
         </div>

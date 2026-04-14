@@ -1974,6 +1974,123 @@ a:hover { color: var(--accent-hover); }
   border-color: var(--accent);
 }
 
+/* Email+password form — shared between the LandingView popover and LoginView */
+.email-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+  min-width: 200px;
+}
+
+.email-auth-input {
+  width: 100%;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.email-auth-input::placeholder {
+  color: var(--text-dim);
+}
+
+.email-auth-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.email-auth-error {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: #c8503c;
+  padding: 0.1rem 0.25rem;
+  line-height: 1.4;
+}
+
+.email-auth-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.55rem 0.9rem;
+  margin-top: 0.15rem;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+
+.email-auth-submit:hover {
+  box-shadow: 0 2px 12px var(--accent-glow);
+}
+
+.email-auth-submit:active {
+  transform: scale(0.98);
+}
+
+.email-auth-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.email-auth-toggle {
+  background: none;
+  border: none;
+  padding: 0.2rem;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: center;
+  transition: color 0.15s;
+}
+
+.email-auth-toggle:hover {
+  color: var(--accent);
+}
+
+/* "or" dividers between social buttons and the email form */
+.login-popover-divider,
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0.15rem 0;
+}
+
+.login-popover-divider::before,
+.login-popover-divider::after,
+.login-divider::before,
+.login-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.login-divider {
+  font-size: 0.72rem;
+  margin: 0.35rem 0;
+}
+
 .landing-projects {
   max-width: 480px;
   margin-bottom: 2rem;

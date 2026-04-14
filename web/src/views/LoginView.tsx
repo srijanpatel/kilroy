@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { KilroyMark } from '../components/KilroyMark';
 import { GitHubIcon, GoogleIcon } from '../components/ProviderIcons';
+import { EmailAuthForm } from '../components/EmailAuthForm';
 
 export function LoginView() {
-  const { user, account, loading, signIn } = useAuth();
+  const { user, account, loading, signIn, config } = useAuth();
   const navigate = useNavigate();
   const params = new URLSearchParams(window.location.search);
   const callbackURL = params.get('callbackURL') || '/';
@@ -18,6 +19,10 @@ export function LoginView() {
 
   if (loading) return null;
 
+  const hasGithub = config?.providers.includes('github');
+  const hasGoogle = config?.providers.includes('google');
+  const hasSocial = hasGithub || hasGoogle;
+
   return (
     <div className="app">
       <div className="landing">
@@ -26,14 +31,24 @@ export function LoginView() {
           <h1 className="landing-title">Sign in to Kilroy</h1>
         </div>
         <div className="login-buttons">
-          <button className="login-btn login-btn-github" onClick={() => signIn('github', callbackURL)}>
-            <span className="login-btn-icon"><GitHubIcon /></span>
-            Continue with GitHub
-          </button>
-          <button className="login-btn login-btn-google" onClick={() => signIn('google', callbackURL)}>
-            <span className="login-btn-icon"><GoogleIcon /></span>
-            Continue with Google
-          </button>
+          {hasGithub && (
+            <button className="login-btn login-btn-github" onClick={() => signIn('github', callbackURL)}>
+              <span className="login-btn-icon"><GitHubIcon /></span>
+              Continue with GitHub
+            </button>
+          )}
+          {hasGoogle && (
+            <button className="login-btn login-btn-google" onClick={() => signIn('google', callbackURL)}>
+              <span className="login-btn-icon"><GoogleIcon /></span>
+              Continue with Google
+            </button>
+          )}
+          {config?.emailPassword && hasSocial && (
+            <div className="login-divider">or</div>
+          )}
+          {config?.emailPassword && (
+            <EmailAuthForm callbackURL={callbackURL} />
+          )}
         </div>
       </div>
     </div>
