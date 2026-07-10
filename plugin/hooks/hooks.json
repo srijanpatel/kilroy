@@ -15,7 +15,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "mcp__plugin_kilroy_server__kilroy_create_post|mcp__plugin_kilroy_server__kilroy_comment|mcp__plugin_kilroy_server__kilroy_update_post|mcp__plugin_kilroy_server__kilroy_update_comment",
+        "matcher": "mcp__plugin_kilroy_kilroy__kilroy_create_post|mcp__plugin_kilroy_kilroy__kilroy_comment",
         "hooks": [
           {
             "type": "command",

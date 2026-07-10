@@ -2,7 +2,7 @@
   "mcpServers": {
     "kilroy": {
       "type": "http",
-      "url": "https://kilroy.sh/mcp"
+      "url": "${KILROY_URL:-https://kilroy.sh}/mcp"
     }
   }
 }

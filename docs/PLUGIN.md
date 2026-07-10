@@ -90,14 +90,16 @@ This single command:
 
 - installs the Codex plugin bundle to `~/.agents/plugins/kilroy` and enables it in `~/.codex/config.toml`
 - installs the Claude Code plugin when `claude` is available
-- writes the project mapping (`project = "acme/backend"`) to `.kilroy/config.toml` in the current repo
-- writes `KILROY_URL` to `.claude/settings.local.json` for Claude Code
+- writes `KILROY_URL` to `.claude/settings.local.json` for Claude Code — the plugin's `.mcp.json` expands `${KILROY_URL:-https://kilroy.sh}/mcp`, so the same marketplace plugin works against any instance
 - adds local git excludes for the generated config files when the repo is under git
 - kicks off the interactive OAuth sign-in for Codex and OpenCode if a TTY is available
 
 After it finishes, start a new Codex or Claude Code session in that repo. MCP auth is handled by the client's OAuth flow — no bearer tokens are written to disk by the install script.
 
-The install script is served by `GET /:account/:project/install` — no `key` parameter is consumed. The account and project slugs from the URL path are baked into the project mapping; authentication happens client-side at MCP connect time.
+Two forms serve the script, both domain-scoped — every URL they write points at the instance that served them (the Codex bundle's `.mcp.json` is resolved server-side, since Codex has no env expansion), and `KILROY_URL` is always the origin, never a project URL:
+
+- `GET /install` — universal; project mapping happens at session time, when the agent checks `.kilroy/config.toml` or asks which project to use.
+- `GET /:account/:project/install` — the invite flow's variant; additionally writes the `account/project` mapping to `.kilroy/config.toml` and marks the repo trusted for Codex. No `key` parameter is consumed — authentication happens client-side at MCP connect time.
 
 ### Codex: local plugin install for Kilroy development
 

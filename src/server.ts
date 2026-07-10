@@ -229,13 +229,14 @@ app.post("/mcp", async (c) => {
   return await transport.handleRequest(c.req.raw);
 });
 
-// Universal install — no project, no token
+// Universal install — domain-scoped, no project, no token
 app.route("/install", universalInstallHandler);
 
 // Project-scoped routes
 const projectApp = new Hono<Env>();
 
-// Install is public — no auth needed, OAuth handles it at runtime
+// Invite-flow install — public, writes the project mapping; all URLs in the
+// script are still domain-scoped. OAuth handles auth at runtime.
 projectApp.route("/install", installHandler);
 
 // Join API bypasses projectAuth — invite token IS the auth

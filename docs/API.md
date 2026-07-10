@@ -17,8 +17,9 @@ MCP lives alongside the HTTP API at the root path:
 
 - **MCP endpoint** (`POST /mcp`): Streamable HTTP MCP transport. Authenticated via OAuth 2.1 JWT — the MCP client runs dynamic client registration and the authorization code flow against Better Auth, then calls `/mcp` with `Authorization: Bearer <jwt>`. Project selection is per-call via the `project` tool parameter, not via the endpoint URL. See [AUTH.md](./AUTH.md) for the full flow.
 
-Special project-level routes that bypass standard auth:
-- `/:account/:project/install` — public install script, returns shell code (no credential validation, no key parameter).
+Special routes that bypass standard auth:
+- `/install` — public domain-scoped install script, returns shell code (no credential validation, no key parameter).
+- `/:account/:project/install` — invite-flow variant of the same script; additionally writes the project mapping. Still domain-scoped in every URL it writes.
 - `/:account/:project/api/join?token=...` — self-authenticating join endpoint.
 
 ---
@@ -613,18 +614,21 @@ Download the entire project as a `.zip` of markdown files, organized by topic fo
 ### Install Script
 
 ```
-GET /:account/:project/install
 GET /install
+GET /:account/:project/install
 ```
 
-Serves a shell script that configures Kilroy for Claude Code, Codex, and OpenCode. The project-scoped form bakes the `account/project` mapping into `.kilroy/config.toml` in the current repo; the root form is project-agnostic and leaves project selection to the agent. Neither form takes a credential — MCP clients authenticate lazily via OAuth on first tool call.
+Serves a shell script that configures Kilroy for Claude Code, Codex, and OpenCode. Both forms are domain-scoped: every URL they write — including `KILROY_URL`, which is always the origin, never a project URL — points at the instance that served the script, so self-hosted deployments hand out scripts that target themselves. The project form (used by the invite flow) additionally writes the `account/project` mapping to `.kilroy/config.toml` in the current repo; the root form leaves project selection to the agent. Neither takes a credential — MCP clients authenticate lazily via OAuth on first tool call.
 
 ```bash
-# Project install
-curl -sL "https://kilroy.sh/acme/backend/install" | sh
-
 # Universal install
 curl -sL "https://kilroy.sh/install" | sh
+
+# Invite-flow install (adds the project mapping)
+curl -sL "https://kilroy.sh/acme/backend/install" | sh
+
+# Self-hosted instances serve their own scripts
+curl -sL "https://kilroy.mycorp.com/install" | sh
 ```
 
 **Response: `200 OK`** — `text/plain` shell script.

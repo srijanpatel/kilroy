@@ -4,12 +4,26 @@ import { posix, resolve } from "path";
 import { getBaseUrl } from "../lib/url";
 
 /**
- * GET /install — serves a universal install script (no project, no token).
- * Sets up the Kilroy plugin; OAuth handles auth at session start.
+ * GET /install — serves the domain-scoped install script (no project, no
+ * token). Every installer is scoped to the Kilroy instance (origin) serving
+ * it, so self-hosted deployments hand out scripts that point at themselves.
+ * OAuth handles auth at session start; project routing happens later via
+ * `.kilroy/config.toml` + the `project` tool parameter.
  *
  *   curl -sL https://kilroy.sh/install | sh
+ *
+ * The script:
+ *  1. Installs and enables a home-local Codex plugin bundle for Kilroy skills
+ *  2. Installs the Kilroy plugin in Claude Code when `claude` is available
+ *  3. Configures KILROY_URL in `.claude/settings.local.json` so the plugin's
+ *     MCP entry (`${KILROY_URL:-https://kilroy.sh}/mcp`) targets this instance
  */
 export const universalInstallHandler = new Hono();
+
+type InstallFile = {
+  path: string;
+  content: string;
+};
 
 universalInstallHandler.get("/", (c) => {
   const baseUrl = getBaseUrl(c.req.url);
@@ -21,23 +35,16 @@ universalInstallHandler.get("/", (c) => {
 });
 
 /**
- * GET /:account/:project/install — serves a shell script that sets up Kilroy
- * for a project in one shot. No key required — OAuth handles auth at runtime.
+ * GET /:account/:project/install — the invite flow's install script. Same
+ * domain-scoped setup as /install (every URL it writes points at the
+ * instance serving it, including KILROY_URL), plus it writes the
+ * `account/project` mapping to `.kilroy/config.toml` in the current repo
+ * and marks the repo trusted for Codex. No key parameter — OAuth handles
+ * auth at MCP connect time.
  *
  *   curl -sL https://kilroy.sh/acme/my-project/install | sh
- *
- * The script:
- *  1. Installs and enables a home-local Codex plugin bundle for Kilroy skills
- *  2. Writes `.kilroy/config.toml` with the project mapping
- *  3. Installs the Kilroy plugin in Claude Code when `claude` is available
- *  4. Configures KILROY_URL in `.claude/settings.local.json`
  */
 export const installHandler = new Hono();
-
-type InstallFile = {
-  path: string;
-  content: string;
-};
 
 installHandler.get("/", (c) => {
   const url = new URL(c.req.url);
@@ -45,9 +52,8 @@ installHandler.get("/", (c) => {
   const accountSlug = segments[0];
   const projectSlug = segments[1];
   const baseUrl = getBaseUrl(c.req.url);
-  const projectUrl = `${baseUrl}/${accountSlug}/${projectSlug}`;
 
-  const script = generateInstallScript(projectUrl, projectSlug, accountSlug);
+  const script = generateProjectInstallScript(baseUrl, accountSlug, projectSlug);
 
   return c.text(script, 200, {
     "Content-Type": "text/plain",
@@ -417,10 +423,11 @@ fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + '\\n');
 
 /**
  * Generates the shared shell preamble: runtime detection, helper functions,
- * and the plugin bundle installer function.
+ * and the plugin bundle installer function. `baseUrl` is the origin of the
+ * Kilroy instance serving the script — bundled configs point at it.
  */
-function shellPreamble(title: string): string {
-  const codexPluginFiles = getCodexPluginFiles();
+function shellPreamble(title: string, baseUrl: string): string {
+  const codexPluginFiles = getCodexPluginFiles(baseUrl);
   const codexPluginWriteCommands = renderShellFileWrites(
     "$TARGET_DIR",
     codexPluginFiles,
@@ -673,7 +680,7 @@ export function generateUniversalInstallScript(baseUrl: string): string {
   const mergePluginState = codexPluginStateScripts();
   const mergeOpenCode = opencodeConfigScripts(baseUrl);
 
-  const preamble = shellPreamble("universal");
+  const preamble = shellPreamble("universal", baseUrl);
   const codexPlugin = shellCodexPluginInstall(mergeMarketplace, mergePluginState);
   const claudeCode = shellClaudeCodeInstall(mergeSettings, settingsJson);
   const opencode = shellOpenCodeInstall(mergeOpenCode);
@@ -724,13 +731,20 @@ k_blank
 `;
 }
 
-export function generateInstallScript(
-  projectUrl: string,
-  slug: string,
+/**
+ * The invite-flow variant: identical domain-scoped setup, plus the
+ * `account/project` mapping in `.kilroy/config.toml` and Codex repo trust.
+ * `baseUrl` is the origin only — KILROY_URL must never carry a project path
+ * (the plugin expands it to `${KILROY_URL}/mcp`, and the project-scoped MCP
+ * endpoint rejects OAuth JWTs).
+ */
+export function generateProjectInstallScript(
+  baseUrl: string,
   accountSlug: string,
+  slug: string,
 ): string {
   const settingsJson = JSON.stringify(
-    { env: { KILROY_URL: projectUrl } },
+    { env: { KILROY_URL: baseUrl } },
     null,
     2,
   );
@@ -739,14 +753,9 @@ export function generateInstallScript(
   const mergeMarketplace = codexMarketplaceScripts();
   const mergePluginState = codexPluginStateScripts();
   const mergeProjectTrust = codexProjectTrustScripts();
-  // OpenCode's MCP entry must target the ROOT /mcp endpoint (JWT OAuth via
-  // server.ts:187), NOT the project-scoped /{account}/{project}/mcp endpoint
-  // (which uses projectAuth/member-key middleware and rejects OAuth JWTs).
-  // Project routing happens via .kilroy/config.toml + the `project` parameter
-  // on each tool call, not via the endpoint URL.
-  const mergeOpenCode = opencodeConfigScripts(new URL(projectUrl).origin);
+  const mergeOpenCode = opencodeConfigScripts(baseUrl);
 
-  const preamble = shellPreamble(`project "${slug}"`);
+  const preamble = shellPreamble(`project "${slug}"`, baseUrl);
   const codexPlugin = shellCodexPluginInstall(mergeMarketplace, mergePluginState);
   const claudeCode = shellClaudeCodeInstall(mergeSettings, settingsJson);
   const opencode = shellOpenCodeInstall(mergeOpenCode);
@@ -826,7 +835,7 @@ function esc(s: string): string {
   return s.replace(/'/g, "'\\''");
 }
 
-function getCodexPluginFiles(): InstallFile[] {
+function getCodexPluginFiles(baseUrl: string): InstallFile[] {
   const pluginRoot = resolve(import.meta.dir, "../../plugin");
   const manifestPath = resolve(pluginRoot, ".codex-plugin/plugin.json");
 
@@ -837,10 +846,23 @@ function getCodexPluginFiles(): InstallFile[] {
     },
     {
       path: ".mcp.json",
-      content: readFileSync(resolve(pluginRoot, ".mcp.json"), "utf8"),
+      content: resolveMcpConfig(
+        readFileSync(resolve(pluginRoot, ".mcp.json"), "utf8"),
+        baseUrl,
+      ),
     },
     ...readInstallFiles(resolve(pluginRoot, "skills"), "skills"),
   ];
+}
+
+/**
+ * The source .mcp.json uses Claude Code's `${KILROY_URL:-…}` env expansion,
+ * which Codex doesn't understand — resolve it to this instance's URL.
+ */
+function resolveMcpConfig(content: string, baseUrl: string): string {
+  const config = JSON.parse(content);
+  config.mcpServers.kilroy.url = `${baseUrl.replace(/\/$/, "")}/mcp`;
+  return JSON.stringify(config, null, 2) + "\n";
 }
 
 function readInstallFiles(root: string, prefix: string): InstallFile[] {
