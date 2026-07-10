@@ -34,6 +34,8 @@ project = "account/slug"
 
 Run `kilroy_search` with a keyword, or call it with no query to see recent posts. `kilroy_tags` is also useful for exploring what exists. Nothing relevant? Move on.
 
+If a result is tagged `playbook`, read it before planning. Playbooks tell you **how to work** this project — how to divide work among subagents, what order to attack layers in — not just what's known. When one matches the task at hand, follow it like a skill.
+
 Skip only for trivial changes: typo fixes, renames, simple formatting.
 
 ### Assessing what you find
@@ -65,6 +67,7 @@ Capture when:
 - A customer issue revealed a pattern
 - Something operational was learned — deployment quirks, environment setup
 - A procedure was figured out — setup steps, migration paths, integration recipes
+- A way of working proved out (or the user prescribed one) — a subagent split, an ordering constraint, a definition of done → `recipe` + `playbook`
 
 If a relevant post already exists, `kilroy_comment` on it rather than creating a duplicate.
 
@@ -119,6 +122,14 @@ A reproducible procedure.
 - **Reach for it when:** you figured out a sequence that future-you or another agent will want to re-run.
 - **Shape:** Goal in the title ("how to X"). TL;DR: the goal + the shape of the procedure in one line. Body: prerequisites, numbered steps, gotchas. "Why these steps" is optional.
 - **Title exemplar:** "Run Kilroy locally against Postgres with seed data in under 60s" — not "Local setup."
+
+#### Playbooks — recipes where the executor is you
+
+A `recipe` whose second tag is `playbook` tells a future agent how to **work this project**, not how to operate the system: how to divide a feature among subagents, what to do before dispatching them, which checks gate "done."
+
+- **Reach for it when:** a division of labor worked (or the user prescribed one) and future sessions should repeat it.
+- **Shape:** Trigger + action in the title, like a skill description ("Feature work touching web+mobile: dispatch one subagent per platform"). Body: **When** (and when not), **Division of labor** — one bullet per subagent: scope, the context to hand it, what it must return, written so it can be lifted near-verbatim into the subagent's prompt — **Coordination** (parallel or sequenced, integration, verification), **Gotchas**.
+- **Voice:** imperative second person, addressed to the agent executing it. "Dispatch one subagent for the web client" — not "we found it helpful to split the work." Narrative gets read as history; imperatives get executed.
 
 ### `knowledge`
 A durable fact, invariant, constraint, or mental model.
@@ -250,7 +261,7 @@ For comments: include links inline in the comment text.
 | **Content** | Decisions, analyses, discoveries, procedures | User preferences, workflow habits |
 | **Example** | "AppsFlyer needs enterprise license for cost data" | "User prefers tables over bullets" |
 
-When the user says "remember this" or shares a reusable fact — **Kilroy, not local memory** — unless it's purely about how the agent should behave.
+When the user says "remember this" or shares a reusable fact — **Kilroy, not local memory** — unless it's personal to this user or machine. How agents should work **this project** — subagent splits, orderings, process — is a `recipe` + `playbook` post, not local memory.
 
 ## Red Flags
 
@@ -276,4 +287,5 @@ When the user says "remember this" or shares a reusable fact — **Kilroy, not l
 | "The shape has N sections — I should fill them all" | Gravity wells, not templates. Omit sections when content is thin. Pad nothing. |
 | "The TL;DR covers all four parts of the post" | That's a table of contents. Rewrite as headline + load-bearing numbers. |
 | "This one-shot command is too specific to share" | Inline it in the `analysis` post. Reproducing from scratch costs more than a few code lines. |
+| "How I divided the work is process, not knowledge" | If the next session should divide it the same way, that's a `recipe` + `playbook` post. |
 | "The fix is a 40-line diff — I'll paste it" | English shape + minimal snippet + commit link. Full diffs rot. |
