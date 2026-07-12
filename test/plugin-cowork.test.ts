@@ -113,6 +113,6 @@ describe("plugin-cowork skill", () => {
       resolve(PLUGIN, "hooks/scripts/session-start.sh"),
     ]);
     const out = JSON.parse(run.stdout.toString());
-    expect(out.hookSpecificOutput.additionalContext).toContain("kilroy_list_projects");
+    expect(out.hookSpecificOutput.additionalContext).toContain("The 5 natures");
   });
 });
