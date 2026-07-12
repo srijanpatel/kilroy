@@ -84,3 +84,35 @@ describe("plugin-cowork hooks", () => {
     expect(out.hookSpecificOutput.additionalContext.length).toBeGreaterThan(10);
   });
 });
+
+describe("plugin-cowork skill", () => {
+  const skill = () =>
+    readFileSync(resolve(PLUGIN, "skills/using-kilroy/SKILL.md"), "utf8");
+
+  test("has frontmatter and no filesystem routing assumptions", () => {
+    const s = skill();
+    expect(s).toContain("name: using-kilroy");
+    // Cowork has no cwd/repo — the coding plugin's config.toml routing must not leak in
+    expect(s).not.toContain("config.toml");
+    expect(s).not.toContain(".kilroy/");
+    expect(s).toContain("kilroy_list_projects");
+  });
+
+  test("covers both reading and writing", () => {
+    const s = skill();
+    expect(s).toContain("## Reading");
+    expect(s).toContain("## Writing");
+    // nature tags survive the rewrite
+    for (const nature of ["analysis", "decision", "bug", "recipe", "knowledge"]) {
+      expect(s).toContain(nature);
+    }
+  });
+
+  test("session-start.sh now injects the real skill", () => {
+    const run = spawnSync("bash", [
+      resolve(PLUGIN, "hooks/scripts/session-start.sh"),
+    ]);
+    const out = JSON.parse(run.stdout.toString());
+    expect(out.hookSpecificOutput.additionalContext).toContain("kilroy_list_projects");
+  });
+});
