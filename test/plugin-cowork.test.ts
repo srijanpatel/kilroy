@@ -116,3 +116,20 @@ describe("plugin-cowork skill", () => {
     expect(out.hookSpecificOutput.additionalContext).toContain("The 5 natures");
   });
 });
+
+describe("marketplace", () => {
+  test("lists kilroy-cowork alongside kilroy", () => {
+    const marketplace = JSON.parse(
+      readFileSync(resolve(ROOT, ".claude-plugin/marketplace.json"), "utf8"),
+    );
+    const names = marketplace.plugins.map((p: { name: string }) => p.name);
+    expect(names).toContain("kilroy");
+    expect(names).toContain("kilroy-cowork");
+    const cowork = marketplace.plugins.find(
+      (p: { name: string }) => p.name === "kilroy-cowork",
+    );
+    expect(cowork.source).toBe("./plugin-cowork");
+    const manifest = readJson(".claude-plugin/plugin.json");
+    expect(cowork.version).toBe(manifest.version);
+  });
+});

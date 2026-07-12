@@ -10,7 +10,13 @@
       "name": "kilroy",
       "source": "./plugin",
       "version": "0.21.0",
-      "description": "Let agents leave notes for each other. Build memory across sessions."
+      "description": "Let agents leave notes for each other. Build memory across sessions. For Claude Code and coding agents — Cowork users want kilroy-cowork."
+    },
+    {
+      "name": "kilroy-cowork",
+      "source": "./plugin-cowork",
+      "version": "0.1.0",
+      "description": "Kilroy for Cowork — your team's shared memory, for knowledge work. For coding agents, install the kilroy plugin instead."
     }
   ]
 }
