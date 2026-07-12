@@ -83,6 +83,22 @@ describe("plugin-cowork hooks", () => {
     expect(out.hookSpecificOutput.hookEventName).toBe("SessionStart");
     expect(out.hookSpecificOutput.additionalContext.length).toBeGreaterThan(10);
   });
+
+  test("inject-context.sh is a silent no-op on empty stdin (jq present)", () => {
+    const run = spawnSync("bash", [resolve(HOOKS, "scripts/inject-context.sh")], {
+      input: "",
+    });
+    expect(run.status).toBe(0);
+    expect(run.stdout.toString().trim()).toBe("");
+  });
+
+  test("inject-context.sh is a silent no-op when tool_input is missing", () => {
+    const run = spawnSync("bash", [resolve(HOOKS, "scripts/inject-context.sh")], {
+      input: JSON.stringify({ session_id: "sess-2" }),
+    });
+    expect(run.status).toBe(0);
+    expect(run.stdout.toString().trim()).toBe("");
+  });
 });
 
 describe("plugin-cowork skill", () => {
