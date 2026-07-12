@@ -16,7 +16,9 @@ export function InviteCard({ installCommand, joinLink, compact, onRegenerateInvi
     setTimeout(() => setCopied(null), 2000);
   };
 
-  if (!installCommand && !joinLink) return null;
+  const origin = window.location.origin;
+  const isHosted = origin === 'https://kilroy.sh';
+  const coworkValue = isHosted ? 'kilroy-sh/kilroy' : `${origin}/mcp`;
 
   return (
     <div className={`invite-card${compact ? ' invite-card-compact' : ''}`}>
@@ -40,6 +42,32 @@ export function InviteCard({ installCommand, joinLink, compact, onRegenerateInvi
           {compact && <div className="invite-card-hint">Connect an agent — run in your project directory</div>}
         </div>
       )}
+      <div className="invite-card-section">
+        <div className="invite-card-label">For Claude Cowork</div>
+        {!compact && (
+          <p className="invite-card-desc">
+            {isHosted
+              ? 'In Cowork: Settings → Plugins → add this marketplace, then install "Kilroy for Cowork".'
+              : 'In Cowork: Settings → Connectors → add a custom connector with this URL. Your instance must be reachable over public HTTPS.'}
+          </p>
+        )}
+        <div className="invite-card-command">
+          <code>{coworkValue}</code>
+          <button
+            className="btn btn-sm"
+            onClick={() => handleCopy(coworkValue, 'cowork')}
+          >
+            {copied === 'cowork' ? 'Copied!' : 'Copy'}
+          </button>
+        </div>
+        {compact && (
+          <div className="invite-card-hint">
+            {isHosted
+              ? 'Cowork: Settings → Plugins → add marketplace → install Kilroy for Cowork'
+              : 'Cowork: Settings → Connectors → add as custom connector'}
+          </div>
+        )}
+      </div>
       {joinLink && (
         <div className="invite-card-section">
           <div className="invite-card-label">For humans</div>
