@@ -17,6 +17,7 @@ import { oauthProviderAuthServerMetadata } from "@better-auth/oauth-provider";
 import { oauthProviderResourceClient } from "@better-auth/oauth-provider/resource-client";
 import { createMcpServer } from "./mcp/server";
 import { getBaseUrl } from "./lib/url";
+import { protectedResourceMetadata } from "./routes/oauth-metadata";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
@@ -166,23 +167,7 @@ if (!viteDevUrl && indexHtml) {
 }
 
 // OAuth 2.1 protected resource metadata (for root /mcp endpoint)
-app.get("/.well-known/oauth-protected-resource", (c) => {
-  const baseUrl = getBaseUrl(c.req.url);
-  return c.json({
-    resource: `${baseUrl}/mcp`,
-    authorization_servers: [`${baseUrl}/api/auth`],
-    bearer_methods_supported: ["header"],
-  });
-});
-
-app.get("/mcp/.well-known/oauth-protected-resource", (c) => {
-  const baseUrl = getBaseUrl(c.req.url);
-  return c.json({
-    resource: `${baseUrl}/mcp`,
-    authorization_servers: [`${baseUrl}/api/auth`],
-    bearer_methods_supported: ["header"],
-  });
-});
+app.route("/", protectedResourceMetadata);
 
 // Root-level MCP endpoint — JWT auth via OAuth provider
 const resourceClient = oauthProviderResourceClient(
