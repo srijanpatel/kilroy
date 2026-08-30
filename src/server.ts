@@ -33,6 +33,23 @@ if (!process.env.BETTER_AUTH_SECRET) {
 await initDatabase();
 
 const app = new Hono();
+
+// TEMP diagnostic (claude.ai connector mcp_registration_failed) — logs any
+// registration-shaped POST so we can see the real path + payload. REMOVE
+// once the Claude Desktop DCR issue is diagnosed.
+app.use(async (c, next) => {
+  if (c.req.method === "POST" && c.req.path.toLowerCase().includes("register")) {
+    let body = "";
+    try {
+      body = (await c.req.raw.clone().text()).slice(0, 1000);
+    } catch {}
+    console.log(`[dcr-debug] POST ${c.req.path} ua=${c.req.header("user-agent") ?? "?"} body=${body}`);
+    await next();
+    console.log(`[dcr-debug] → ${c.res.status} for POST ${c.req.path}`);
+    return;
+  }
+  await next();
+});
 const viteDevUrl = process.env.KILROY_WEB_DEV_URL?.replace(/\/$/, "");
 
 function isBackendRoute(path: string): boolean {
