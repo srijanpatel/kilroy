@@ -102,11 +102,14 @@ describe("generateUniversalInstallScript", () => {
       readFileSync(homePluginManifestPath, "utf8"),
     );
     expect(homePluginManifest.skills).toBe("./skills/");
-    expect(homePluginManifest.mcpServers).toBe("./.mcp.json");
+    expect(homePluginManifest.mcpServers).toBe("./.codex-plugin/mcp.json");
 
-    // Bundled .mcp.json points at the instance that served the script
+    // Bundled codex MCP config points at the instance that served the script
     const bundledMcp = JSON.parse(
-      readFileSync(join(homeDir, ".agents/plugins/kilroy/.mcp.json"), "utf8"),
+      readFileSync(
+        join(homeDir, ".agents/plugins/kilroy/.codex-plugin/mcp.json"),
+        "utf8",
+      ),
     );
     expect(bundledMcp.mcpServers.kilroy.url).toBe(
       "https://kilroy.example.com/mcp",
@@ -202,9 +205,12 @@ describe("generateUniversalInstallScript", () => {
     );
     expect(kilroyConfig).toContain('project = "srijan/sagaland"');
 
-    // Bundled .mcp.json points at the instance origin, not the project
+    // Bundled codex MCP config points at the instance origin, not the project
     const bundledMcp = JSON.parse(
-      readFileSync(join(homeDir, ".agents/plugins/kilroy/.mcp.json"), "utf8"),
+      readFileSync(
+        join(homeDir, ".agents/plugins/kilroy/.codex-plugin/mcp.json"),
+        "utf8",
+      ),
     );
     expect(bundledMcp.mcpServers.kilroy.url).toBe(
       "https://kilroy.example.com/mcp",

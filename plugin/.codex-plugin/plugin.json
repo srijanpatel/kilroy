@@ -17,11 +17,11 @@
     "memory"
   ],
   "skills": "./skills/",
-  "mcpServers": "./.mcp.json",
+  "mcpServers": "./.codex-plugin/mcp.json",
   "interface": {
     "displayName": "Kilroy",
     "shortDescription": "Shared memory for agents and team.",
-    "longDescription": "Kilroy gives agents a shared knowledge base — decisions, discoveries, and gotchas persist across sessions so context is never lost.",
+    "longDescription": "Kilroy gives agents a shared knowledge base \u2014 decisions, discoveries, and gotchas persist across sessions so context is never lost.",
     "developerName": "Kilroy",
     "category": "Productivity",
     "capabilities": [

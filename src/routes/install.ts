@@ -845,9 +845,13 @@ function getCodexPluginFiles(baseUrl: string): InstallFile[] {
       content: readFileSync(manifestPath, "utf8"),
     },
     {
-      path: ".mcp.json",
+      // The manifest's mcpServers points here — a codex-specific config kept
+      // separate from the root .mcp.json so Claude Code retains its
+      // ${KILROY_URL:-…} env template. Its default is hosted kilroy.sh;
+      // resolve it to the instance that served this script.
+      path: ".codex-plugin/mcp.json",
       content: resolveMcpConfig(
-        readFileSync(resolve(pluginRoot, ".mcp.json"), "utf8"),
+        readFileSync(resolve(pluginRoot, ".codex-plugin/mcp.json"), "utf8"),
         baseUrl,
       ),
     },
@@ -856,8 +860,8 @@ function getCodexPluginFiles(baseUrl: string): InstallFile[] {
 }
 
 /**
- * The source .mcp.json uses Claude Code's `${KILROY_URL:-…}` env expansion,
- * which Codex doesn't understand — resolve it to this instance's URL.
+ * Rewrite the MCP server URL to the instance that served the install script,
+ * so self-hosted installs don't point at the hosted kilroy.sh default.
  */
 function resolveMcpConfig(content: string, baseUrl: string): string {
   const config = JSON.parse(content);
